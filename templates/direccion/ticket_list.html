@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+{% block title %}Tickets de Soporte - Direccion General{% endblock %}
+{% block page_title %}Tickets de Soporte{% endblock %}
+{% block content %}
+<div class="space-y-6">
+    <div class="flex items-center justify-between">
+        <p class="text-sm text-gray-500">{{ tickets.count }} ticket(s) registrados</p>
+        {% if user.profile.rol != 'ADMINISTRADOR' %}
+        <a href="{% url 'ticket_create' %}" class="px-4 py-2 bg-[#003363] text-white rounded-lg hover:bg-[#002244] transition-colors text-sm font-medium">
+            + Nuevo Ticket
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- Filters -->
+    <form method="GET" class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+        <div class="flex flex-wrap items-end gap-3">
+            <div class="flex-1 min-w-[160px]">
+                <label class="block text-xs font-medium text-gray-500 mb-1">Estado</label>
+                <select name="estado" class="form-input text-sm">
+                    <option value="">Todos los estados</option>
+                    {% for val, label in estados %}
+                    <option value="{{ val }}" {% if filtro_estado == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% if user.profile.rol == 'ADMINISTRADOR' %}
+            <div class="flex-1 min-w-[160px]">
+                <label class="block text-xs font-medium text-gray-500 mb-1">Usuario</label>
+                <select name="usuario" class="form-input text-sm">
+                    <option value="">Todos los usuarios</option>
+                    {% for u in usuarios %}
+                    <option value="{{ u.pk }}" {% if filtro_usuario|stringformat:"s" == u.pk|stringformat:"s" %}selected{% endif %}>{{ u.get_full_name|default:u.username }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+            <div class="flex items-center gap-2">
+                <button type="submit" class="px-4 py-2 bg-[#003363] text-white rounded-lg hover:bg-[#002244] transition-colors text-sm font-medium">Filtrar</button>
+                {% if filtro_estado or filtro_usuario %}
+                <a href="{% url 'ticket_list' %}" class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">Limpiar</a>
+                {% endif %}
+            </div>
+        </div>
+    </form>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        {% if tickets %}
+        <div class="divide-y divide-gray-100">
+            {% for t in tickets %}
+            <div class="px-6 py-4 hover:bg-gray-50 transition-colors">
+                <div class="flex items-center justify-between gap-4">
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-xs font-mono text-gray-400">#{{ t.pk }}</span>
+                            <span class="text-sm font-medium text-gray-800 truncate flex items-center gap-1.5">{{ t.asunto }}</span>
+                            {% if t.estado == 'ABIERTO' %}
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-red-50 text-red-600">Abierto</span>
+                            {% elif t.estado == 'EN_PROCESO' %}
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-600">En proceso</span>
+                            {% elif t.estado == 'RESUELTO' %}
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-green-50 text-green-600">Resuelto</span>
+                            {% elif t.estado == 'CERRADO' %}
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-gray-50 text-gray-500">Cerrado</span>
+                            {% endif %}
+                            {% if t.prioridad == 'ALTO' %}
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-red-50 text-red-500">Alta</span>
+                            {% elif t.prioridad == 'MEDIO' %}
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-500">Media</span>
+                            {% elif t.prioridad == 'BAJO' %}
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-green-50 text-green-500">Baja</span>
+                            {% endif %}
+                        </div>
+                        <p class="text-xs text-gray-500 line-clamp-1">{{ t.descripcion|truncatechars:120 }}</p>
+                        <p class="text-[11px] text-gray-400 mt-1">
+                            {{ t.fecha_creacion|date:"d/m/Y H:i" }} por {{ t.creado_por.get_full_name|default:t.creado_por.username|default:'Sistema' }}
+                            {% if t.asignado_a %} &middot; Asignado: {{ t.asignado_a.get_full_name|default:t.asignado_a.username }}{% endif %}
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-1.5 shrink-0">
+                        <a href="{% url 'ticket_detail' t.pk %}" class="px-2.5 py-1 text-[11px] font-medium rounded-md text-gray-600 hover:text-[#003363] hover:bg-gray-100 transition-colors">
+                            <svg class="w-3.5 h-3.5 inline-block mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                            Detalle
+                        </a>
+                        {% if user.profile.rol == 'ADMINISTRADOR' %}
+                            {% if t.estado == 'ABIERTO' or t.estado == 'EN_PROCESO' %}
+                            <a href="{% url 'ticket_resolver' t.pk %}" class="px-2.5 py-1 text-[11px] font-medium rounded-md bg-green-50 text-green-700 hover:bg-green-100 transition-colors">
+                                Resolver
+                            </a>
+                            {% elif t.estado == 'RESUELTO' %}
+                            <a href="{% url 'ticket_resolver' t.pk %}" class="px-2.5 py-1 text-[11px] font-medium rounded-md bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors">
+                                Reabrir
+                            </a>
+                            {% endif %}
+                        <a href="{% url 'ticket_asignar' t.pk %}" class="px-2.5 py-1 text-[11px] font-medium rounded-md text-[#003363] hover:bg-[#e8f0f8] transition-colors">Asignar</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-sm text-gray-400 text-center py-10">
+            {% if filtro_estado or filtro_usuario %}
+                No se encontraron tickets con esos filtros.
+            {% else %}
+                No hay tickets registrados todavia.
+            {% endif %}
+        </p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

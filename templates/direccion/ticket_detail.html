@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% block title %}Ticket #{{ ticket.pk }} - {{ ticket.asunto }}{% endblock %}
+{% block page_title %}Ticket #{{ ticket.pk }}{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6">
+  <a href="{% url 'ticket_list' %}" class="inline-flex items-center gap-1.5 text-sm text-gray-600 hover:text-[#003363] transition-colors">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+    Volver a Tickets
+  </a>
+
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <div class="p-6">
+      <div class="flex items-start justify-between gap-4">
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="text-xs font-mono text-gray-400 bg-gray-100 px-2 py-0.5 rounded">#{{ ticket.pk }}</span>
+            <h2 class="text-lg font-semibold text-gray-900 truncate">{{ ticket.asunto }}</h2>
+          </div>
+          <div class="flex flex-wrap gap-2 mb-4">
+            {% if ticket.estado == 'ABIERTO' %}
+            <span class="px-3 py-1 rounded-full text-xs font-semibold bg-red-50 text-red-600">Abierto</span>
+            {% elif ticket.estado == 'EN_PROCESO' %}
+            <span class="px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-600">En proceso</span>
+            {% elif ticket.estado == 'RESUELTO' %}
+            <span class="px-3 py-1 rounded-full text-xs font-semibold bg-green-50 text-green-600">Resuelto</span>
+            {% elif ticket.estado == 'CERRADO' %}
+            <span class="px-3 py-1 rounded-full text-xs font-semibold bg-gray-50 text-gray-500">Cerrado</span>
+            {% endif %}
+            {% if ticket.prioridad == 'ALTO' %}
+            <span class="px-3 py-1 rounded-full text-xs font-semibold bg-red-50 text-red-500">Prioridad Alta</span>
+            {% elif ticket.prioridad == 'MEDIO' %}
+            <span class="px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-500">Prioridad Media</span>
+            {% elif ticket.prioridad == 'BAJO' %}
+            <span class="px-3 py-1 rounded-full text-xs font-semibold bg-green-50 text-green-500">Prioridad Baja</span>
+            {% endif %}
+          </div>
+        </div>
+        {% if user.profile.rol == 'ADMINISTRADOR' %}
+        <div class="flex gap-2 shrink-0">
+          {% if ticket.estado == 'ABIERTO' or ticket.estado == 'EN_PROCESO' %}
+          <a href="{% url 'ticket_resolver' ticket.pk %}" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-green-600 text-white hover:bg-green-700">Resolver</a>
+          {% elif ticket.estado == 'RESUELTO' %}
+          <a href="{% url 'ticket_resolver' ticket.pk %}" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-amber-500 text-white hover:bg-amber-600">Reabrir</a>
+          {% endif %}
+          <a href="{% url 'ticket_asignar' ticket.pk %}" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-[#003363] text-white hover:bg-[#002244]">Asignar</a>
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 pt-4 border-t border-gray-100">
+        <div>
+          <p class="text-xs text-gray-500 uppercase">Creado por</p>
+          <p class="text-sm font-medium text-gray-800">{% if ticket.creado_por %}{{ ticket.creado_por.get_full_name|default:ticket.creado_por.username }}{% else %}Sistema{% endif %}</p>
+        </div>
+        <div>
+          <p class="text-xs text-gray-500 uppercase">Asignado a</p>
+          <p class="text-sm font-medium text-gray-800">{% if ticket.asignado_a %}{{ ticket.asignado_a.get_full_name|default:ticket.asignado_a.username }}{% else %}---{% endif %}</p>
+        </div>
+        <div>
+          <p class="text-xs text-gray-500 uppercase">Fecha de creacion</p>
+          <p class="text-sm font-medium text-gray-800">{{ ticket.fecha_creacion|date:"d/m/Y H:i" }}</p>
+        </div>
+      </div>
+    </div>
+
+    {% if ticket.descripcion %}
+    <div class="px-6 pb-6">
+      <p class="text-xs text-gray-500 uppercase mb-2">Descripcion</p>
+      <div class="p-4 bg-gray-50 rounded-lg text-sm text-gray-700 whitespace-pre-wrap">{{ ticket.descripcion }}</div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Timeline / History -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+      <h3 class="font-semibold text-gray-800 flex items-center gap-2">
+        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Historial de Cambios
+      </h3>
+      <span class="text-xs text-gray-400">{{ historial.count }} registro(s)</span>
+    </div>
+
+    {% if historial %}
+    <div class="p-6">
+      <div class="relative">
+        <div class="absolute left-4 top-2 bottom-2 w-0.5 bg-gray-200"></div>
+        <div class="space-y-0">
+          {% for h in historial %}
+          <div class="relative pl-10 pb-6 last:pb-0">
+            <div class="absolute left-2.5 top-1.5 w-3 h-3 rounded-full border-2
+              {% if h.campo == 'estado' %}border-blue-500 bg-blue-50
+              {% elif h.campo == 'prioridad' %}border-amber-500 bg-amber-50
+              {% else %}border-purple-500 bg-purple-50{% endif %}"></div>
+            <div class="flex items-start gap-3">
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="text-xs font-medium text-gray-800">
+                    {% if h.campo == 'estado' %}Cambio de estado
+                    {% elif h.campo == 'prioridad' %}Cambio de prioridad
+                    {% else %}Cambio de asignacion{% endif %}
+                  </span>
+                  <span class="text-[10px] text-gray-400">{{ h.fecha|date:"d/m/Y H:i" }}</span>
+                </div>
+                <div class="mt-1 flex items-center gap-2 text-sm">
+                  {% if h.valor_anterior and h.valor_anterior != '---' %}
+                  <span class="px-2 py-0.5 rounded text-xs bg-red-50 text-red-600 line-through">{{ h.valor_anterior }}</span>
+                  <svg class="w-3.5 h-3.5 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+                  {% endif %}
+                  <span class="px-2 py-0.5 rounded text-xs
+                    {% if h.campo == 'estado' %}bg-blue-50 text-blue-700
+                    {% elif h.campo == 'prioridad' %}bg-amber-50 text-amber-700
+                    {% else %}bg-purple-50 text-purple-700{% endif %}">{{ h.valor_nuevo }}</span>
+                </div>
+                {% if h.usuario %}
+                <p class="text-[11px] text-gray-400 mt-0.5">por {% if h.usuario %}{{ h.usuario.get_full_name|default:h.usuario.username }}{% endif %}</p>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <div class="flex flex-col items-center justify-center py-10 text-gray-400">
+      <svg width="40" height="40" fill="none" stroke="currentColor" viewBox="0 0 24 24" class="mb-3"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      <p class="text-sm">No hay registros en el historial.</p>
+      <p class="text-xs mt-1">Los cambios de estado, prioridad y asignacion apareceran aqui.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

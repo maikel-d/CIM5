@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% block title %}Personal de la Dirección{% endblock %}
+{% block page_title %}Personal de la Dirección{% endblock %}
+{% block content %}
+<div class="space-y-4">
+  <div class="flex items-center justify-between">
+    <form method="get" class="flex gap-2">
+      <input type="text" name="search" value="{{ search }}" placeholder="Buscar..." class="form-input max-w-md">
+      <button type="submit" class="px-4 py-2 bg-[#003363] text-white rounded-lg hover:bg-[#004a80] text-sm">Buscar</button>
+      {% if search %}<a href="{% url 'personal_list' %}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-sm">Limpiar</a>{% endif %}
+    </form>
+    <div class="flex gap-2">
+      <a href="{% url 'personal_pdf' %}" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm flex items-center gap-1.5">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+        PDF
+      </a>
+      <a href="{% url 'personal_export' %}" class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 text-sm flex items-center gap-1.5">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+        Excel
+      </a>
+      <a href="{% url 'personal_create' %}" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm">+ Nuevo</a>
+    </div>
+  </div>
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <table class="w-full">
+      <thead class="bg-gray-50 border-b border-gray-200">
+        <tr>
+          <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase" style="width:60px"></th>
+          <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">Apellidos</th>
+          <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">Nombres</th>
+          <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">Cédula</th>
+          <th class="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase">Acciones</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for p in personal_list %}
+        <tr class="hover:bg-gray-50 transition-colors clickable-row" onclick="window.location='{% url 'personal_detail' p.pk %}'">
+          <td class="px-6 py-4">
+            <div class="w-12 h-12 rounded-full overflow-hidden bg-[#e8f0f8] flex items-center justify-center text-xs font-bold text-[#003363] flex-shrink-0">
+              {% if p.foto %}
+              <img src="{{ p.foto.url }}" alt="" class="w-full h-full object-cover">
+              {% else %}
+              {{ p.nombres|first }}{{ p.apellidos|first }}
+              {% endif %}
+            </div>
+          </td>
+          <td class="px-6 py-4 text-sm font-medium text-gray-800">{{ p.apellidos }}</td>
+          <td class="px-6 py-4 text-sm text-gray-600">{{ p.nombres }}</td>
+          <td class="px-6 py-4 text-sm text-gray-500">{{ p.cedula }}</td>
+          <td class="px-6 py-4 text-right whitespace-nowrap" onclick="event.stopPropagation()">
+            <a href="{% url 'personal_detail' p.pk %}" class="action-btn view" title="Ver detalles">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+              Ver
+            </a>
+            {% if user.profile.rol == 'ADMINISTRADOR' %}
+            <a href="{% url 'personal_edit' p.pk %}" class="action-btn edit" title="Editar">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+              Editar
+            </a>
+            <a href="{% url 'personal_delete' p.pk %}" class="action-btn delete" title="Eliminar">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+              Eliminar
+            </a>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" class="px-4 py-12 text-center text-gray-400">
+            <svg width="40" height="40" fill="none" stroke="currentColor" viewBox="0 0 24 24" class="mx-auto mb-3"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/></svg>
+            <p class="text-sm font-medium">No hay personal registrado</p>
+            <p class="text-xs mt-1">Agrega el primer registro usando el botón "+ Nuevo"</p>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if is_paginated %}
+  <div class="pagination">
+    {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search }}{% endif %}">&laquo;</a>{% endif %}
+    {% for i in paginator.page_range %}
+      {% if page_obj.number == i %}<span class="current">{{ i }}</span>{% else %}<a href="?page={{ i }}{% if search %}&search={{ search }}{% endif %}">{{ i }}</a>{% endif %}
+    {% endfor %}
+    {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search }}{% endif %}">&raquo;</a>{% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

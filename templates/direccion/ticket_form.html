@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block title %}{{ accion }} Ticket - Direccion General{% endblock %}
+{% block page_title %}{{ accion }} Ticket{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto">
+  <div class="form-card">
+    <div class="form-card-header">
+      <div class="form-header-icon blue">
+        <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+      </div>
+      <div class="form-header-text">
+        <h3>{{ accion }} Ticket</h3>
+        <p>{% if ticket %}Ticket #{{ ticket.pk }} &mdash; {{ ticket.asunto }}{% else %}Registra un nuevo ticket de soporte t&eacute;cnico{% endif %}</p>
+      </div>
+    </div>
+
+    {% if ticket %}
+    <div class="mx-6 mt-4 p-4 bg-gray-50 rounded-lg border border-gray-100">
+        <p class="text-xs text-gray-500 mb-1">Ticket #{{ ticket.pk }}</p>
+        <p class="text-sm font-semibold text-gray-800">{{ ticket.asunto }}</p>
+        <p class="text-xs text-gray-600 mt-1">{{ ticket.descripcion }}</p>
+        <p class="text-[11px] text-gray-400 mt-2">
+            {{ ticket.fecha_creacion|date:"d/m/Y H:i" }} &middot; {{ ticket.creado_por.get_full_name|default:ticket.creado_por.username }}
+        </p>
+    </div>
+    {% endif %}
+
+    <form method="POST" class="form-card-body">
+      {% csrf_token %}
+      <p class="form-section-title">{% if ticket %}Asignaci&oacute;n del Ticket{% else %}Detalles del Ticket{% endif %}</p>
+      {% for field in form %}
+      <div class="form-field-group">
+        <label class="form-field-label">
+          {% if field.name == 'asunto' %}<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+          {% elif field.name == 'descripcion' %}<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/></svg>
+          {% elif field.name == 'prioridad' %}<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"/></svg>
+          {% elif field.name == 'estado' %}<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          {% elif field.name == 'asignado_a' %}<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          {% else %}<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          {% endif %}
+          {{ field.label }}
+        </label>
+        <div class="form-field-input">{{ field }}</div>
+        {% if field.errors %}<p class="form-field-error"><svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>{{ field.errors.0 }}</p>{% endif %}
+      </div>
+      {% endfor %}
+      <div class="form-card-actions" style="margin-top:0.75rem">
+        <a href="{% url 'ticket_list' %}" class="form-btn form-btn-cancel">Cancelar</a>
+        <button type="submit" class="form-btn form-btn-submit">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+          {{ accion }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

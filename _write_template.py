@@ -1,0 +1,1 @@
+import pathlib; pathlib.Path("templates/direccion/informes_diarios.html").write_text(open(0).read(), encoding="utf-8")

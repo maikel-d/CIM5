@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}Eliminar Expediente{% endblock %}
+{% block page_title %}Eliminar Expediente{% endblock %}
+{% block content %}
+<div class="max-w-md mx-auto bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
+  <p class="text-gray-700 mb-4">¿Está seguro de eliminar el expediente <strong>{{ caso.nombre }}</strong>?</p>
+  <p class="text-sm text-red-500 mb-6">Esta acción eliminará el expediente. Las personas investigadas asociadas quedarán sin expediente asignado.</p>
+  <form method="post">
+    {% csrf_token %}
+    <div class="flex justify-center gap-3">
+      <a href="{% url 'caso_list' %}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">Cancelar</a>
+      <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Eliminar permanentemente</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

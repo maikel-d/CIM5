@@ -1,0 +1,678 @@
+{% extends 'base.html' %}
+{% load direccion_extras %}
+{% load permissions_tags %}
+{% block title %}Dashboard - Dirección General{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+{% endblock %}
+{% block content %}
+<div class="space-y-6">
+    <!-- Welcome Banner -->
+    <div class="bg-gradient-to-r from-[#003363] to-[#004a80] rounded-xl shadow-sm p-4 sm:p-5 text-white">
+        <div class="flex items-center gap-3 sm:gap-4">
+            <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/20 flex items-center justify-center text-base sm:text-xl font-bold shrink-0">
+                {{ user.get_full_name|default:user.username|first|upper }}
+            </div>
+            <p class="text-sm sm:text-base md:text-lg font-medium leading-tight">
+                Bienvenido, {{ user.get_full_name|default:user.username }} -
+                <span class="font-semibold">
+                    {% if user.profile.rol == 'ADMINISTRADOR' %}Administrador
+                    {% elif user.profile.rol == 'ANALISTA' %}Analista
+                    {% elif user.profile.rol == 'ADMINISTRATIVO' %}Administrativo
+                    {% endif %}
+                </span>
+            </p>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="form-card">
+      <div class="form-card-header">
+        <div class="form-header-icon blue">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="20" height="20">
+            <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+          </svg>
+        </div>
+        <div class="form-header-text">
+          <h3>Resumen General</h3>
+          <p>Indicadores clave del sistema</p>
+        </div>
+      </div>
+      <div class="form-card-body p-3 sm:p-5">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <a href="{% url 'personal_list' %}" class="stat-card bg-white rounded-xl shadow-sm border border-gray-200 p-6 cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 block">
+            <div class="stat-accent" style="background:#003363"></div>
+            <div class="flex items-center gap-4 relative">
+                <div class="stat-icon" style="background:#e8f0f8;color:#003363">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path></svg>
+                </div>
+                <div class="min-w-0"><p class="stat-label text-gray-500 text-xs sm:text-sm">Personal Activo</p><p class="stat-value text-gray-800 text-xl sm:text-2xl">{{ total_personal }}</p></div>
+            </div>
+        </a>
+        {% if user.profile|can:'casos_ver' %}
+        <a href="{% url 'caso_list' %}" class="stat-card bg-white rounded-xl shadow-sm border border-gray-200 p-6 cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 block">
+            <div class="stat-accent" style="background:#0891b2"></div>
+            <div class="flex items-center gap-4 relative">
+                <div class="stat-icon" style="background:#ecfeff;color:#0891b2">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                </div>
+                <div class="min-w-0"><p class="stat-label text-gray-500 text-xs sm:text-sm">Expedientes</p><p class="stat-value text-gray-800 text-xl sm:text-2xl">{{ total_casos }}</p></div>
+            </div>
+        </a>
+        {% endif %}
+        {% if user.profile|can:'investigados_ver' %}
+        <a href="{% url 'investigado_list' %}" class="stat-card bg-white rounded-xl shadow-sm border border-gray-200 p-6 cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 block">
+            <div class="stat-accent" style="background:#7c3aed"></div>
+            <div class="flex items-center gap-4 relative">
+                <div class="stat-icon" style="background:#f3e8ff;color:#7c3aed">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </div>
+                <div class="min-w-0"><p class="stat-label text-gray-500 text-xs sm:text-sm">Investigados</p><p class="stat-value text-gray-800 text-xl sm:text-2xl">{{ total_investigados }}</p></div>
+            </div>
+        </a>
+        {% endif %}
+        {% if user.profile|can:'documentos_direccion_ver' %}
+        <a href="{% url 'documentos_direccion' %}" class="stat-card bg-white rounded-xl shadow-sm border border-gray-200 p-6 cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 block">
+            <div class="stat-accent" style="background:#16a34a"></div>
+            <div class="flex items-center gap-4 relative">
+                <div class="stat-icon" style="background:#f0fdf4;color:#16a34a">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                </div>
+                <div class="min-w-0"><p class="stat-label text-gray-500 text-xs sm:text-sm">Documentos</p><p class="stat-value text-gray-800 text-xl sm:text-2xl">{{ total_documentos_personal|add:total_documentos_investigados }}</p></div>
+            </div>
+        </a>
+        {% endif %}
+        {% if user.profile|can:'documentos_direccion_ver' %}
+        <a href="{% url 'documentos_direccion' %}" class="stat-card bg-white rounded-xl shadow-sm border border-gray-200 p-6 cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 block">
+            <div class="stat-accent" style="background:#2563eb"></div>
+            <div class="flex items-center gap-4 relative">
+                <div class="stat-icon" style="background:#eff6ff;color:#2563eb">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                </div>
+                <div class="min-w-0"><p class="stat-label text-gray-500 text-xs sm:text-sm">Doc. Dirección</p><p class="stat-value text-gray-800 text-xl sm:text-2xl">{{ total_documentos_direccion }}</p></div>
+            </div>
+        </a>
+        {% endif %}
+        {% if user.profile|can:'tickets_ver' %}
+        <a href="{% url 'ticket_list' %}" class="stat-card bg-white rounded-xl shadow-sm border border-gray-200 p-6 cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 block">
+            <div class="stat-accent" style="background:#dc2626"></div>
+            <div class="flex items-center gap-4 relative">
+                <div class="stat-icon" style="background:#fef2f2;color:#dc2626">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+                <div class="min-w-0"><p class="stat-label text-gray-500 text-xs sm:text-sm">Tickets Abiertos</p><p class="stat-value text-gray-800 text-xl sm:text-2xl">{{ total_tickets_abiertos }}</p></div>
+            </div>
+        </a>
+        {% endif %}
+        {% if user.profile|can:'usuarios_ver' %}
+        <a href="{% url 'usuario_list' %}" class="stat-card bg-white rounded-xl shadow-sm border border-gray-200 p-6 cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 block">
+            <div class="stat-accent" style="background:#ea580c"></div>
+            <div class="flex items-center gap-4 relative">
+                <div class="stat-icon" style="background:#fff7ed;color:#ea580c">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                </div>
+                <div class="min-w-0"><p class="stat-label text-gray-500 text-xs sm:text-sm">Usuarios Activos</p><p class="stat-value text-gray-800 text-xl sm:text-2xl">{{ total_usuarios }}</p></div>
+            </div>
+        </a>
+        {% endif %}
+      </div>
+    </div>
+    </div>
+
+    {% if user.profile|can:'documentos_direccion_ver' or user.profile|can:'personal_ver' or user.profile|can:'investigados_ver' or user.profile|can:'casos_ver' %}
+    <!-- Charts Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+            <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-100 flex items-center justify-between">
+                <h3 class="font-semibold text-gray-800 text-sm sm:text-base">Distribución de Documentos por Tipo</h3>
+                <a href="{% url 'documentos_direccion' %}" class="text-xs text-[#003363] hover:text-[#002244]">Ver todos</a>
+            </div>
+            <div class="p-4 sm:p-6 flex items-center justify-center">
+                <canvas id="docTypeChart" height="200" class="max-h-[180px] sm:max-h-[220px] w-full"></canvas>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+            <h3 class="font-semibold text-gray-800 mb-4 text-sm sm:text-base">Registros por Mes (últimos 6 meses)</h3>
+            <canvas id="monthlyChart" height="200" class="w-full"></canvas>
+        </div>
+    </div>
+
+    </div>
+    {% endif %}
+
+    {% if user.profile|can:'tickets_ver' %}
+    <!-- Tickets por Estado -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+            <h3 class="font-semibold text-gray-800 mb-4 text-sm sm:text-base">Tickets por Estado</h3>
+            <canvas id="ticketStatusChart" height="180" class="w-full"></canvas>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+            <h3 class="font-semibold text-gray-800 mb-4 text-sm sm:text-base">Resumen de Tickets</h3>
+            <div class="space-y-3">
+                <div class="flex items-center justify-between p-3 bg-red-50 rounded-lg">
+                    <div class="flex items-center gap-2">
+                        <span class="w-3 h-3 rounded-full bg-red-500"></span>
+                        <span class="text-sm text-gray-700">Abiertos</span>
+                    </div>
+                    <span class="text-sm font-bold text-red-600">{{ tickets_abiertos_count|default:total_tickets_abiertos }}</span>
+                </div>
+                <div class="flex items-center justify-between p-3 bg-amber-50 rounded-lg">
+                    <div class="flex items-center gap-2">
+                        <span class="w-3 h-3 rounded-full bg-amber-500"></span>
+                        <span class="text-sm text-gray-700">En proceso</span>
+                    </div>
+                    <span class="text-sm font-bold text-amber-600">{{ tickets_proceso_count }}</span>
+                </div>
+                <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                    <div class="flex items-center gap-2">
+                        <span class="w-3 h-3 rounded-full bg-green-500"></span>
+                        <span class="text-sm text-gray-700">Resueltos</span>
+                    </div>
+                    <span class="text-sm font-bold text-green-600">{{ tickets_resueltos_count }}</span>
+                </div>
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div class="flex items-center gap-2">
+                        <span class="w-3 h-3 rounded-full bg-gray-400"></span>
+                        <span class="text-sm text-gray-700">Cerrados</span>
+                    </div>
+                    <span class="text-sm font-bold text-gray-500">{{ tickets_cerrados_count }}</span>
+                </div>
+                <div class="pt-2 border-t border-gray-100">
+                    <a href="{% url 'ticket_list' %}" class="block text-center text-xs text-[#003363] hover:text-[#002244] font-medium py-2">
+                        Ver todos los tickets →
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if user.profile|can:'documentos_direccion_ver' %}
+    <!-- Últimos Documentos por Tipo -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+        <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-100 flex items-center justify-between">
+            <h3 class="font-semibold text-gray-800 text-sm sm:text-base">Últimos Documentos por Tipo</h3>
+            <a href="{% url 'documentos_direccion' %}" class="text-xs text-[#003363] hover:text-[#002244]">Ver todos</a>
+        </div>
+        <div class="p-3 sm:p-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- PDF -->
+                <div class="bg-red-50/40 rounded-lg p-3">
+                    <div class="flex items-center gap-2 mb-2">
+                        <div class="w-6 h-6 rounded flex items-center justify-center bg-red-100 text-red-600">
+                            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M20 2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12z"/><path d="M11 8h6v1h-6zM11 11h6v1h-6zM11 14h3v1h-3z"/><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6z"/></svg>
+                        </div>
+                        <span class="text-xs font-semibold text-red-700 uppercase tracking-wider">PDF</span>
+                        <span class="text-[10px] text-red-400 ml-auto">{{ docs_pdf|length }}</span>
+                    </div>
+                    <div class="space-y-1 max-h-[160px] overflow-y-auto">
+                        {% for doc in docs_pdf %}
+                        <a href="{{ doc.archivo.url }}" target="_blank" rel="noopener noreferrer" class="flex items-center gap-1.5 p-1.5 rounded hover:bg-red-100/60 transition-colors group">
+                            <span class="text-[11px] text-gray-600 truncate flex-1 group-hover:text-red-700">{{ doc.descripcion|default:doc.archivo.name|filename }}</span>
+                            <span class="text-[9px] text-gray-400 shrink-0">{{ doc.fecha_subida|date:"d/m" }}</span>
+                        </a>
+                        {% empty %}
+                        <p class="text-[11px] text-red-400 text-center py-3">Sin documentos PDF</p>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Word -->
+                <div class="bg-blue-50/40 rounded-lg p-3">
+                    <div class="flex items-center gap-2 mb-2">
+                        <div class="w-6 h-6 rounded flex items-center justify-center bg-blue-100 text-[#003363]">
+                            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 2h8l6 6v12c0 1.1-.9 2-2 2H6c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2zm7 1.5V9h5.5L13 3.5zM7 13l1.5 5L10 14l1.5 4L13 13h1.5l-2.25 7h-1.5L10 16l-1.25 4h-1.5L5 13H7z"/></svg>
+                        </div>
+                        <span class="text-xs font-semibold text-blue-700 uppercase tracking-wider">Word</span>
+                        <span class="text-[10px] text-blue-400 ml-auto">{{ docs_word|length }}</span>
+                    </div>
+                    <div class="space-y-1 max-h-[160px] overflow-y-auto">
+                        {% for doc in docs_word %}
+                        <a href="{{ doc.archivo.url }}" target="_blank" rel="noopener noreferrer" class="flex items-center gap-1.5 p-1.5 rounded hover:bg-blue-100/60 transition-colors group">
+                            <span class="text-[11px] text-gray-600 truncate flex-1 group-hover:text-blue-700">{{ doc.descripcion|default:doc.archivo.name|filename }}</span>
+                            <span class="text-[9px] text-gray-400 shrink-0">{{ doc.fecha_subida|date:"d/m" }}</span>
+                        </a>
+                        {% empty %}
+                        <p class="text-[11px] text-blue-400 text-center py-3">Sin documentos Word</p>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Imagen -->
+                <div class="bg-green-50/40 rounded-lg p-3">
+                    <div class="flex items-center gap-2 mb-2">
+                        <div class="w-6 h-6 rounded flex items-center justify-center bg-green-100 text-green-600">
+                            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+                        </div>
+                        <span class="text-xs font-semibold text-green-700 uppercase tracking-wider">Imagen</span>
+                        <span class="text-[10px] text-green-400 ml-auto">{{ docs_img|length }}</span>
+                    </div>
+                    <div class="space-y-1 max-h-[160px] overflow-y-auto">
+                        {% for doc in docs_img %}
+                        <a href="{{ doc.archivo.url }}" target="_blank" rel="noopener noreferrer" class="flex items-center gap-1.5 p-1.5 rounded hover:bg-green-100/60 transition-colors group">
+                            <span class="text-[11px] text-gray-600 truncate flex-1 group-hover:text-green-700">{{ doc.descripcion|default:doc.archivo.name|filename }}</span>
+                            <span class="text-[9px] text-gray-400 shrink-0">{{ doc.fecha_subida|date:"d/m" }}</span>
+                        </a>
+                        {% empty %}
+                        <p class="text-[11px] text-green-400 text-center py-3">Sin imágenes</p>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Otros -->
+                <div class="bg-gray-50/60 rounded-lg p-3">
+                    <div class="flex items-center gap-2 mb-2">
+                        <div class="w-6 h-6 rounded flex items-center justify-center bg-gray-100 text-gray-500">
+                            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13z"/></svg>
+                        </div>
+                        <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Otros</span>
+                        <span class="text-[10px] text-gray-400 ml-auto">{{ docs_otro|length }}</span>
+                    </div>
+                    <div class="space-y-1 max-h-[160px] overflow-y-auto">
+                        {% for doc in docs_otro %}
+                        <a href="{{ doc.archivo.url }}" target="_blank" rel="noopener noreferrer" class="flex items-center gap-1.5 p-1.5 rounded hover:bg-gray-100 transition-colors group">
+                            <span class="text-[11px] text-gray-600 truncate flex-1 group-hover:text-gray-800">{{ doc.descripcion|default:doc.archivo.name|filename }}</span>
+                            <span class="text-[9px] text-gray-400 shrink-0">{{ doc.fecha_subida|date:"d/m" }}</span>
+                        </a>
+                        {% empty %}
+                        <p class="text-[11px] text-gray-400 text-center py-3">Sin otros documentos</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if user.profile|can:'tareas_ver' or user.profile|can:'tickets_ver' %}
+    <!-- Tareas & Tickets Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {% if user.profile|can:'tareas_ver' %}
+        <!-- Tareas Pendientes -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+            <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-100 flex items-center justify-between">
+                <h3 class="font-semibold text-gray-800 text-sm sm:text-base">
+                    <span class="flex items-center gap-2">
+                        Tareas Pendientes
+                        {% if tareas_pendientes %}
+                        <span class="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-amber-50 text-amber-600">{{ tareas_pendientes.count }} pendientes</span>
+                        {% endif %}
+                    </span>
+                </h3>
+                <a href="{% url 'tareas_list' %}" class="text-xs text-[#003363] hover:text-[#002244]">Ver todas</a>
+            </div>
+            <div class="p-4 sm:p-6">
+                {% if tareas_pendientes %}
+                <div class="space-y-2">
+                    {% for t in tareas_pendientes|slice:":6" %}
+                    <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors">
+                        <a href="{% url 'tarea_completar' t.pk %}" class="shrink-0">
+                            <div class="w-4 h-4 rounded border-2 border-gray-300 hover:border-[#003363] flex items-center justify-center transition-colors"></div>
+                        </a>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm text-gray-700 truncate">{{ t.descripcion }}</p>
+                            <p class="text-[11px] text-gray-400 flex items-center gap-1.5">
+                                <span class="inline-block w-2 h-2 rounded-full
+                                    {% if t.prioridad == 'ALTO' %}bg-red-500
+                                    {% elif t.prioridad == 'MEDIO' %}bg-amber-400
+                                    {% else %}bg-green-500{% endif %}"></span>
+                                {{ t.get_prioridad_display }}
+                                · {{ t.fecha_creacion|date:"d/m/Y" }}
+                            </p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <p class="text-sm text-gray-400">No hay tareas pendientes.</p>
+                    <a href="{% url 'tareas_list' %}" class="text-xs text-[#003363] hover:text-[#002244] mt-1 inline-block">Crear una tarea</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {% endif %}
+        {% if user.profile|can:'tickets_ver' %}
+        <!-- Tickets Recientes -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+            <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-100 flex items-center justify-between">
+                <h3 class="font-semibold text-gray-800 text-sm sm:text-base">Tickets de Soporte</h3>
+                <a href="{% url 'ticket_list' %}" class="text-xs text-[#003363] hover:text-[#002244]">Ver todos</a>
+            </div>
+            <div class="p-4 sm:p-6">
+                {% if tickets_recientes %}
+                <div class="space-y-2">
+                    {% for t in tickets_recientes %}
+                    <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors">
+                        <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0
+                            {% if t.estado == 'ABIERTO' %}bg-red-50
+                            {% elif t.estado == 'EN_PROCESO' %}bg-amber-50
+                            {% elif t.estado == 'RESUELTO' %}bg-green-50
+                            {% else %}bg-gray-50{% endif %}">
+                            <span class="text-[10px] font-bold
+                                {% if t.estado == 'ABIERTO' %}text-red-600
+                                {% elif t.estado == 'EN_PROCESO' %}text-amber-600
+                                {% elif t.estado == 'RESUELTO' %}text-green-600
+                                {% else %}text-gray-500{% endif %}">#{{ t.pk }}</span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-800 truncate flex items-center gap-1.5">
+                                {{ t.asunto }}
+                                <span class="inline-block w-2 h-2 rounded-full shrink-0
+                                    {% if t.prioridad == 'ALTO' %}bg-red-500
+                                    {% elif t.prioridad == 'MEDIO' %}bg-amber-400
+                                    {% else %}bg-green-500{% endif %}"></span>
+                            </p>
+                            <p class="text-[11px] text-gray-400">
+                                {% if t.estado == 'ABIERTO' %}Abierto
+                                {% elif t.estado == 'EN_PROCESO' %}En proceso
+                                {% elif t.estado == 'RESUELTO' %}Resuelto
+                                {% else %}Cerrado{% endif %}
+                                · {{ t.fecha_creacion|date:"d/m/Y" }}
+                            </p>
+                        </div>
+                        <svg class="w-3.5 h-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <p class="text-sm text-gray-400">No hay tickets recientes.</p>
+                    {% if user.profile.rol != 'ADMINISTRADOR' %}
+                    <a href="{% url 'ticket_create' %}" class="text-xs text-[#003363] hover:text-[#002244] mt-1 inline-block">Crear un ticket</a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Actividad Reciente: Informes del Mes + Auditoría -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {% if user.profile|can:'informes_ver' %}
+        <!-- Informes del Mes -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+            <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-100 flex items-center justify-between">
+                <h3 class="font-semibold text-gray-800 text-sm sm:text-base">
+                    <span class="flex items-center gap-2">
+                        <svg class="w-4 h-4 sm:w-5 sm:h-5 text-[#003363]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        Informes de {{ mes_actual_nombre }}
+                        <span class="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-[#e8f0f8] text-[#003363]">{{ total_informes_mes }} total</span>
+                    </span>
+                </h3>
+                <a href="{% url 'informes_diarios' %}" class="text-xs text-[#003363] hover:text-[#002244]">Ver todas</a>
+            </div>
+            <div class="p-3 sm:p-4">
+                {% if informes_mes %}
+                <div class="space-y-1">
+                    {% for inf in informes_mes %}
+                    <div class="flex items-center gap-3 p-2.5 rounded-lg hover:bg-gray-50 transition-colors">
+                        <div class="w-9 h-9 rounded-lg bg-[#e8f0f8] flex items-center justify-center shrink-0">
+                            <svg class="w-4 h-4 text-[#003363]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-800 truncate">{{ inf.titulo }}</p>
+                            <p class="text-[11px] text-gray-400 flex items-center gap-2">
+                                <span>{{ inf.fecha|date:"d/m/Y" }}</span>
+                                {% if inf.creado_por %}
+                                <span>· {{ inf.creado_por.get_full_name|default:inf.creado_por.username }}</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <a href="{% url 'informe_diario_preview' inf.pk %}" target="_blank" class="text-xs text-[#003363] hover:text-[#002244] flex items-center gap-1 shrink-0">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                            PDF
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-6">
+                    <svg class="w-10 h-10 mx-auto text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    <p class="text-sm text-gray-400">No hay informes este mes.</p>
+                    <a href="{% url 'informes_diarios' %}" class="text-xs text-[#003363] hover:text-[#002244] mt-1 inline-block">Crear un informe</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Auditoría Reciente -->
+        {% if user.profile|can:'auditoria_ver' %}
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+            <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-100 flex items-center justify-between">
+                <h3 class="font-semibold text-gray-800 text-sm sm:text-base">
+                    <span class="flex items-center gap-2">
+                        <svg class="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                        Auditoría Reciente
+                    </span>
+                </h3>
+                <a href="{% url 'audit_log_list' %}" class="text-xs text-[#003363] hover:text-[#002244]">Ver todas</a>
+            </div>
+            <div class="p-3 sm:p-4">
+                {% if auditoria_reciente %}
+                <div class="space-y-1">
+                    {% for log in auditoria_reciente %}
+                    <div class="flex items-center gap-3 p-2.5 rounded-lg hover:bg-gray-50 transition-colors">
+                        <div class="w-2 h-2 rounded-full shrink-0 mt-0.5
+                            {% if log.accion == 'CREAR' %}bg-green-500
+                            {% elif log.accion == 'ACTUALIZAR' %}bg-blue-500
+                            {% elif log.accion == 'ELIMINAR' %}bg-red-500
+                            {% elif log.accion == 'TOGGLE' %}bg-amber-500
+                            {% elif log.accion == 'EXPORTAR' %}bg-purple-500
+                            {% elif log.accion == 'BACKUP' %}bg-cyan-500
+                            {% elif log.accion == 'RESTAURAR' %}bg-emerald-500
+                            {% else %}bg-gray-400{% endif %}"></div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm text-gray-700">
+                                <span class="font-medium">{{ log.username }}</span>
+                                <span class="
+                                    {% if log.accion == 'CREAR' %}text-green-600
+                                    {% elif log.accion == 'ACTUALIZAR' %}text-blue-600
+                                    {% elif log.accion == 'ELIMINAR' %}text-red-600
+                                    {% elif log.accion == 'TOGGLE' %}text-amber-600
+                                    {% elif log.accion == 'EXPORTAR' %}text-purple-600
+                                    {% else %}text-gray-600{% endif %}">{{ log.get_accion_display }}</span>
+                                <span class="text-gray-500">{{ log.modelo }}</span>
+                            </p>
+                            <p class="text-[11px] text-gray-400">
+                                {{ log.fecha|date:"d/m/Y H:i" }}
+                                {% if log.detalle %}
+                                · <span class="text-gray-500">{{ log.detalle|truncatechars:50 }}</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-6">
+                    <svg class="w-10 h-10 mx-auto text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                    <p class="text-sm text-gray-400">No hay registros de auditoría recientes.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    </div>
+
+    {% if user.profile|can:'usuarios_ver' %}
+    <!-- Usuarios del Sistema -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+        <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-100 flex items-center justify-between">
+            <h3 class="font-semibold text-gray-800 text-sm sm:text-base">
+                Usuarios del Sistema
+                <span class="text-sm font-normal text-gray-400 ml-2">({{ total_usuarios }})</span>
+            </h3>
+            {% if user.profile.rol == 'ADMINISTRADOR' %}
+            <a href="{% url 'usuario_list' %}" class="text-xs text-[#003363] hover:text-[#002244]">Gestionar</a>
+            {% endif %}
+        </div>
+        <div class="p-3 sm:p-4">
+            {% if usuarios_sistema %}
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                {% for u in usuarios_sistema %}
+                <div class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0
+                        {% if u.profile.rol == 'ADMINISTRADOR' %}bg-[#003363] text-white
+                        {% elif u.profile.rol == 'ANALISTA' %}bg-purple-100 text-purple-700
+                        {% else %}bg-blue-100 text-blue-700{% endif %}">
+                        {{ u.get_full_name|default:u.username|first|upper }}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-gray-800 truncate">{{ u.get_full_name|default:u.username }}</p>
+                        <p class="text-[11px]">
+                            {% if u.profile.rol == 'ADMINISTRADOR' %}
+                            <span class="text-[#003363] font-medium">Administrador</span>
+                            {% elif u.profile.rol == 'ANALISTA' %}
+                            <span class="text-purple-600 font-medium">Analista</span>
+                            {% elif u.profile.rol == 'ADMINISTRATIVO' %}
+                            <span class="text-blue-600 font-medium">Administrativo</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="w-2 h-2 rounded-full shrink-0 {% if u.is_active %}bg-green-400{% else %}bg-gray-300{% endif %}" title="{% if u.is_active %}Activo{% else %}Inactivo{% endif %}"></div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-sm text-gray-400 text-center py-6">No hay usuarios registrados.</p>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+const chartData = {{ chart_data_json|safe }};
+
+{% if user.profile|can:'documentos_direccion_ver' %}
+// Document Type Distribution (Doughnut)
+new Chart(document.getElementById('docTypeChart'), {
+    type: 'doughnut',
+    data: {
+        labels: ['PDF', 'Word', 'Imagen'],
+        datasets: [{
+            data: [chartData.docTypes.pdf, chartData.docTypes.word, chartData.docTypes.img],
+            backgroundColor: ['#EF4444', '#003363', '#10B981'],
+            borderWidth: 0
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true } }
+        }
+    }
+});
+{% endif %}
+
+{% if user.profile|can:'personal_ver' or user.profile|can:'investigados_ver' or user.profile|can:'casos_ver' %}
+// Monthly Registrations (Line)
+(function() {
+    const el = document.getElementById('monthlyChart');
+    if (!el) return;
+    const datasets = [];
+    {% if user.profile|can:'personal_ver' %}
+    datasets.push({
+        label: 'Personal',
+        data: chartData.personalMonthly,
+        borderColor: '#003363',
+        backgroundColor: 'rgba(0, 51, 99, 0.1)',
+        fill: true,
+        tension: 0.3,
+        pointRadius: 4
+    });
+    {% endif %}
+    {% if user.profile|can:'investigados_ver' %}
+    datasets.push({
+        label: 'Investigados',
+        data: chartData.investigadoMonthly,
+        borderColor: '#8B5CF6',
+        backgroundColor: 'rgba(139, 92, 246, 0.1)',
+        fill: true,
+        tension: 0.3,
+        pointRadius: 4
+    });
+    {% endif %}
+    {% if user.profile|can:'casos_ver' %}
+    datasets.push({
+        label: 'Expedientes',
+        data: chartData.casoMonthly,
+        borderColor: '#0891B2',
+        backgroundColor: 'rgba(8, 145, 178, 0.1)',
+        fill: true,
+        tension: 0.3,
+        pointRadius: 4,
+        borderDash: [5, 3]
+    });
+    {% endif %}
+    new Chart(el, {
+        type: 'line',
+        data: {
+            labels: chartData.months,
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            interaction: { intersect: false, mode: 'index' },
+            plugins: {
+                legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true } }
+            },
+            scales: {
+                y: { beginAtZero: true, ticks: { stepSize: 1 } }
+            }
+        }
+    });
+})();
+{% endif %}
+
+{% if user.profile|can:'tickets_ver' %}
+// Tickets by Status (Horizontal Bar)
+new Chart(document.getElementById('ticketStatusChart'), {
+    type: 'bar',
+    data: {
+        labels: ['Abierto', 'En proceso', 'Resuelto', 'Cerrado'],
+        datasets: [{
+            label: 'Tickets',
+            data: [
+                chartData.ticketsEstado.abierto,
+                chartData.ticketsEstado.proceso,
+                chartData.ticketsEstado.resuelto,
+                chartData.ticketsEstado.cerrado
+            ],
+            backgroundColor: ['#EF4444', '#F59E0B', '#10B981', '#9CA3AF'],
+            borderRadius: 6,
+            borderSkipped: false
+        }]
+    },
+    options: {
+        indexAxis: 'y',
+        responsive: true,
+        plugins: {
+            legend: { display: false }
+        },
+        scales: {
+            x: {
+                beginAtZero: true,
+                ticks: { stepSize: 1 },
+                grid: { display: false }
+            },
+            y: {
+                grid: { display: false },
+                ticks: { font: { size: 12, weight: 'bold' } }
+            }
+        }
+    }
+});
+{% endif %}
+</script>
+{% endblock %}

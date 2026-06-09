@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% block title %}Gestión de Usuarios{% endblock %}
+{% block page_title %}Gestión de Usuarios{% endblock %}
+{% block content %}
+<div class="space-y-4">
+  <div class="flex items-center justify-between">
+    <form method="get" class="flex gap-2">
+      <input type="text" name="search" value="{{ search }}" placeholder="Buscar usuario, nombre o email..." class="form-input max-w-md">
+      <button type="submit" class="px-4 py-2 bg-[#003363] text-white rounded-lg hover:bg-[#004a80] text-sm">Buscar</button>
+      {% if search %}<a href="{% url 'usuario_list' %}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-sm">Limpiar</a>{% endif %}
+    </form>
+    <div class="flex items-center gap-3">
+      <p class="text-sm text-gray-500">Total: {{ page_obj.paginator.count }} usuarios</p>
+      <a href="{% url 'usuario_create' %}" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm">+ Nuevo Usuario</a>
+    </div>
+  </div>
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <table class="w-full">
+      <thead class="bg-gray-50 border-b border-gray-200">
+        <tr>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Usuario</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Nombre Completo</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Email</th>
+          <th class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Rol</th>
+          <th class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Estado</th>
+          <th class="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">Acciones</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for u in usuarios %}
+        <tr class="hover:bg-gray-50 transition-colors">
+          <td class="px-4 py-3 text-sm font-medium text-gray-800">{{ u.username }}</td>
+          <td class="px-4 py-3 text-sm text-gray-600">{{ u.get_full_name|default:"-" }}</td>
+          <td class="px-4 py-3 text-sm text-gray-500">{{ u.email|default:"-" }}</td>
+          <td class="px-4 py-3 text-center">
+            {% if u.rol == 'ADMINISTRADOR' %}
+            <span class="inline-block px-2 py-0.5 text-xs rounded-full bg-purple-100 text-purple-700">Administrador</span>
+            {% elif u.rol == 'ANALISTA' %}
+            <span class="inline-block px-2 py-0.5 text-xs rounded-full bg-[#e8f0f8] text-[#003363]">Analista</span>
+            {% elif u.rol == 'ADMINISTRATIVO' %}
+            <span class="inline-block px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-700">Administrativo</span>
+            {% else %}
+            <span class="inline-block px-2 py-0.5 text-xs rounded-full bg-red-100 text-red-700">{{ u.rol }}</span>
+            {% endif %}
+          </td>
+          <td class="px-4 py-3 text-center">
+            {% if u.is_active %}
+            <span class="inline-block w-2 h-2 rounded-full bg-green-500" title="Activo"></span>
+            {% else %}
+            <span class="inline-block w-2 h-2 rounded-full bg-red-500" title="Inactivo"></span>
+            {% endif %}
+          </td>
+          <td class="px-4 py-3 text-right whitespace-nowrap">
+            <a href="{% url 'usuario_edit' u.pk %}" class="action-btn edit" title="Editar">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+              Editar
+            </a>
+            {% if u != user and not u.is_superuser %}
+            <a href="{% url 'usuario_toggle' u.pk %}" class="action-btn {% if u.is_active %}deactivate{% else %}activate{% endif %}"
+               onclick="return confirm('{% if u.is_active %}Desactivar{% else %}Activar{% endif %} a {{ u.username }}?')">
+              {% if u.is_active %}
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+              Desactivar
+              {% else %}
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              Activar
+              {% endif %}
+            </a>
+            <a href="{% url 'usuario_delete' u.pk %}" class="action-btn delete"
+               onclick="return confirm('¿Eliminar permanentemente a {{ u.username }}? Esta acción no se puede deshacer.')">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+              Eliminar
+            </a>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="px-4 py-8 text-center text-gray-500">No hay usuarios registrados.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if is_paginated %}
+  <div class="pagination">
+    {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search }}{% endif %}">&laquo;</a>{% endif %}
+    {% for i in paginator.page_range %}
+      {% if page_obj.number == i %}<span class="current">{{ i }}</span>{% else %}<a href="?page={{ i }}{% if search %}&search={{ search }}{% endif %}">{{ i }}</a>{% endif %}
+    {% endfor %}
+    {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search }}{% endif %}">&raquo;</a>{% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

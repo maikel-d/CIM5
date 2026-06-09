@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% block title %}Tareas Pendientes - Direccion General{% endblock %}
+{% block page_title %}Tareas Pendientes{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto space-y-6">
+    <!-- Add Task Form -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h3 class="font-semibold text-gray-800 mb-4">Nueva Tarea</h3>
+        <form method="POST" class="flex gap-3 items-start">
+            {% csrf_token %}
+            <div class="flex-1 space-y-2">
+                {{ form.descripcion }}
+                <div class="flex items-center gap-2">
+                    <label class="text-xs font-medium text-gray-500">Prioridad:</label>
+                    {{ form.prioridad }}
+                </div>
+            </div>
+            <button type="submit" class="px-5 py-2.5 bg-[#003363] text-white rounded-lg hover:bg-[#002244] transition-colors text-sm font-medium shrink-0 self-start">
+                Agregar
+            </button>
+        </form>
+    </div>
+
+    <!-- Task List -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+        <div class="px-6 py-4 border-b border-gray-100">
+            <h3 class="font-semibold text-gray-800">
+                Todas las tareas
+                <span class="text-sm font-normal text-gray-400 ml-2">({{ tareas.count }} total)</span>
+            </h3>
+        </div>
+        <div class="divide-y divide-gray-100">
+            {% if tareas %}
+                {% for tarea in tareas %}
+                <div class="flex items-center gap-4 px-6 py-3.5 {% if tarea.completada %}bg-gray-50{% else %}hover:bg-gray-50 transition-colors{% endif %}">
+                    <a href="{% url 'tarea_completar' tarea.pk %}" class="shrink-0">
+                        <div class="w-5 h-5 rounded border-2 {% if tarea.completada %}bg-green-500 border-green-500{% else %}border-gray-300 hover:border-[#003363]{% endif %} flex items-center justify-center transition-colors">
+                            {% if tarea.completada %}
+                            <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                            {% endif %}
+                        </div>
+                    </a>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm {% if tarea.completada %}text-gray-400 line-through{% else %}text-gray-700{% endif %}">{{ tarea.descripcion }}</p>
+                        <p class="text-xs text-gray-400 mt-0.5 flex items-center gap-1.5">
+                            <span class="inline-block w-2 h-2 rounded-full
+                                {% if tarea.prioridad == 'ALTO' %}bg-red-500
+                                {% elif tarea.prioridad == 'MEDIO' %}bg-amber-400
+                                {% else %}bg-green-500{% endif %}"></span>
+                            <span class="{% if tarea.prioridad == 'ALTO' %}text-red-500{% elif tarea.prioridad == 'MEDIO' %}text-amber-500{% else %}text-green-500{% endif %}">{{ tarea.get_prioridad_display }}</span>
+                            &middot; {{ tarea.fecha_creacion|date:"d/m/Y H:i" }}
+                            {% if tarea.creado_por %} &middot; {{ tarea.creado_por.get_full_name|default:tarea.creado_por.username }}{% endif %}
+                        </p>
+                    </div>
+                    {% if user.profile.rol == 'ADMINISTRADOR' %}
+                    <a href="{% url 'tarea_eliminar' tarea.pk %}" class="text-gray-300 hover:text-red-500 transition-colors shrink-0" onclick="return confirm('¿Eliminar esta tarea?')">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    </a>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-sm text-gray-400 text-center py-8">No hay tareas pendientes. ¡Agrega una arriba!</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

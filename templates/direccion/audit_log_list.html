@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block title %}Registros de Auditoría{% endblock %}
+{% block page_title %}Registros de Auditoría{% endblock %}
+{% block content %}
+<div class="space-y-4">
+  <div class="flex items-center justify-between">
+    <p class="text-sm text-gray-500">Total: {{ total_logs }} registros</p>
+    <form method="get" class="flex gap-2">
+      <select name="modelo" class="form-input w-40">
+        <option value="">Todos los modelos</option>
+        <option value="Personal"{% if modelo_filtro == "Personal" %} selected{% endif %}>Personal</option>
+        <option value="Investigado"{% if modelo_filtro == "Investigado" %} selected{% endif %}>Casos</option>
+        <option value="Documento"{% if "Documento" in modelo_filtro %} selected{% endif %}>Documentos</option>
+        <option value="Usuario"{% if modelo_filtro == "Usuario" %} selected{% endif %}>Usuarios</option>
+      </select>
+      <select name="accion" class="form-input w-40">
+        <option value="">Todas las acciones</option>
+        {% for key, label in acciones %}
+        <option value="{{ key }}"{% if accion_filtro == key %} selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="px-4 py-2 bg-[#003363] text-white rounded-lg hover:bg-[#004a80] text-sm">Filtrar</button>
+      {% if modelo_filtro or accion_filtro %}<a href="{% url 'audit_log_list' %}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-sm">Limpiar</a>{% endif %}
+    </form>
+  </div>
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <table class="w-full">
+      <thead class="bg-gray-50 border-b border-gray-200">
+        <tr>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Fecha</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Usuario</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Acción</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Modelo</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Objeto</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Detalle</th>
+          <th class="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">IP</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100 text-sm">
+        {% for log in logs %}
+        <tr class="hover:bg-gray-50 transition-colors">
+          <td class="px-4 py-3 whitespace-nowrap text-gray-500">{{ log.fecha|date:"d/m/Y H:i" }}</td>
+          <td class="px-4 py-3 font-medium text-gray-800">{{ log.username }}</td>
+          <td class="px-4 py-3">
+            {% if log.accion == "CREAR" %}<span class="px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-700">Creación</span>
+            {% elif log.accion == "ACTUALIZAR" %}<span class="px-2 py-0.5 text-xs rounded-full bg-[#e8f0f8] text-[#003363]">Actualización</span>
+            {% elif log.accion == "ELIMINAR" %}<span class="px-2 py-0.5 text-xs rounded-full bg-red-100 text-red-700">Eliminación</span>
+            {% elif log.accion == "TOGGLE" %}<span class="px-2 py-0.5 text-xs rounded-full bg-yellow-100 text-yellow-700">Toggle</span>
+            {% elif log.accion == "EXPORTAR" %}<span class="px-2 py-0.5 text-xs rounded-full bg-purple-100 text-purple-700">Exportación</span>
+            {% else %}<span class="px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-700">{{ log.get_accion_display }}</span>{% endif %}
+          </td>
+          <td class="px-4 py-3 text-gray-600">{{ log.modelo }}</td>
+          <td class="px-4 py-3 text-gray-600 max-w-xs truncate" title="{{ log.objeto_repr }}">{{ log.objeto_repr }}</td>
+          <td class="px-4 py-3 text-gray-500 max-w-sm truncate" title="{{ log.detalle }}">{{ log.detalle }}</td>
+          <td class="px-4 py-3 text-right text-gray-400 text-xs">{{ log.direccion_ip|default:"-" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="px-4 py-8 text-center text-gray-500">No hay registros de auditoría.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if is_paginated %}
+  <div class="pagination">
+    {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}{% if modelo_filtro %}&modelo={{ modelo_filtro }}{% endif %}{% if accion_filtro %}&accion={{ accion_filtro }}{% endif %}">&laquo;</a>{% endif %}
+    {% for i in paginator.page_range %}
+      {% if page_obj.number == i %}<span class="current">{{ i }}</span>{% else %}<a href="?page={{ i }}{% if modelo_filtro %}&modelo={{ modelo_filtro }}{% endif %}{% if accion_filtro %}&accion={{ accion_filtro }}{% endif %}">{{ i }}</a>{% endif %}
+    {% endfor %}
+    {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}{% if modelo_filtro %}&modelo={{ modelo_filtro }}{% endif %}{% if accion_filtro %}&accion={{ accion_filtro }}{% endif %}">&raquo;</a>{% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+{% block title %}Reportes{% endblock %}
+{% block page_title %}Centro de Reportes{% endblock %}
+{% block content %}
+<div class="space-y-6">
+  <!-- Filtros Generales -->
+  <div class="form-card">
+    <div class="form-card-header">
+      <div class="form-header-icon blue">
+        <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+      </div>
+      <div class="form-header-text">
+        <h3>Filtros Generales</h3>
+        <p>Aplica filtros por fecha para ajustar los reportes</p>
+      </div>
+    </div>
+    <div class="form-card-body">
+      <form method="get" class="flex flex-wrap gap-4 items-end">
+        <div class="form-field-group" style="margin-bottom:0;min-width:180px">
+          <label class="form-field-label">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            Fecha desde
+          </label>
+          <div class="form-field-input"><input type="date" name="fecha_desde" value="{{ fecha_desde }}" class="form-input"></div>
+        </div>
+        <div class="form-field-group" style="margin-bottom:0;min-width:180px">
+          <label class="form-field-label">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            Fecha hasta
+          </label>
+          <div class="form-field-input"><input type="date" name="fecha_hasta" value="{{ fecha_hasta }}" class="form-input"></div>
+        </div>
+        <div class="flex items-center gap-2" style="padding-bottom:1px">
+          <button type="submit" class="form-btn form-btn-submit">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            Filtrar
+          </button>
+          {% if fecha_desde or fecha_hasta %}
+          <a href="{% url 'reportes' %}" class="form-btn form-btn-cancel">Limpiar</a>
+          {% endif %}
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div class="stat-card bg-gradient-to-br from-[#003363] to-[#004a80] rounded-xl p-6 text-white">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/></svg>
+        </div>
+        <div><p class="text-sm font-medium opacity-80">Personal Activo</p><p class="text-3xl font-bold">{{ total_personal }}</p></div>
+      </div>
+    </div>
+    <div class="stat-card bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        </div>
+        <div><p class="text-sm font-medium opacity-80">Personas Investigadas</p><p class="text-3xl font-bold">{{ total_investigados }}</p></div>
+      </div>
+    </div>
+    <div class="stat-card bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        </div>
+        <div><p class="text-sm font-medium opacity-80">Documentos</p><p class="text-3xl font-bold">{{ total_documentos }}</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Report Cards -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <div class="form-card">
+      <div class="flex items-center gap-3 px-6 pt-5 pb-3">
+        <div class="w-10 h-10 rounded-lg bg-red-50 flex items-center justify-center">
+          <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/></svg>
+        </div>
+        <div><h3 class="font-semibold text-gray-800">Personal</h3><p class="text-xs text-gray-500">Listado completo del personal activo</p></div>
+      </div>
+      <div class="px-6 pb-5 flex gap-2">
+        <a href="{% url 'personal_pdf' %}" class="form-btn" style="background:#dc2626;color:#fff">
+          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+          PDF
+        </a>
+        <a href="{% url 'personal_export' %}" class="form-btn" style="background:#059669;color:#fff">
+          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          Excel
+        </a>
+      </div>
+    </div>
+    <div class="form-card">
+      <div class="flex items-center gap-3 px-6 pt-5 pb-3">
+        <div class="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center">
+          <svg class="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        </div>
+        <div><h3 class="font-semibold text-gray-800">Casos</h3><p class="text-xs text-gray-500">Listado completo de personas investigadas</p></div>
+      </div>
+      <div class="px-6 pb-5 flex gap-2">
+        <a href="{% url 'investigado_pdf' %}" class="form-btn" style="background:#dc2626;color:#fff">
+          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+          PDF
+        </a>
+        <a href="{% url 'investigado_export' %}" class="form-btn" style="background:#059669;color:#fff">
+          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          Excel
+        </a>
+      </div>
+    </div>
+    <div class="form-card">
+      <div class="flex items-center gap-3 px-6 pt-5 pb-3">
+        <div class="w-10 h-10 rounded-lg bg-cyan-50 flex items-center justify-center">
+          <svg class="w-5 h-5 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        </div>
+        <div><h3 class="font-semibold text-gray-800">Estad&iacute;sticas</h3><p class="text-xs text-gray-500">Dashboard con m&eacute;tricas clave del sistema</p></div>
+      </div>
+      <div class="px-6 pb-5">
+        <a href="{% url 'dashboard' %}" class="form-btn form-btn-submit">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+          Ir al Dashboard
+        </a>
+      </div>
+    </div>
+    {% if user.profile.rol == 'ADMINISTRADOR' %}
+    <div class="form-card">
+      <div class="flex items-center gap-3 px-6 pt-5 pb-3">
+        <div class="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center">
+          <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+        </div>
+        <div><h3 class="font-semibold text-gray-800">Auditor&iacute;a</h3><p class="text-xs text-gray-500">Log de actividades del sistema</p></div>
+      </div>
+      <div class="px-6 pb-5">
+        <a href="{% url 'audit_log_list' %}" class="form-btn" style="background:#374151;color:#fff">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+          Ver Auditor&iacute;a
+        </a>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Exportacion Rapida -->
+  <div class="form-card">
+    <div class="form-card-header">
+      <div class="form-header-icon green">
+        <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      </div>
+      <div class="form-header-text">
+        <h3>Exportaci&oacute;n R&aacute;pida</h3>
+        <p>Descarga todos los reportes disponibles en un solo lugar</p>
+      </div>
+    </div>
+    <div class="form-card-body">
+      <div class="flex flex-wrap gap-2">
+        <a href="{% url 'personal_pdf' %}" class="form-btn" style="background:#dc2626;color:#fff">
+          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+          Personal &mdash; PDF
+        </a>
+        <a href="{% url 'personal_export' %}" class="form-btn" style="background:#059669;color:#fff">
+          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          Personal &mdash; Excel
+        </a>
+        <a href="{% url 'investigado_pdf' %}" class="form-btn" style="background:#dc2626;color:#fff">
+          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+          Casos &mdash; PDF
+        </a>
+        <a href="{% url 'investigado_export' %}" class="form-btn" style="background:#059669;color:#fff">
+          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          Casos &mdash; Excel
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block title %}Notificaciones - Direccion General{% endblock %}
+{% block page_title %}Notificaciones{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+        <div class="px-6 py-4 border-b border-gray-100">
+            <h3 class="font-semibold text-gray-800">
+                Todas las notificaciones
+                <span class="text-sm font-normal text-gray-400 ml-2">({{ notificaciones.count }} total)</span>
+            </h3>
+        </div>
+        <div class="divide-y divide-gray-100">
+            {% if notificaciones %}
+                {% for n in notificaciones %}
+                <div class="px-6 py-4 {% if not n.leida %}bg-blue-50{% else %}hover:bg-gray-50{% endif %} transition-colors">
+                    <div class="flex items-center gap-3">
+                        <div class="w-2 h-2 rounded-full shrink-0 {% if not n.leida %}bg-[#003363]{% else %}bg-gray-200{% endif %}"></div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm text-gray-700">{{ n.mensaje }}</p>
+                            <p class="text-xs text-gray-400 mt-0.5">{{ n.fecha_creacion|date:"d/m/Y H:i" }}</p>
+                        </div>
+                        {% if n.link %}
+                        <a href="{{ n.link }}" class="text-xs text-[#003363] hover:text-[#002244] font-medium shrink-0">Ver</a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-sm text-gray-400 text-center py-10">No hay notificaciones.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

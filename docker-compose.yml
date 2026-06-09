@@ -1,0 +1,306 @@
+# ============================================
+#   Docker Compose
+#   Sistema de Gestión - Dirección General
+# ============================================
+#
+# === USO BÁSICO ===
+#   docker compose up -d
+#   (acceder en http://localhost:8080)
+#
+# === PRIMERA VEZ / MIGRAR DESDE SQLITE ===
+#   Si ya tienes datos en SQLite y quieres migrarlos a PostgreSQL:
+#
+#   1. Exporta tus datos actuales:
+#      python manage.py dumpdata --natural-foreign --natural-primary
+#        --exclude contenttypes --exclude auth.permission
+#        --exclude sessions --exclude admin.logentry > respaldo_migracion.json
+#
+#   2. Inicia los contenedores:
+#      docker compose up -d
+#
+#   3. Migra los datos a PostgreSQL:
+#      docker compose exec app python migrar_a_postgres.py
+#
+#   4. ¡Listo! Inicia sesión con admin / admin321
+#
+# === COMANDOS ÚTILES ===
+#   Reconstruir:          docker compose up -d --build
+#   Ver logs:             docker compose logs -f
+#   Resetear contraseña:  docker compose exec app python manage.py changepassword admin
+#   Backup BD:            docker compose exec app python manage.py dumpdata > backup.json
+#   Shell Django:         docker compose exec app python manage.py shell
+#
+# ============================================
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: direccion-db
+    restart: unless-stopped
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=${DB_NAME:-direccion}
+      - POSTGRES_USER=${DB_USER:-direccion}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-direccion}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-direccion} -d ${DB_NAME:-direccion}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+
+  app:
+    build: .
+    container_name: direccion-app
+    restart: unless-stopped
+    expose:
+      - "8000"
+    volumes:
+      - media_data:/DATA/CIM5NV/media
+      - static_data:/DATA/CIM5NV/staticfiles
+    environment:
+      - DEBUG=${DEBUG:-False}
+      - SECRET_KEY=${SECRET_KEY:-cambiar-esta-clave-en-produccion}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-*}
+      - DJANGO_SETTINGS_MODULE=core.settings
+      - DB_ENGINE=${DB_ENGINE:-django.db.backends.postgresql}
+      - DB_NAME=${DB_NAME:-direccion}
+      - DB_USER=${DB_USER:-direccion}
+      - DB_PASSWORD=${DB_PASSWORD:-direccion}
+      - DB_HOST=${DB_HOST:-db}
+      - DB_PORT=${DB_PORT:-5432}
+      - DOMAIN=${DOMAIN:-}
+      - SECURE_SSL_REDIRECT=${SECURE_SSL_REDIRECT:-False}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin321}
+      - WEBUI_PORT=${WEBUI_PORT:-80}
+      - WEBUI_PORT_SSL=${WEBUI_PORT_SSL:-443}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; req = urllib.request.Request('http://localhost:8000/', headers={'X-Forwarded-Proto': 'https'}); urllib.request.urlopen(req, timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    depends_on:
+      db:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+
+    # Metadatos para CasaOS - Variables de entorno configurables
+    x-casaos:
+      envs:
+        - container: DEBUG
+          description:
+            en_us: Enable debug mode (set to True only for development)
+            es_es: Activar modo depuración (solo para desarrollo)
+          default: "False"
+        - container: SECRET_KEY
+          description:
+            en_us: Django secret key for cryptographic signing
+            es_es: Clave secreta de Django para firmas criptográficas
+        - container: ALLOWED_HOSTS
+          description:
+            en_us: Comma-separated list of allowed hostnames/IPs
+            es_es: Lista separada por comas de hosts/IPs permitidos
+          default: "*"
+        - container: DB_ENGINE
+          description:
+            en_us: Database engine (postgresql or sqlite3)
+            es_es: Motor de base de datos (postgresql o sqlite3)
+          default: "django.db.backends.postgresql"
+        - container: DB_NAME
+          description:
+            en_us: Database name
+            es_es: Nombre de la base de datos
+          default: "direccion"
+        - container: DB_USER
+          description:
+            en_us: Database user
+            es_es: Usuario de la base de datos
+          default: "direccion"
+        - container: DB_PASSWORD
+          description:
+            en_us: Database password
+            es_es: Contraseña de la base de datos
+        - container: DOMAIN
+          description:
+            en_us: "Your domain name for HTTPS setup (e.g., example.com). Leave empty for HTTP/IP access."
+            es_es: "Tu nombre de dominio para HTTPS (ej: ejemplo.com). Dejar vacío para acceso HTTP/IP."
+          default: ""
+        - container: SECURE_SSL_REDIRECT
+          description:
+            en_us: Redirect HTTP to HTTPS (requires DOMAIN and valid SSL certificate)
+            es_es: Redirigir HTTP a HTTPS (requiere DOMAIN y certificado SSL válido)
+          default: "False"
+        - container: ADMIN_PASSWORD
+          description:
+            en_us: Default admin password (used only on first run)
+            es_es: Contraseña por defecto del admin (solo en el primer inicio)
+          default: "admin321"
+      volumes:
+        - container: /DATA/CIM5NV/media
+          description:
+            en_us: Uploaded media files (photos, documents)
+            es_es: Archivos multimedia subidos (fotos, documentos)
+        - container: /DATA/CIM5NV/staticfiles
+          description:
+            en_us: Collected static files (CSS, JS, images)
+            es_es: Archivos estáticos recopilados (CSS, JS, imágenes)
+
+  certbot:
+    image: certbot/certbot:v2.1.1
+    container_name: direccion-certbot
+    restart: unless-stopped
+    profiles:
+      - ssl
+    volumes:
+      - certbot_www:/var/www/certbot:rw
+      - certbot_conf:/etc/letsencrypt:rw
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        trap exit TERM;
+        while true; do
+          certbot renew --webroot -w /var/www/certbot --quiet --no-self-upgrade 2>/dev/null || true;
+          sleep 86400 &
+          wait $!;
+        done
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: direccion-nginx
+    restart: unless-stopped
+    ports:
+      - target: 80
+        published: ${WEBUI_PORT:-80}
+        protocol: tcp
+      - target: 443
+        published: ${WEBUI_PORT_SSL:-443}
+        protocol: tcp
+    environment:
+      - WEBUI_PORT=${WEBUI_PORT:-80}
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+      - certbot_www:/var/www/certbot:ro
+      - certbot_conf:/etc/letsencrypt:ro
+      - static_data:/DATA/CIM5NV/staticfiles:ro
+      - media_data:/DATA/CIM5NV/media:ro
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:80/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    depends_on:
+      - app
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 128M
+        reservations:
+          cpus: '0.25'
+          memory: 64M
+
+    # Metadatos para CasaOS - Puerto de la interfaz web
+    x-casaos:
+      ports:
+        - container: "80"
+          description:
+            en_us: Web UI port (HTTP)
+            es_es: Puerto de la interfaz web (HTTP)
+          host_default: 80
+
+volumes:
+  pg_data:
+  certbot_www:
+  certbot_conf:
+  media_data:
+  static_data:
+
+# ============================================
+#   CasaOS App Store Metadata
+# ============================================
+x-casaos:
+  architectures:
+    - amd64
+    - arm64
+    - arm
+  main: nginx
+  author: Direccion General
+  category: Productivity
+  title:
+    en_us: Sistema de Gestión
+    es_es: Sistema de Gestión
+  tagline:
+    en_us: Management system for Dirección General
+    es_es: Sistema de gestión para la Dirección General
+  description:
+    en_us: |
+      Complete management system with:
+      - Personnel and case management
+      - Document tracking
+      - Reports and statistics
+      - Ticket and task management
+    es_es: |
+      Sistema de gestión completo con:
+      - Gestión de personal y casos
+      - Seguimiento de documentos
+      - Informes y estadísticas
+      - Gestión de tickets y tareas
+  icon: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons@master/png/django.png
+  thumbnail: https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons@master/png/django.png
+  index: /
+  port_map: "${WEBUI_PORT}"
+  scheme: http
+  tips:
+    before_install:
+      en_us: |
+        **Sistema de Gestión - Dirección General**
+
+        Before installing:
+        1. Make sure port **${WEBUI_PORT}** is available.
+        2. Configuration is ready to use with sensible defaults.
+        3. For custom settings, modify environment variables
+           in the CasaOS UI after installation.
+
+        **Default credentials:**
+        - Username: **admin**
+        - Password: **admin321**
+        *(Change the password after first login)*
+
+        For SSL/HTTPS setup, see the init-letsencrypt.sh script.
+      es_es: |
+        **Sistema de Gestión - Dirección General**
+
+        Antes de instalar:
+        1. Asegúrate de que el puerto **${WEBUI_PORT}** esté disponible.
+        2. La configuración tiene valores por defecto funcionales.
+        3. Para ajustes personalizados, modifica las variables
+           de entorno en la UI de CasaOS después de instalar.
+
+        **Credenciales por defecto:**
+        - Usuario: **admin**
+        - Contraseña: **admin321**
+        *(Cambia la contraseña después del primer inicio de sesión)*
+
+        Para configurar SSL/HTTPS, consulta el script init-letsencrypt.sh.
