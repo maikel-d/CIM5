@@ -1,7 +1,9 @@
 from django.shortcuts import redirect
-from django.http import HttpResponseForbidden, Http404
+from django.http import HttpResponseForbidden
 from django.middleware.csrf import get_token
 from functools import wraps
+
+from .permissions import verificar_permiso_acceso
 
 
 def _pagina_403(usuario, mensaje, csrf_token):
@@ -71,7 +73,6 @@ def _pagina_403(usuario, mensaje, csrf_token):
 
 
 
-
 def permiso_required(*permisos):
     """Decorador para restringir acceso basado en permisos granulares.
     Uso: @permiso_required('personal_ver', 'personal_crear')
@@ -83,18 +84,12 @@ def permiso_required(*permisos):
         def _wrapped_view(request, *args, **kwargs):
             if not request.user.is_authenticated:
                 return redirect("login")
-            if request.user.is_superuser:
+            if verificar_permiso_acceso(request.user, permisos):
                 return view_func(request, *args, **kwargs)
-            try:
-                profile = request.user.profile
-                for permiso in permisos:
-                    if profile.tiene_permiso(permiso):
-                        return view_func(request, *args, **kwargs)
-                return _pagina_403(request.user, "No tienes permisos para acceder a esta sección.", get_token(request))
-            except Http404:
-                raise
-            except Exception:
-                return _pagina_403(request.user, "No tienes permisos para acceder a esta sección.", get_token(request))
-            return view_func(request, *args, **kwargs)
+            return _pagina_403(
+                request.user,
+                "No tienes permisos para acceder a esta sección.",
+                get_token(request),
+            )
         return _wrapped_view
     return decorator

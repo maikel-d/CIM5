@@ -153,3 +153,25 @@ def permisos_para_rol(rol):
 
 def tiene_permiso(rol, permiso):
     return permiso in permisos_para_rol(rol)
+
+
+def verificar_permiso_acceso(usuario, permisos):
+    """Verifica si un usuario tiene acceso basado en permisos granulares.
+
+    Retorna True si:
+    - El usuario es superuser (is_superuser=True), O
+    - El usuario tiene al menos uno de los permisos requeridos via su perfil.
+
+    Retorna False si el usuario no tiene perfil, ocurre un error,
+    o no tiene ninguno de los permisos solicitados.
+    """
+    if usuario.is_superuser:
+        return True
+    try:
+        profile = usuario.profile
+        for permiso in permisos:
+            if profile.tiene_permiso(permiso):
+                return True
+    except Exception:
+        pass
+    return False
