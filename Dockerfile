@@ -10,9 +10,12 @@ ENV PYTHONDONTWRITEBYTECODE=1     PYTHONUNBUFFERED=1     PIP_NO_CACHE_DIR=1
 
 # Builder stage: compilar psycopg2 desde fuente + dependencias de imágenes
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    libc6-dev \
     libjpeg62-turbo-dev \
     libwebp-dev \
     libpq-dev \
+    build-essential \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
