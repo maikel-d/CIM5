@@ -8,7 +8,12 @@ FROM python:3.12-slim AS builder
 
 ENV PYTHONDONTWRITEBYTECODE=1     PYTHONUNBUFFERED=1     PIP_NO_CACHE_DIR=1
 
-RUN apt-get update && apt-get install -y --no-install-recommends     libjpeg62-turbo-dev     libwebp-dev     && rm -rf /var/lib/apt/lists/*
+# Builder stage: compilar psycopg2 desde fuente + dependencias de imágenes
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libjpeg62-turbo-dev \
+    libwebp-dev \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -22,7 +27,12 @@ ENV PYTHONDONTWRITEBYTECODE=1     PYTHONUNBUFFERED=1     DJANGO_SETTINGS_MODULE=
 
 WORKDIR $APP_HOME
 
-RUN apt-get update && apt-get install -y --no-install-recommends     libjpeg62-turbo     libwebp7     && rm -rf /var/lib/apt/lists/*
+# Runtime: solo librerías necesarias para ejecutar
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libjpeg62-turbo \
+    libwebp7 \
+    libpq5 \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin

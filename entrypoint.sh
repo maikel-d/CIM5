@@ -45,7 +45,7 @@ echo "[OK] Migraciones aplicadas"
 # Static files
 echo ""
 echo "[*] Recopilando archivos estáticos..."
-python manage.py collectstatic --noinput --clear
+python manage.py collectstatic --noinput
 echo "[OK] Archivos estáticos recopilados"
 
 # Superusuario por defecto (solo si no existe)
