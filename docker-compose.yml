@@ -205,7 +205,9 @@ services:
       - static_data:/DATA/CIM5NV/staticfiles:ro
       - media_data:/DATA/CIM5NV/media:ro
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost/"]
+      # Verifica que nginx responda (incluso un 301 significa que el proceso está vivo)
+      # --max-redirect=0 evita seguir la redirección HTTP→HTTPS
+      test: ["CMD", "wget", "-qO-", "--max-redirect=0", "http://localhost/"]
       interval: 30s
       timeout: 10s
       retries: 3
