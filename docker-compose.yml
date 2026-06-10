@@ -205,7 +205,7 @@ services:
       - static_data:/DATA/CIM5NV/staticfiles:ro
       - media_data:/DATA/CIM5NV/media:ro
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "--no-check-certificate", "https://localhost/"]
+      test: ["CMD", "wget", "-qO-", "http://localhost/"]
       interval: 30s
       timeout: 10s
       retries: 3
