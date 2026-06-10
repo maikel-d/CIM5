@@ -61,10 +61,22 @@ def _build_excel_response(sheet_title, headers, rows, column_widths, filename):
 
 def _build_pdf_response(title, headers, rows, filename):
     """Construye una respuesta HTTP con un archivo PDF con estilo corporativo."""
-    LOGO_PATH = str(settings.BASE_DIR / 'static' / 'images' / 'logo.png')
+    # Buscar el logo en STATICFILES_DIRS (directorio fuente) o STATIC_ROOT (collectstatic)
+    _logo_candidates = [
+        settings.STATICFILES_DIRS[0] / 'images' / 'logo.png',
+        settings.STATIC_ROOT / 'images' / 'logo.png',
+    ]
+    LOGO_PATH = None
+    for _p in _logo_candidates:
+        if _p.exists():
+            LOGO_PATH = str(_p)
+            break
 
     def _make_logo():
-        return Image(LOGO_PATH, width=30, height=30)
+        if LOGO_PATH:
+            return Image(LOGO_PATH, width=30, height=30)
+        # Si no hay logo disponible, retornar celda vacía
+        return Paragraph("", getSampleStyleSheet()["Normal"])
 
     buf = BytesIO()
     doc = SimpleDocTemplate(buf, pagesize=landscape(letter),

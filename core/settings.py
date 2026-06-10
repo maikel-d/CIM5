@@ -186,6 +186,12 @@ LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/login/'
 
+# Límite de tamaño para archivos subidos (coincide con la validación en forms.py: 10MB)
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10 MB
+
+# Archivos >2.5MB se escriben a disco en vez de mantenerse en memoria
+FILE_UPLOAD_MAX_MEMORY_SIZE = 2.5 * 1024 * 1024  # 2.5 MB (default de Django)
+
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
