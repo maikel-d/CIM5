@@ -26,6 +26,7 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q, Case, When, IntegerField, Count
+from django.db.models.functions import TruncMonth
 from django.conf import settings
 from django.urls import reverse_lazy
 from django.utils import timezone
@@ -136,14 +137,27 @@ def dashboard(request):
     total_personal = Personal.objects.filter(activo=True).count()
     total_casos = Caso.objects.filter(activo=True).count()
     total_investigados = Investigado.objects.filter(activo=True).count()
-    total_documentos_personal = DocumentoPersonal.objects.count()
-    total_documentos_investigados = DocumentoInvestigado.objects.count()
-    total_documentos_casos = DocumentoCaso.objects.count()
-    total_documentos_direccion = DocumentoDireccion.objects.count()
     total_usuarios = User.objects.filter(is_active=True).count()
     tareas_pendientes = Tarea.objects.filter(completada=False).order_by("-fecha_creacion")
     tareas_count = Tarea.objects.count()
     tareas_completadas = Tarea.objects.filter(completada=True).count()
+
+    # Document type counts — 4 queries using conditional aggregation (instead of 12+)
+    _doc_q_pdf = Count('id', filter=Q(tipo='PDF'))
+    _doc_q_word = Count('id', filter=Q(tipo='WORD'))
+    _doc_q_img = Count('id', filter=Q(tipo='IMAGEN'))
+    _doc_q_otro = Count('id', filter=Q(tipo='OTRO'))
+    dp = DocumentoPersonal.objects.aggregate(p=_doc_q_pdf, w=_doc_q_word, i=_doc_q_img, o=_doc_q_otro)
+    di = DocumentoInvestigado.objects.aggregate(p=_doc_q_pdf, w=_doc_q_word, i=_doc_q_img, o=_doc_q_otro)
+    dc = DocumentoCaso.objects.aggregate(p=_doc_q_pdf, w=_doc_q_word, i=_doc_q_img, o=_doc_q_otro)
+    dd = DocumentoDireccion.objects.aggregate(p=_doc_q_pdf, w=_doc_q_word, i=_doc_q_img, o=_doc_q_otro)
+    docs_pdf = dp['p'] + di['p'] + dc['p'] + dd['p']
+    docs_word = dp['w'] + di['w'] + dc['w'] + dd['w']
+    docs_img = dp['i'] + di['i'] + dc['i'] + dd['i']
+    total_documentos_personal = dp['p'] + dp['w'] + dp['i'] + dp['o']
+    total_documentos_investigados = di['p'] + di['w'] + di['i'] + di['o']
+    total_documentos_casos = dc['p'] + dc['w'] + dc['i'] + dc['o']
+    total_documentos_direccion = dd['p'] + dd['w'] + dd['i'] + dd['o']
 
     # Tickets: abiertos/en_proceso primero, luego por fecha descendente
     tickets_recientes = TicketSoporte.objects.annotate(
@@ -178,24 +192,35 @@ def dashboard(request):
     docs_img_list = [d for d in all_docs_merged if d.tipo == 'IMAGEN'][:5]
     docs_otro_list = [d for d in all_docs_merged if d.tipo == 'OTRO'][:5]
 
-    docs_pdf = DocumentoPersonal.objects.filter(tipo="PDF").count() + DocumentoInvestigado.objects.filter(tipo="PDF").count() + DocumentoCaso.objects.filter(tipo="PDF").count()
-    docs_word = DocumentoPersonal.objects.filter(tipo="WORD").count() + DocumentoInvestigado.objects.filter(tipo="WORD").count() + DocumentoCaso.objects.filter(tipo="WORD").count()
-    docs_img = DocumentoPersonal.objects.filter(tipo="IMAGEN").count() + DocumentoInvestigado.objects.filter(tipo="IMAGEN").count() + DocumentoCaso.objects.filter(tipo="IMAGEN").count()
-
-    # Build monthly chart data (last 6 months)
-    months, pm, im, cm = [], [], [], []
+    # Build monthly chart data (last 6 months) — 3 queries instead of 18
     now = timezone.now()
-    for i in range(5, -1, -1):
-        ms = now.replace(day=1) - timedelta(days=30 * i)
-        ms = ms.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        if i > 0:
-            me = (ms + timedelta(days=32)).replace(day=1) - timedelta(seconds=1)
+    six_months_ago = (now - timedelta(days=180)).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    month_names_es = {1: 'Ene', 2: 'Feb', 3: 'Mar', 4: 'Abr', 5: 'May', 6: 'Jun',
+                      7: 'Jul', 8: 'Ago', 9: 'Sep', 10: 'Oct', 11: 'Nov', 12: 'Dic'}
+
+    expected_months = []
+    d = six_months_ago
+    for _ in range(6):
+        expected_months.append((d.year, d.month))
+        if d.month == 12:
+            d = d.replace(year=d.year + 1, month=1)
         else:
-            me = now
-        months.append(ms.strftime("%b"))
-        pm.append(Personal.objects.filter(fecha_creacion__gte=ms, fecha_creacion__lte=me).count())
-        im.append(Investigado.objects.filter(fecha_creacion__gte=ms, fecha_creacion__lte=me).count())
-        cm.append(Caso.objects.filter(fecha_creacion__gte=ms, fecha_creacion__lte=me).count())
+            d = d.replace(month=d.month + 1)
+    months = [month_names_es[m] for _, m in expected_months]
+
+    def _monthly_counts(queryset):
+        counts = {}
+        for row in (queryset.filter(fecha_creacion__gte=six_months_ago)
+                           .annotate(month=TruncMonth('fecha_creacion'))
+                           .values('month')
+                           .annotate(cnt=Count('id'))):
+            key = (row['month'].year, row['month'].month)
+            counts[key] = row['cnt']
+        return [counts.get(ym, 0) for ym in expected_months]
+
+    pm = _monthly_counts(Personal.objects)
+    im = _monthly_counts(Investigado.objects)
+    cm = _monthly_counts(Caso.objects)
 
     chart_data = json.dumps({
         "docTypes": {"pdf": docs_pdf, "word": docs_word, "img": docs_img},
@@ -217,14 +242,13 @@ def dashboard(request):
     # Usuarios del sistema
     usuarios_sistema = User.objects.filter(is_active=True).select_related('profile').order_by('username')
 
-    # Informes del mes actual
+    # Informes del mes actual — single query reuse for count and list
     hoy = date.today()
-    informes_mes = InformeDiario.objects.filter(
+    informes_qs = InformeDiario.objects.filter(
         fecha__year=hoy.year, fecha__month=hoy.month
-    ).order_by('-fecha', '-fecha_creacion')[:10]
-    total_informes_mes = InformeDiario.objects.filter(
-        fecha__year=hoy.year, fecha__month=hoy.month
-    ).count()
+    )
+    total_informes_mes = informes_qs.count()
+    informes_mes = informes_qs.order_by('-fecha', '-fecha_creacion')[:10]
 
     # Auditoria reciente (ultimos 10 registros, si el usuario tiene permiso)
     auditoria_reciente = []
@@ -1026,6 +1050,9 @@ def notificaciones_list(request):
     """Lista todas las notificaciones y marca las no leídas como leídas."""
     notis = Notificacion.objects.filter(usuario=request.user)
     notis.filter(leida=False).update(leida=True)
+    # Invalidar cache del badge de notificaciones
+    from django.core.cache import cache
+    cache.delete(f'notis_unread_{request.user.pk}')
     return render(request, "direccion/notificaciones_list.html", {
         "notificaciones": notis,
     })
@@ -1081,7 +1108,7 @@ def tarea_eliminar(request, pk):
 @permiso_required(perms.TICKETS_VER)
 def ticket_detail(request, pk):
     """Detalle de un ticket con su historial de cambios."""
-    ticket = get_object_or_404(TicketSoporte, pk=pk)
+    ticket = get_object_or_404(TicketSoporte.objects.select_related('creado_por', 'asignado_a'), pk=pk)
     return render(request, "direccion/ticket_detail.html", {
         "ticket": ticket,
         "historial": ticket.historial.all(),
@@ -1096,11 +1123,11 @@ def ticket_list(request):
 
     # Admin/Supervisor ven todos los tickets; el resto solo los propios
     if request.user.profile.tiene_permiso(perms.TICKETS_RESOLVER):
-        tickets = TicketSoporte.objects.all()
+        tickets = TicketSoporte.objects.select_related('creado_por', 'asignado_a').all()
         if filtro_usuario:
             tickets = tickets.filter(creado_por_id=filtro_usuario)
     else:
-        tickets = TicketSoporte.objects.filter(creado_por=request.user)
+        tickets = TicketSoporte.objects.select_related('creado_por', 'asignado_a').filter(creado_por=request.user)
 
     if filtro_estado:
         tickets = tickets.filter(estado=filtro_estado)
