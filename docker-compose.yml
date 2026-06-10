@@ -206,9 +206,9 @@ services:
       - media_data:/DATA/CIM5NV/media:ro
     healthcheck:
       # Verifica que nginx responda (incluso un 301 significa que el proceso está vivo)
-      # --max-redirect 0 evita seguir la redirección HTTP->HTTPS
-      # curl funciona correctamente en nginx:alpine (wget BusyBox no soporta --max-redirect)
-      test: ["CMD", "curl", "-sf", "--max-redirect", "0", "http://localhost/"]
+      # --max-redirs 0 evita seguir la redirección HTTP->HTTPS
+      # NOTA: el flag correcto es --max-redirs (no --max-redirect)
+      test: ["CMD", "curl", "-sf", "--max-redirs", "0", "http://localhost/"]
       interval: 30s
       timeout: 10s
       retries: 3
