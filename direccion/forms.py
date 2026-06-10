@@ -1,12 +1,24 @@
 from django import forms
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
+from django.core.exceptions import ValidationError
 from .models import (
     UserProfile, Personal, DocumentoPersonal,
     Caso, Investigado, DocumentoInvestigado, DocumentoDireccion,
     DocumentoCaso, Tarea, TicketSoporte, InformeDiario,
     Bien, DocumentoBien
 )
+
+
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
+
+
+def _validar_tamano_archivo(archivo, max_size=MAX_FILE_SIZE):
+    """Valida que un archivo no supere el tamaño máximo permitido."""
+    if archivo and archivo.size > max_size:
+        mb = max_size / (1024 * 1024)
+        raise ValidationError(f"El archivo no puede superar los {mb:.0f}MB. Tamaño actual: {archivo.size / (1024 * 1024):.1f}MB")
+    return archivo
 
 
 class UserCreateForm(UserCreationForm):
@@ -100,6 +112,9 @@ class PersonalForm(forms.ModelForm):
             if not hasattr(field.widget.attrs, "get") or not field.widget.attrs.get("class"):
                 field.widget.attrs.update({"class": "form-input"})
 
+    def clean_foto(self):
+        return _validar_tamano_archivo(self.cleaned_data.get("foto"))
+
 
 class DocumentoPersonalForm(forms.ModelForm):
     class Meta:
@@ -108,6 +123,9 @@ class DocumentoPersonalForm(forms.ModelForm):
         widgets = {
             "descripcion": forms.TextInput(attrs={"class": "form-input", "placeholder": "Descripción opcional"}),
         }
+
+    def clean_archivo(self):
+        return _validar_tamano_archivo(self.cleaned_data.get("archivo"))
 
 
 class CasoForm(forms.ModelForm):
@@ -153,6 +171,9 @@ class InvestigadoForm(forms.ModelForm):
             if not hasattr(field.widget.attrs, "get") or not field.widget.attrs.get("class"):
                 field.widget.attrs.update({"class": "form-input"})
 
+    def clean_foto(self):
+        return _validar_tamano_archivo(self.cleaned_data.get("foto"))
+
 
 class DocumentoInvestigadoForm(forms.ModelForm):
     class Meta:
@@ -161,6 +182,9 @@ class DocumentoInvestigadoForm(forms.ModelForm):
         widgets = {
             "descripcion": forms.TextInput(attrs={"class": "form-input", "placeholder": "Descripción opcional"}),
         }
+
+    def clean_archivo(self):
+        return _validar_tamano_archivo(self.cleaned_data.get("archivo"))
 
 
 class DocumentoDireccionForm(forms.ModelForm):
@@ -172,6 +196,9 @@ class DocumentoDireccionForm(forms.ModelForm):
             "categoria": forms.Select(attrs={"class": "form-input"}),
         }
 
+    def clean_archivo(self):
+        return _validar_tamano_archivo(self.cleaned_data.get("archivo"))
+
 
 class DocumentoCasoForm(forms.ModelForm):
     class Meta:
@@ -180,6 +207,9 @@ class DocumentoCasoForm(forms.ModelForm):
         widgets = {
             "descripcion": forms.TextInput(attrs={"class": "form-input", "placeholder": "Descripción opcional"}),
         }
+
+    def clean_archivo(self):
+        return _validar_tamano_archivo(self.cleaned_data.get("archivo"))
 
 
 class TareaForm(forms.ModelForm):
@@ -245,6 +275,9 @@ class InformeDiarioForm(forms.ModelForm):
             "archivo": forms.FileInput(attrs={"class": "form-input"}),
         }
 
+    def clean_archivo(self):
+        return _validar_tamano_archivo(self.cleaned_data.get("archivo"))
+
 
 class BienForm(forms.ModelForm):
     class Meta:
@@ -272,6 +305,9 @@ class BienForm(forms.ModelForm):
             if not hasattr(field.widget.attrs, "get") or not field.widget.attrs.get("class"):
                 field.widget.attrs.update({"class": "form-input"})
 
+    def clean_foto(self):
+        return _validar_tamano_archivo(self.cleaned_data.get("foto"))
+
 
 class DocumentoBienForm(forms.ModelForm):
     class Meta:
@@ -280,6 +316,9 @@ class DocumentoBienForm(forms.ModelForm):
         widgets = {
             "descripcion": forms.TextInput(attrs={"class": "form-input", "placeholder": "Descripción opcional"}),
         }
+
+    def clean_archivo(self):
+        return _validar_tamano_archivo(self.cleaned_data.get("archivo"))
 
 
 class LoginForm(forms.Form):
