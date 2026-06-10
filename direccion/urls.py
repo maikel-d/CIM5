@@ -76,8 +76,17 @@ urlpatterns = [
     path("informes-diarios/<int:pk>/eliminar/", views.eliminar_informe_diario, name="informe_diario_eliminar"),
     path("informes-diarios/<int:pk>/previsualizar/", views.previsualizar_informe_pdf, name="informe_diario_preview"),
 
-    # Bienes (placeholder - próximamente)
-    path("bienes/", views.bienes_list, name="bienes_list"),
+    # Búsqueda Global (JSON)
+    path("buscar/", views.busqueda_global, name="busqueda_global"),
+
+    # Bienes CRUD
+    path("bienes/", views.BienListView.as_view(), name="bien_list"),
+    path("bienes/crear/", views.BienCreateView.as_view(), name="bien_create"),
+    path("bienes/<int:pk>/", views.BienDetailView.as_view(), name="bien_detail"),
+    path("bienes/<int:pk>/editar/", views.BienUpdateView.as_view(), name="bien_edit"),
+    path("bienes/<int:pk>/eliminar/", views.BienDeleteView.as_view(), name="bien_delete"),
+    path("bienes/<int:pk>/documento/agregar/", views.agregar_documento_bien, name="bien_documento_add"),
+    path("bienes/<int:pk>/documento/<int:doc_pk>/eliminar/", views.eliminar_documento_bien, name="bien_documento_delete"),
 
     # Reports Center
     path("reportes/", views.panel_reportes, name="reportes"),

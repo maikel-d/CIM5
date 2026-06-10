@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% load permissions_tags %}
+{% block title %}{{ bien.nombre }}{% endblock %}
+{% block page_title %}{{ bien.nombre }}{% endblock %}
+{% block content %}
+<div class="mb-4">
+  <a href="{% url 'bien_list' %}" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 hover:text-[#003363] hover:bg-[#e8f0f8] rounded-lg transition-colors">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+    Volver al listado
+  </a>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <div class="lg:col-span-1">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
+      <div class="w-32 h-32 rounded-xl bg-gray-200 overflow-hidden mx-auto mb-4">
+        {% if bien.foto %}<img src="{{ bien.foto.url }}" alt="" class="w-full h-full object-cover">{% else %}
+        <div class="w-full h-full flex items-center justify-center bg-[#e8f0f8] text-[#003363]">
+          <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+        </div>{% endif %}
+      </div>
+      <h3 class="font-semibold text-gray-800">{{ bien.nombre }}</h3>
+      <p class="text-sm text-gray-500 mt-1">{{ bien.get_categoria_display }}</p>
+      <div class="flex justify-center gap-2 mt-4">
+        {% if user.profile|can:'bienes_editar' %}
+        <a href="{% url 'bien_edit' bien.pk %}" class="px-3 py-1.5 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 text-sm">Editar</a>
+        {% endif %}
+        {% if user.profile|can:'bienes_eliminar' %}
+        <a href="{% url 'bien_delete' bien.pk %}" class="px-3 py-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600 text-sm">Eliminar</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="lg:col-span-2 space-y-6">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <h3 class="font-semibold text-gray-800 mb-4">Informacion del Bien</h3>
+      <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div><dt class="text-xs text-gray-500 uppercase">Nombre</dt><dd class="text-sm font-medium text-gray-800">{{ bien.nombre }}</dd></div>
+        <div><dt class="text-xs text-gray-500 uppercase">Categoria</dt><dd class="text-sm font-medium text-gray-800">{{ bien.get_categoria_display }}</dd></div>
+        <div><dt class="text-xs text-gray-500 uppercase">Estado</dt><dd class="text-sm">{{ bien.get_estado_display }}</dd></div>
+        <div><dt class="text-xs text-gray-500 uppercase">Ubicacion</dt><dd class="text-sm font-medium text-gray-800">{{ bien.ubicacion|default:"-" }}</dd></div>
+        <div><dt class="text-xs text-gray-500 uppercase">Serial / Codigo</dt><dd class="text-sm font-medium text-gray-800 font-mono">{{ bien.codigo_inventario|default:bien.serial|default:"-" }}</dd></div>
+        <div><dt class="text-xs text-gray-500 uppercase">Valor</dt><dd class="text-sm font-medium text-gray-800">{% if bien.valor %}{{ bien.valor }} Bs.{% else %}-{% endif %}</dd></div>
+      </dl>
+      {% if bien.descripcion %}
+      <div class="mt-4 pt-4 border-t border-gray-100">
+        <p class="text-xs text-gray-500 uppercase mb-2">Descripcion</p>
+        <p class="text-sm text-gray-700">{{ bien.descripcion|linebreaks }}</p>
+      </div>
+      {% endif %}
+    </div>
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-semibold text-gray-800">Documentos</h3>
+        <span class="text-xs text-gray-400">{{ documentos.count }} archivo(s)</span>
+      </div>
+      {% if user.profile|can:'bienes_documentos_agregar' %}
+      <form method="post" action="{% url 'bien_documento_add' bien.pk %}" enctype="multipart/form-data" class="mb-4 p-3 border-2 border-dashed border-gray-200 rounded-lg">
+        {% csrf_token %}
+        <div class="flex items-center gap-2">
+          <input type="file" name="archivo" required class="text-sm" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg">
+          <input type="text" name="descripcion" placeholder="Descripcion" class="form-input text-sm flex-1">
+          <button type="submit" class="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm whitespace-nowrap">Subir</button>
+        </div>
+      </form>
+      {% endif %}
+      <div class="space-y-2">
+        {% for doc in documentos %}
+        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+          <div class="flex items-center gap-3">
+            <div>{% if doc.tipo == 'PDF' %}PDF{% elif doc.tipo == 'WORD' %}DOC{% else %}FILE{% endif %}</div>
+            <div>
+              <p class="text-sm text-gray-800">{{ doc.descripcion|default:doc.archivo.name }}</p>
+              <p class="text-xs text-gray-400">{{ doc.fecha_subida|date:"d/m/Y H:i" }} - {{ doc.get_tipo_display }}</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <a href="{{ doc.archivo.url }}" target="_blank" class="text-xs text-[#003363] hover:underline">Ver</a>
+            {% if user.profile|can:'bienes_documentos_eliminar' %}
+            <a href="{% url 'bien_documento_delete' bien.pk doc.pk %}" class="text-xs text-red-500 hover:underline" onclick="return confirm('Eliminar?')">Eliminar</a>
+            {% endif %}
+          </div>
+        </div>
+        {% empty %}
+        <p class="text-sm text-gray-400 text-center py-6">Sin documentos.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

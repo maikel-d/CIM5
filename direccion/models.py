@@ -553,3 +553,101 @@ class DocumentoInvestigado(TipoDocumentoMixin, models.Model):
         return f"{self.investigado} - {nombre}"
 
 
+# ============================================================
+# BIENES (Assets / Inventory)
+# ============================================================
+
+def bien_photo_path(instance, filename):
+    ext = filename.split('.')[-1]
+    return f'bienes/fotos/{instance.pk}_{instance.nombre}.{ext}'
+
+
+def bien_document_path(instance, filename):
+    return f'bienes/documentos/{instance.bien.pk}/{filename}'
+
+
+class Bien(models.Model):
+    CATEGORIA_CHOICES = [
+        ('VEHICULO', 'Vehículo'),
+        ('INMUEBLE', 'Inmueble'),
+        ('EQUIPO', 'Equipo'),
+        ('MUEBLE', 'Mueble'),
+        ('ARMAMENTO', 'Armamento'),
+        ('COMUNICACIONES', 'Comunicaciones'),
+        ('INFORMATICA', 'Informática'),
+        ('OTRO', 'Otro'),
+    ]
+
+    ESTADO_CHOICES = [
+        ('BUENO', 'Bueno'),
+        ('REGULAR', 'Regular'),
+        ('MALO', 'Malo'),
+        ('OBSOLETO', 'Obsoleto'),
+    ]
+
+    nombre = models.CharField('Nombre del bien', max_length=200)
+    descripcion = models.TextField('Descripción', blank=True, null=True)
+    foto = models.ImageField(
+        'Foto', upload_to=bien_photo_path, blank=True, null=True,
+        help_text='Formatos: .jpg, .jpeg, .png'
+    )
+    categoria = models.CharField('Categoría', max_length=20, choices=CATEGORIA_CHOICES, default='OTRO')
+    codigo_inventario = models.CharField('Código de inventario', max_length=50, unique=True, blank=True, null=True)
+    serial = models.CharField('Serial', max_length=100, blank=True, null=True)
+    marca = models.CharField('Marca', max_length=100, blank=True, null=True)
+    modelo_bien = models.CharField('Modelo', max_length=100, blank=True, null=True)
+    ubicacion = models.CharField('Ubicación', max_length=200, blank=True, null=True)
+    estado = models.CharField('Estado', max_length=20, choices=ESTADO_CHOICES, default='BUENO')
+    fecha_adquisicion = models.DateField('Fecha de adquisición', blank=True, null=True)
+    valor = models.DecimalField('Valor (Bs.)', max_digits=14, decimal_places=2, blank=True, null=True)
+    activo = models.BooleanField('Activo', default=True)
+    fecha_creacion = models.DateTimeField('Fecha de creación', auto_now_add=True)
+    fecha_actualizacion = models.DateTimeField('Fecha de actualización', auto_now=True)
+
+    class Meta:
+        verbose_name = 'Bien'
+        verbose_name_plural = 'Bienes'
+        ordering = ['-fecha_creacion']
+
+    def __str__(self):
+        return f"{self.nombre} - {self.get_categoria_display()}"
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+            try:
+                old = Bien.objects.get(pk=self.pk)
+                if old.foto and old.foto != self.foto:
+                    old.foto.delete(save=False)
+            except Bien.DoesNotExist:
+                pass
+        super().save(*args, **kwargs)
+
+
+class DocumentoBien(TipoDocumentoMixin, models.Model):
+    TIPO_CHOICES = [
+        ('PDF', 'PDF'),
+        ('WORD', 'Word'),
+        ('IMAGEN', 'Imagen'),
+        ('OTRO', 'Otro'),
+    ]
+
+    bien = models.ForeignKey(
+        Bien, on_delete=models.CASCADE, related_name='documentos',
+        verbose_name='Bien'
+    )
+    archivo = models.FileField(
+        'Archivo', upload_to=bien_document_path,
+        help_text='Formatos: PDF, Word (.doc, .docx), imágenes'
+    )
+    tipo = models.CharField('Tipo', max_length=10, choices=TIPO_CHOICES, editable=False)
+    descripcion = models.CharField('Descripción', max_length=255, blank=True, null=True)
+    fecha_subida = models.DateTimeField('Fecha de subida', auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Documento del Bien'
+        verbose_name_plural = 'Documentos de Bienes'
+        ordering = ['-fecha_subida']
+
+    def __str__(self):
+        nombre = os.path.basename(self.archivo.name) if self.archivo.name else '(sin archivo)'
+        return f"{self.bien} - {nombre}"

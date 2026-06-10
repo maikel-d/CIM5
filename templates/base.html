@@ -77,7 +77,7 @@
                 {% endif %}
 
                 {% if user.profile|can:'bienes_ver' %}
-                <a href="{% url 'bienes_list' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#002244] transition-colors {% if 'bienes' in request.resolver_match.url_name %}bg-[#002244] text-white{% else %}text-gray-300{% endif %}">
+                <a href="{% url 'bien_list' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#002244] transition-colors {% if 'bienes' in request.resolver_match.url_name %}bg-[#002244] text-white{% else %}text-gray-300{% endif %}">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
                     Bienes
                 </a>
@@ -127,7 +127,16 @@
                         </button>
                         <h1 class="text-lg sm:text-xl font-semibold text-gray-800">{% block page_title %}Dashboard{% endblock %}</h1>
                     </div>
-                    <div class="flex items-center gap-2 sm:gap-4">
+                    <div class="flex items-center gap-1 sm:gap-2">
+                        <!-- Búsqueda Global -->
+                        <button type="button" onclick="abrirBusqueda()" class="hidden sm:flex items-center gap-2 px-3 py-1.5 text-sm text-gray-400 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 hover:text-gray-600 hover:border-gray-300 transition-all cursor-pointer" title="Buscar en el sistema (Ctrl+K)">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                            <span>Buscar...</span>
+                            <kbd class="hidden md:inline-flex items-center px-1.5 py-0.5 text-[10px] font-semibold text-gray-400 bg-gray-200/60 rounded">Ctrl+K</kbd>
+                        </button>
+                        <button type="button" onclick="abrirBusqueda()" class="sm:hidden p-2 text-gray-500 hover:text-[#003363] hover:bg-gray-100 rounded-lg transition-colors" title="Buscar">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                        </button>
                         <a href="{% url 'notificaciones_list' %}" class="relative p-2 text-gray-500 hover:text-[#003363] hover:bg-gray-100 rounded-lg transition-colors">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
                             {% if notificaciones_no_leidas > 0 %}
@@ -173,12 +182,10 @@
         sidebar.classList.toggle('-translate-x-full', isOpen);
         if (overlay) overlay.classList.toggle('hidden', isOpen);
         if (btn) btn.setAttribute('aria-expanded', !isOpen);
-        // Solo bloquear scroll del body cuando la sidebar está abierta en móvil
         if (window.innerWidth < 1024) {
             document.body.classList.toggle('overflow-hidden', !isOpen);
         }
     }
-    // Cerrar sidebar automáticamente al pasar a desktop
     const mql = window.matchMedia('(min-width: 1024px)');
     mql.addEventListener('change', function(e) {
         if (e.matches) {
@@ -193,7 +200,234 @@
             }
         }
     });
+
+    // ============================================
+    // BÚSQUEDA GLOBAL (Ctrl+K)
+    // ============================================
+    let searchTimeout = null;
+    let searchSelectedIndex = -1;
+    let searchResultsData = null;
+
+    document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            abrirBusqueda();
+        }
+        if (e.key === 'Escape') {
+            cerrarBusqueda();
+        }
+    });
+
+    function abrirBusqueda() {
+        const modal = document.getElementById('searchModal');
+        if (!modal) return;
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+        setTimeout(function() {
+            const input = document.getElementById('searchInput');
+            if (input) {
+                input.focus();
+                input.select();
+            }
+        }, 150);
+    }
+
+    function cerrarBusqueda() {
+        const modal = document.getElementById('searchModal');
+        if (!modal || modal.style.display === 'none') return;
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+        searchTimeout = null;
+        searchSelectedIndex = -1;
+        searchResultsData = null;
+    }
+
+    function onSearchInput(e) {
+        const q = e.target.value.trim();
+        const resultsEl = document.getElementById('searchResults');
+        const emptyEl = document.getElementById('searchEmpty');
+        const loaderEl = document.getElementById('searchLoader');
+
+        if (!resultsEl || !emptyEl || !loaderEl) return;
+
+        if (q.length < 2) {
+            resultsEl.innerHTML = '';
+            resultsEl.style.display = 'none';
+            emptyEl.style.display = 'block';
+            emptyEl.innerHTML = '<div class="search-empty-icon"><svg width="36" height="36" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg><p class="search-empty-title">¿Qué estás buscando?</p><p class="search-empty-hint">Escribe al menos 2 caracteres para comenzar la búsqueda</p></div>';
+            searchSelectedIndex = -1;
+            return;
+        }
+
+        loaderEl.style.display = 'block';
+        emptyEl.style.display = 'none';
+
+        if (searchTimeout) clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(function() {
+            fetchBusqueda(q);
+        }, 300);
+    }
+
+    function fetchBusqueda(q) {
+        fetch('{% url "busqueda_global" %}?q=' + encodeURIComponent(q), {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            const resultsEl = document.getElementById('searchResults');
+            const emptyEl = document.getElementById('searchEmpty');
+            const loaderEl = document.getElementById('searchLoader');
+            if (!resultsEl || !emptyEl || !loaderEl) return;
+            loaderEl.style.display = 'none';
+
+            const icons = {
+                'users': '<svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/></svg>',
+                'folder': '<svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>',
+                'search': '<svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>',
+                'file': '<svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>',
+                'ticket': '<svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/></svg>',
+                'checklist': '<svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>',
+                'chart': '<svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>'
+            };
+
+            const results = data.results;
+            const keys = Object.keys(results);
+
+            if (keys.length === 0) {
+                resultsEl.style.display = 'none';
+                emptyEl.style.display = 'block';
+                emptyEl.innerHTML = '<div class="search-empty-icon"><svg width="36" height="36" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><p class="search-empty-title">Sin resultados</p><p class="search-empty-hint">No se encontraron resultados para "' + q + '"</p></div>';
+                searchResultsData = null;
+                return;
+            }
+
+            emptyEl.style.display = 'none';
+            resultsEl.style.display = 'block';
+
+            let html = '';
+            let itemIndex = 0;
+            const flatItems = [];
+
+            keys.forEach(function(key) {
+                const group = results[key];
+                html += '<div class="search-group">';
+                html += '<div class="search-group-label"><span class="search-group-icon">' + (icons[group.icon] || '') + '</span>' + group.label + '</div>';
+                group.items.forEach(function(item) {
+                    flatItems.push({url: item.url});
+                    html += '<a href="' + item.url + '" class="search-result-item" data-index="' + itemIndex + '" onclick="cerrarBusqueda()">';
+                    html += '<div class="search-item-content">';
+                    html += '<span class="search-item-title">' + escapeHtml(item.title) + '</span>';
+                    if (item.subtitle) html += '<span class="search-item-subtitle">' + escapeHtml(item.subtitle) + '</span>';
+                    html += '</div>';
+                    html += '<svg class="search-item-arrow" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>';
+                    html += '</a>';
+                    itemIndex++;
+                });
+                html += '</div>';
+            });
+
+            resultsEl.innerHTML = html;
+            searchResultsData = flatItems;
+            searchSelectedIndex = -1;
+        })
+        .catch(function() {
+            const loaderEl = document.getElementById('searchLoader');
+            if (loaderEl) loaderEl.style.display = 'none';
+        });
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        var div = document.createElement('div');
+        div.appendChild(document.createTextNode(text));
+        return div.innerHTML;
+    }
+
+    function onSearchKeydown(e) {
+        if (!searchResultsData || searchResultsData.length === 0) return;
+
+        const items = document.querySelectorAll('.search-result-item');
+        if (items.length === 0) return;
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            searchSelectedIndex = Math.min(searchSelectedIndex + 1, items.length - 1);
+            updateSearchSelection(items);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (searchSelectedIndex <= 0) {
+                searchSelectedIndex = items.length - 1;
+            } else {
+                searchSelectedIndex = searchSelectedIndex - 1;
+            }
+            updateSearchSelection(items);
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (searchSelectedIndex >= 0 && searchSelectedIndex < searchResultsData.length) {
+                cerrarBusqueda();
+                window.location.href = searchResultsData[searchSelectedIndex].url;
+            }
+        }
+    }
+
+    function updateSearchSelection(items) {
+        items.forEach(function(el, i) {
+            el.classList.toggle('search-item-selected', i === searchSelectedIndex);
+            if (i === searchSelectedIndex) {
+                el.scrollIntoView({ block: 'nearest' });
+            }
+        });
+    }
+
+
     </script>
     {% block extra_scripts %}{% endblock %}
+
+<!-- ============================================
+     BÚSQUEDA GLOBAL MODAL
+     ============================================ -->
+<div id="searchModal" class="search-modal-overlay" style="display:none" onclick="if(event.target===this)cerrarBusqueda()">
+  <div class="search-modal">
+    <div class="search-modal-header">
+      <div class="search-input-wrapper">
+        <svg class="search-input-icon" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        <input type="text" id="searchInput" class="search-input" placeholder="Buscar personal, casos, documentos, tickets..." autocomplete="off" spellcheck="false" oninput="onSearchInput(event)" onkeydown="onSearchKeydown(event)">
+        <button type="button" class="search-input-clear" onclick="document.getElementById('searchInput').value='';onSearchInput({target:{value:''}});document.getElementById('searchInput').focus()" title="Limpiar">
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="search-modal-close">
+        <kbd>Esc</kbd>
+      </div>
+    </div>
+    <div class="search-modal-body">
+      <!-- Loader -->
+      <div id="searchLoader" class="search-loader" style="display:none">
+        <div class="search-loader-spinner"></div>
+        <span>Buscando...</span>
+      </div>
+
+      <!-- Results -->
+      <div id="searchResults" class="search-results" style="display:none"></div>
+
+      <!-- Empty state -->
+      <div id="searchEmpty" class="search-empty">
+        <div class="search-empty-icon">
+          <svg width="36" height="36" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <p class="search-empty-title">¿Qué estás buscando?</p>
+          <p class="search-empty-hint">Escribe al menos 2 caracteres para comenzar la búsqueda</p>
+        </div>
+      </div>
+    </div>
+    <div class="search-modal-footer">
+      <div class="search-footer-hints">
+        <span><kbd>↑↓</kbd> Navegar</span>
+        <span><kbd>Enter</kbd> Abrir</span>
+        <span><kbd>Esc</kbd> Cerrar</span>
+      </div>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>

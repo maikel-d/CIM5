@@ -94,6 +94,17 @@
             </div>
         </a>
         {% endif %}
+        {% if user.profile|can:'bienes_ver' %}
+        <a href="{% url 'bien_list' %}" class="stat-card bg-white rounded-xl shadow-sm border border-gray-200 p-6 cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 block">
+            <div class="stat-accent" style="background:#7c3aed"></div>
+            <div class="flex items-center gap-4 relative">
+                <div class="stat-icon" style="background:#f3e8ff;color:#7c3aed">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                </div>
+                <div class="min-w-0"><p class="stat-label text-gray-500 text-xs sm:text-sm">Bienes Activos</p><p class="stat-value text-gray-800 text-xl sm:text-2xl">{{ total_bienes }}</p></div>
+            </div>
+        </a>
+        {% endif %}
         {% if user.profile|can:'tickets_ver' %}
         <a href="{% url 'ticket_list' %}" class="stat-card bg-white rounded-xl shadow-sm border border-gray-200 p-6 cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 block">
             <div class="stat-accent" style="background:#dc2626"></div>

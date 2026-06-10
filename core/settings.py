@@ -3,16 +3,75 @@ Django settings for core project.
 """
 
 from pathlib import Path
+import sys
+import os
 from decouple import config, Csv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = config('SECRET_KEY', default='cambiar-esta-clave-en-produccion')
+# ---- Detectar entorno de ejecución ----
+# En Docker: usar variables de entorno del sistema (docker-compose las define)
+# En local: leer .env directamente, ignorando variables del sistema
+#            que puedan interferir (ej: Windows system env vars)
+#
+# NOTA: No usamos RepositoryEnv de python-decouple porque en ciertas
+# versiones tiene bugs de parseo en Windows. Implementamos nuestro
+# propio lector de .env que es robusto y predecible.
+_env_file = BASE_DIR / '.env'
+_running_in_container = os.path.exists('/.dockerenv')
 
-DEBUG = config('DEBUG', default=False, cast=bool)
+def _read_env_file(key, default=None, cast=None):
+    """Lee una variable SOLO del archivo .env, ignorando os.environ.
+    Esto permite que las variables del sistema (ej: Windows system env vars)
+    no interfieran con la configuración local."""
+    try:
+        with open(_env_file, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith('#') or '=' not in line:
+                    continue
+                # Soporte para 'export KEY=value'
+                if line.startswith('export '):
+                    line = line[7:]
+                k, v = line.split('=', 1)
+                k = k.strip()
+                v = v.strip()
+                # Quitar comentarios inline (ej: KEY=value # comment)
+                comment_pos = -1
+                for c in (' #', '\t#'):
+                    pos = v.find(c)
+                    if pos != -1 and (comment_pos == -1 or pos < comment_pos):
+                        comment_pos = pos
+                if comment_pos != -1:
+                    v = v[:comment_pos].strip()
+                # Quitar comillas si están presentes
+                if len(v) >= 2 and v[0] == v[-1] and v[0] in ('"', "'"):
+                    v = v[1:-1]
+                if k == key:
+                    if cast is bool:
+                        return v.lower() in ('true', '1', 'yes', 'on')
+                    elif callable(cast):
+                        return cast(v)
+                    return v
+    except (IOError, OSError, FileNotFoundError):
+        pass
+    if default is not None:
+        return default
+    return None
+
+if _running_in_container:
+    # En Docker: system env vars vienen de docker-compose, usar config()
+    _env = config
+else:
+    # En local: leer solo del .env (ignorar variables del sistema)
+    _env = _read_env_file
+
+SECRET_KEY = _env('SECRET_KEY', default='cambiar-esta-clave-en-produccion')
+
+DEBUG = _env('DEBUG', default=False, cast=bool)
 
 # En desarrollo, agrega tu IP local a la variable ALLOWED_HOSTS en .env
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='127.0.0.1,localhost', cast=Csv())
+ALLOWED_HOSTS = _env('ALLOWED_HOSTS', default='127.0.0.1,localhost', cast=Csv())
 
 # Detectar y agregar automáticamente la IP local de red para acceso desde otros dispositivos
 local_ip = ''
@@ -46,6 +105,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
+    'direccion.middleware.CSRFTrustedOriginMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -80,12 +140,12 @@ DATA_DIR.mkdir(exist_ok=True)
 
 DATABASES = {
     'default': {
-        'ENGINE': config('DB_ENGINE', default='django.db.backends.sqlite3'),
-        'NAME': config('DB_NAME', default=str(DATA_DIR / 'db.sqlite3')),
-        'USER': config('DB_USER', default=''),
-        'PASSWORD': config('DB_PASSWORD', default=''),
-        'HOST': config('DB_HOST', default=''),
-        'PORT': config('DB_PORT', default=''),
+        'ENGINE': _env('DB_ENGINE', default='django.db.backends.sqlite3'),
+        'NAME': _env('DB_NAME', default=str(DATA_DIR / 'db.sqlite3')),
+        'USER': _env('DB_USER', default=''),
+        'PASSWORD': _env('DB_PASSWORD', default=''),
+        'HOST': _env('DB_HOST', default=''),
+        'PORT': _env('DB_PORT', default=''),
     }
 }
 
@@ -109,6 +169,9 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 # En desarrollo/testing, Django sirve los archivos estáticos directamente.
 if not DEBUG:
     STORAGES = {
+        'default': {
+            'BACKEND': 'django.core.files.storage.FileSystemStorage',
+        },
         'staticfiles': {
             'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
         },
@@ -128,10 +191,17 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Seguridad para producción detrás de nginx
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=False, cast=bool)
+SECURE_SSL_REDIRECT = _env('SECURE_SSL_REDIRECT', default=False, cast=bool)
 
 # HTTPS Security Headers (solo cuando DEBUG=False y DOMAIN está configurado)
-_domain = config('DOMAIN', default='')
+_domain = _env('DOMAIN', default='')
+
+# When running tests, override environment settings to avoid SSL redirects
+# and ensure DEBUG is enabled. This must be placed AFTER all config() calls
+# to ensure the overrides take effect.
+if 'test' in sys.argv:
+    DEBUG = True
+    SECURE_SSL_REDIRECT = False
 
 if not DEBUG:
     # Content Security Policy básica
@@ -158,12 +228,12 @@ if not DEBUG and _domain:
     ]
     # Si el dominio es una IP, agregar también los puertos personalizados
     if _domain.replace('.', '').isdigit():
-        _webui_port = config('WEBUI_PORT', default='80')
+        _webui_port = _env('WEBUI_PORT', default='80')
         if _webui_port != '80':
             CSRF_TRUSTED_ORIGINS.append(f'https://{_domain}:{_webui_port}')
             CSRF_TRUSTED_ORIGINS.append(f'http://{_domain}:{_webui_port}')
         # Puerto HTTPS personalizado (WEBUI_PORT_SSL)
-        _webui_port_ssl = config('WEBUI_PORT_SSL', default='443')
+        _webui_port_ssl = _env('WEBUI_PORT_SSL', default='443')
         if _webui_port_ssl != '443':
             CSRF_TRUSTED_ORIGINS.append(f'https://{_domain}:{_webui_port_ssl}')
 
@@ -177,7 +247,7 @@ if not DEBUG and not _domain:
     CSRF_USE_SESSIONS = True
 
     # Construir trusted origins desde la IP local detectada + ALLOWED_HOSTS
-    _webui_port = config('WEBUI_PORT', default='80')
+    _webui_port = _env('WEBUI_PORT', default='80')
     _trusted_origins = []
 
     # Agregar la IP local con puerto (ej: http://192.168.0.101:8080)

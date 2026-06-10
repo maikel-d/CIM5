@@ -4,7 +4,8 @@ from django.contrib.auth.forms import UserCreationForm
 from .models import (
     UserProfile, Personal, DocumentoPersonal,
     Caso, Investigado, DocumentoInvestigado, DocumentoDireccion,
-    DocumentoCaso, Tarea, TicketSoporte, InformeDiario
+    DocumentoCaso, Tarea, TicketSoporte, InformeDiario,
+    Bien, DocumentoBien
 )
 
 
@@ -242,6 +243,42 @@ class InformeDiarioForm(forms.ModelForm):
             }),
             "fecha": forms.DateInput(attrs={"type": "date", "class": "form-input"}),
             "archivo": forms.FileInput(attrs={"class": "form-input"}),
+        }
+
+
+class BienForm(forms.ModelForm):
+    class Meta:
+        model = Bien
+        fields = [
+            "nombre", "descripcion", "foto", "categoria",
+            "codigo_inventario", "serial", "marca", "modelo_bien",
+            "ubicacion", "estado", "fecha_adquisicion", "valor"
+        ]
+        widgets = {
+            "descripcion": forms.Textarea(attrs={
+                "rows": 3, "class": "form-input",
+                "placeholder": "Descripción del bien..."
+            }),
+            "fecha_adquisicion": forms.DateInput(
+                attrs={"type": "date", "class": "form-input"}
+            ),
+            "categoria": forms.Select(attrs={"class": "form-input"}),
+            "estado": forms.Select(attrs={"class": "form-input"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            if not hasattr(field.widget.attrs, "get") or not field.widget.attrs.get("class"):
+                field.widget.attrs.update({"class": "form-input"})
+
+
+class DocumentoBienForm(forms.ModelForm):
+    class Meta:
+        model = DocumentoBien
+        fields = ["archivo", "descripcion"]
+        widgets = {
+            "descripcion": forms.TextInput(attrs={"class": "form-input", "placeholder": "Descripción opcional"}),
         }
 
 

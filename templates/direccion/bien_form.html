@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Formulario Bien{% endblock %}
+{% block page_title %}Formulario Bien{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto">
+  <a href="{% url 'bien_list' %}" class="form-back-link">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+    Volver al listado
+  </a>
+  <form method="post" enctype="multipart/form-data" class="form-card">
+    {% csrf_token %}
+    <div class="form-card-header">
+      <div class="form-header-icon blue">
+        <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+      </div>
+      <div class="form-header-text">
+        <h3>{% if form.instance.pk %}Editar Bien{% else %}Nuevo Bien{% endif %}</h3>
+        <p>{% if form.instance.pk %}Modifica los datos del bien{% else %}Registra un nuevo bien{% endif %}</p>
+      </div>
+    </div>
+    <div class="form-card-body">
+      <p class="form-section-title">Datos del Bien</p>
+      {% for field in form %}
+      <div class="form-field-group">
+        <label class="form-field-label">{{ field.label }}</label>
+        <div class="form-field-input">{{ field }}</div>
+        {% if field.errors %}<p class="form-field-error">{{ field.errors.0 }}</p>{% endif %}
+        {% if field.help_text %}<p class="form-field-help">{{ field.help_text }}</p>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    <div class="form-card-actions">
+      <a href="{% url 'bien_list' %}" class="form-btn form-btn-cancel">Cancelar</a>
+      <button type="submit" class="form-btn form-btn-submit">{% if form.instance.pk %}Guardar Cambios{% else %}Registrar Bien{% endif %}</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

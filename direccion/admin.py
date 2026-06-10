@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin
-from .models import UserProfile, Personal, DocumentoPersonal, Caso, Investigado, DocumentoInvestigado, DocumentoDireccion, DocumentoCaso, AuditLog, TicketSoporte, TicketHistorial, Tarea, Notificacion, InformeDiario
+from .models import UserProfile, Personal, DocumentoPersonal, Caso, Investigado, DocumentoInvestigado, DocumentoDireccion, DocumentoCaso, AuditLog, TicketSoporte, TicketHistorial, Tarea, Notificacion, InformeDiario, Bien, DocumentoBien
 
 
 class UserProfileInline(admin.StackedInline):
@@ -134,6 +134,27 @@ class InformeDiarioAdmin(admin.ModelAdmin):
     search_fields = ["titulo", "contenido"]
     date_hierarchy = "fecha"
     readonly_fields = ["fecha_creacion", "fecha_actualizacion"]
+
+
+class DocumentoBienInline(admin.TabularInline):
+    model = DocumentoBien
+    extra = 1
+    fields = ["archivo", "descripcion", "tipo", "fecha_subida"]
+    readonly_fields = ["tipo", "fecha_subida"]
+
+
+@admin.register(Bien)
+class BienAdmin(admin.ModelAdmin):
+    list_display = ["nombre", "categoria", "estado", "codigo_inventario", "ubicacion", "activo"]
+    list_filter = ["categoria", "estado", "activo"]
+    search_fields = ["nombre", "codigo_inventario", "serial", "marca", "ubicacion"]
+    inlines = [DocumentoBienInline]
+
+
+@admin.register(DocumentoBien)
+class DocumentoBienAdmin(admin.ModelAdmin):
+    list_display = ["bien", "tipo", "descripcion", "fecha_subida"]
+    list_filter = ["tipo"]
 
 
 @admin.register(Notificacion)
