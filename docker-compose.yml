@@ -207,7 +207,7 @@ services:
     healthcheck:
       # Verifica que nginx responda (incluso un 301 significa que el proceso está vivo)
       # --max-redirs 0 evita seguir la redirección HTTP->HTTPS
-      # NOTA: el flag correcto es --max-redirs (no --max-redirect)
+      # NOTA: Se usa curl ya que wget (BusyBox) no soporta las opciones necesarias
       test: ["CMD", "curl", "-sf", "--max-redirs", "0", "http://localhost/"]
       interval: 30s
       timeout: 10s
