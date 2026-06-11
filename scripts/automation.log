@@ -12,3 +12,37 @@
 [2026-06-11 05:50:01] [3/5] Rotando backups antiguos en Google Drive...
 [2026-06-11 05:50:01] Backups completos en Drive: 1, se eliminarán: -2
 [2026-06-11 05:50:01] [4/5] Git commit + push...
+[main 4577c57] auto: cambios 2026-06-11
+ 2 files changed, 117 insertions(+)
+ create mode 100644 scripts/automation.log
+ create mode 100755 scripts/direccion-automation.sh
+To https://github.com/maikel-d/CIM5.git
+   380f700..4577c57  main -> main
+[2026-06-11 05:50:01] Git push completado
+[2026-06-11 05:50:01] FIN
+
+========================================
+[2026-06-11 06:00:01] INICIO
+[2026-06-11 06:00:01] [5/5] Reiniciando contenedores Docker...
+ Container direccion-nginx Restarting 
+ Container direccion-db Restarting 
+ Container direccion-app Restarting 
+ Container direccion-db Started 
+ Container direccion-nginx Started 
+ Container direccion-app Started 
+[2026-06-11 06:00:01] Contenedores reiniciados
+[2026-06-11 06:00:01] FIN
+
+========================================
+[2026-06-11 13:08:13] INICIO
+[2026-06-11 13:08:13] [1/5] Backup completo (PostgreSQL + código)...
+[2026-06-11 13:08:13] 1a. Dump PostgreSQL...
+[2026-06-11 13:08:13] PostgreSQL dump: 73K
+[2026-06-11 13:08:13] 1b. Copiando código del proyecto...
+[2026-06-11 13:08:13] 1c. Comprimiendo backup...
+[2026-06-11 13:08:13] Backup completo creado: 1.9M
+[2026-06-11 13:08:13] [2/5] Subiendo backup completo a Google Drive...
+[2026-06-11 13:08:13] Backup subido a Drive: backup_completo_2026-06-11.tar.gz
+[2026-06-11 13:08:13] [3/5] Rotando backups antiguos en Google Drive...
+[2026-06-11 13:08:13] Backups completos en Drive: 1, se eliminarán: -2
+[2026-06-11 13:08:13] [4/5] Git commit + push...
