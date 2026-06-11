@@ -1,8 +1,8 @@
 #!/bin/bash
 # ============================================
 #   direccion-automation.sh
-#   Automatización diaria - Dirección General
-#   Backup completo: PostgreSQL + código + archivos
+#   Automatizacion diaria - Direccion General
+#   Backup COMPLETO: PostgreSQL + codigo + volumenes Docker
 # ============================================
 set -e
 
@@ -13,6 +13,7 @@ RCLONE_DIR="drive:/CIM5-Backups"
 TARBALL="/tmp/backup_completo_$DATE_STAMP.tar.gz"
 BACKUP_DIR="/tmp/backup_temp_$DATE_STAMP"
 MAX_BACKUPS=3
+VOLUMES=("media_data" "static_data")
 
 echo "" >> "$LOG_FILE"
 echo "========================================" >> "$LOG_FILE"
@@ -20,9 +21,9 @@ echo "[$DATE] INICIO" >> "$LOG_FILE"
 
 cd /DATA/CIM5NV
 
-# ---- Tarea 1: Backup completo (PostgreSQL + código + archivos) ----
+# ---- Tarea 1: Backup completo ----
 if [[ "$1" == "git-push" || -z "$1" ]]; then
-    echo "[$DATE] [1/5] Backup completo (PostgreSQL + código)..." >> "$LOG_FILE"
+    echo "[$DATE] [1/5] Backup completo (PostgreSQL + codigo + volumenes)..." >> "$LOG_FILE"
 
     mkdir -p "$BACKUP_DIR"
 
@@ -32,13 +33,27 @@ if [[ "$1" == "git-push" || -z "$1" ]]; then
     PG_SIZE=$(wc -c < "$BACKUP_DIR/base_de_datos.sql" 2>/dev/null || echo 0)
     echo "[$DATE] PostgreSQL dump: $(numfmt --to=iec $PG_SIZE 2>/dev/null || echo ${PG_SIZE}B)" >> "$LOG_FILE"
 
-    # 1b. Copiar el código del proyecto (excluyendo .git, __pycache__, .pyc, respaldos)
-    echo "[$DATE] 1b. Copiando código del proyecto..." >> "$LOG_FILE"
+    # 1b. Copiar el codigo del proyecto
+    echo "[$DATE] 1b. Copiando codigo del proyecto..." >> "$LOG_FILE"
     mkdir -p "$BACKUP_DIR/proyecto"
     rsync -a --exclude=".git" --exclude="__pycache__" --exclude="*.pyc" --exclude="*.pyo"         --exclude=".gitignore" --exclude="respaldos" --exclude="scripts/automation.log"         /DATA/CIM5NV/ "$BACKUP_DIR/proyecto/" 2>>"$LOG_FILE"
 
-    # 1c. Crear tarball comprimido
-    echo "[$DATE] 1c. Comprimiendo backup..." >> "$LOG_FILE"
+    # 1c. Backup de volumenes Docker
+    echo "[$DATE] 1c. Backupeando volumenes Docker..." >> "$LOG_FILE"
+    mkdir -p "$BACKUP_DIR/volumenes"
+    for vol in "${VOLUMES[@]}"; do
+        FULL_VOL="cim5nv_$vol"
+        VOL_FILE="$BACKUP_DIR/volumenes/$vol.tar.gz"
+        echo "[$DATE]     Volumen: $FULL_VOL" >> "$LOG_FILE"
+        docker run --rm -v "$FULL_VOL:/source" alpine tar czf - -C /source . 2>>"$LOG_FILE" > "$VOL_FILE" ||             echo "[$DATE]     AVISO: Volumen $FULL_VOL vacio o no disponible" >> "$LOG_FILE"
+        if [ -f "$VOL_FILE" ] && [ -s "$VOL_FILE" ]; then
+            VOL_SIZE=$(wc -c < "$VOL_FILE" 2>/dev/null || echo 0)
+            echo "[$DATE]     Backup OK: $(numfmt --to=iec $VOL_SIZE 2>/dev/null || echo ${VOL_SIZE}B)" >> "$LOG_FILE"
+        fi
+    done
+
+    # 1d. Crear tarball comprimido
+    echo "[$DATE] 1d. Comprimiendo backup..." >> "$LOG_FILE"
     cd /tmp
     tar czf "$TARBALL" -C /tmp "backup_temp_$DATE_STAMP" 2>>"$LOG_FILE"
     rm -rf "$BACKUP_DIR"
@@ -48,16 +63,16 @@ if [[ "$1" == "git-push" || -z "$1" ]]; then
     echo "[$DATE] Backup completo creado: $(numfmt --to=iec $TAR_SIZE 2>/dev/null || echo ${TAR_SIZE}B)" >> "$LOG_FILE"
 
     # ---- Tarea 2: Subir a Google Drive ----
-    echo "[$DATE] [2/5] Subiendo backup completo a Google Drive..." >> "$LOG_FILE"
+    echo "[$DATE] [2/5] Subiendo backup a Google Drive..." >> "$LOG_FILE"
 
     if [ -f "$TARBALL" ] && [ -s "$TARBALL" ]; then
         rclone copyto "$TARBALL" "$RCLONE_DIR/backup_completo_$DATE_STAMP.tar.gz" >> "$LOG_FILE" 2>&1
         echo "[$DATE] Backup subido a Drive: backup_completo_$DATE_STAMP.tar.gz" >> "$LOG_FILE"
     else
-        echo "[$DATE] ERROR: Archivo de backup vacío o no existe" >> "$LOG_FILE"
+        echo "[$DATE] ERROR: Archivo de backup vacio o no existe" >> "$LOG_FILE"
     fi
 
-    # ---- Tarea 3: Rotar backups en Drive (mantener solo los 3 más recientes) ----
+    # ---- Tarea 3: Rotar backups en Drive ----
     echo "[$DATE] [3/5] Rotando backups antiguos en Google Drive..." >> "$LOG_FILE"
 
     rclone ls "$RCLONE_DIR" 2>>"$LOG_FILE" | grep -oP "backup_completo_\d{4}-\d{2}-\d{2}\.tar\.gz" | sort > /tmp/backups_list.txt
@@ -65,7 +80,7 @@ if [[ "$1" == "git-push" || -z "$1" ]]; then
     TOTAL=$(wc -l < /tmp/backups_list.txt 2>/dev/null || echo 0)
     TO_DELETE=$((TOTAL - MAX_BACKUPS))
 
-    echo "[$DATE] Backups completos en Drive: $TOTAL, se eliminarán: $TO_DELETE" >> "$LOG_FILE"
+    echo "[$DATE] Backups en Drive: $TOTAL, se eliminaran: $TO_DELETE" >> "$LOG_FILE"
 
     if [ "$TO_DELETE" -gt 0 ]; then
         head -n "$TO_DELETE" /tmp/backups_list.txt | while IFS= read -r file; do
@@ -76,7 +91,7 @@ if [[ "$1" == "git-push" || -z "$1" ]]; then
 
     rm -f /tmp/backups_list.txt
 
-    # ---- Tarea 4: Git commit + push (sólo código) ----
+    # ---- Tarea 4: Git commit + push ----
     echo "[$DATE] [4/5] Git commit + push..." >> "$LOG_FILE"
 
     git add -A 2>>"$LOG_FILE"
@@ -86,7 +101,7 @@ if [[ "$1" == "git-push" || -z "$1" ]]; then
         git push origin main >> "$LOG_FILE" 2>&1
         echo "[$DATE] Git push completado" >> "$LOG_FILE"
     else
-        echo "[$DATE] Sin cambios nuevos, no se creó commit" >> "$LOG_FILE"
+        echo "[$DATE] Sin cambios nuevos, no se creo commit" >> "$LOG_FILE"
     fi
 
     # Limpiar tarball temporal
