@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import RegexValidator
+from datetime import date
 import os
 
 
@@ -43,45 +44,25 @@ def personal_document_path(instance, filename):
 
 
 class Personal(models.Model):
-    RANGO_CHOICES = [
-        ('', '--- Sin rango ---'),
-        ('DISTINGUIDO', 'Distinguido'),
-        ('CABO_SEGUNDO', 'Cabo Segundo'),
-        ('CABO_PRIMERO', 'Cabo Primero'),
-        ('SARGENTO_SEGUNDO', 'Sargento Segundo'),
-        ('SARGENTO_PRIMERO', 'Sargento Primero'),
-        ('SARGENTO_MAYOR', 'Sargento Mayor'),
-        ('OFICIAL', 'Oficial'),
-        ('OFICIAL_JEFE', 'Oficial Jefe'),
-        ('OFICIAL_MAYOR', 'Oficial Mayor'),
-        ('COMISIONADO', 'Comisionado'),
-        ('INSPECTOR', 'Inspector'),
-        ('SUB_TENIENTE', 'Sub-Teniente'),
-        ('SEGUNDO_TENIENTE', 'Segundo Teniente'),
-        ('PRIMER_TENIENTE', 'Primer Teniente'),
-        ('CAPITAN', 'Capitán'),
-        ('MAYOR', 'Mayor'),
-        ('TENIENTE_CORONEL', 'Teniente Coronel'),
-        ('CORONEL', 'Coronel'),
-        ('GENERAL', 'General'),
-    ]
-
     foto = models.ImageField(
         'Foto', upload_to=personal_photo_path, blank=True, null=True,
         help_text='Formatos: .jpg, .jpeg, .png'
     )
-    apellidos = models.CharField('Apellidos', max_length=150)
-    nombres = models.CharField('Nombres', max_length=150)
+    apellidos = models.CharField('Apellidos', max_length=150, db_index=True)
+    nombres = models.CharField('Nombres', max_length=150, db_index=True)
     cedula = models.CharField(
         'Cédula', max_length=15, unique=True,
         validators=[RegexValidator(r'^[VEJPGvejpg]-?\d{5,10}$', 'Formato: V-12345678')]
     )
-    rango = models.CharField('Rango', max_length=30, choices=RANGO_CHOICES, blank=True, default='', help_text='Solo para personal militar o policial')
     telefonos = models.TextField('Teléfonos', blank=True, null=True, help_text='Ingrese uno o varios números')
     fecha_nacimiento = models.DateField('Fecha de Nacimiento', blank=True, null=True)
-    fecha_creacion = models.DateTimeField('Fecha de creación', auto_now_add=True)
+    grado = models.CharField('Grado', max_length=100, blank=True, default='', help_text='Grado profesional / jerárquico')
+    direccion = models.TextField('Dirección', blank=True, null=True, help_text='Dirección de domicilio')
+    fecha_ingreso = models.DateField('Fecha de Ingreso', blank=True, null=True)
+    contacto_emergencia = models.TextField('Contacto de Emergencia', blank=True, null=True, help_text='Nombre, parentesco y teléfono')
+    fecha_creacion = models.DateTimeField('Fecha de creación', auto_now_add=True, db_index=True)
     fecha_actualizacion = models.DateTimeField('Fecha de actualización', auto_now=True)
-    activo = models.BooleanField('Activo', default=True)
+    activo = models.BooleanField('Activo', default=True, db_index=True)
 
     class Meta:
         verbose_name = 'Personal'
@@ -90,6 +71,15 @@ class Personal(models.Model):
 
     def __str__(self):
         return f"{self.apellidos}, {self.nombres} - {self.cedula}"
+
+    @property
+    def edad(self):
+        if not self.fecha_nacimiento:
+            return None
+        today = date.today()
+        return today.year - self.fecha_nacimiento.year - (
+            (today.month, today.day) < (self.fecha_nacimiento.month, self.fecha_nacimiento.day)
+        )
 
     def save(self, *args, **kwargs):
         if self.pk:
@@ -105,8 +95,9 @@ class Personal(models.Model):
 class TipoDocumentoMixin:
     """Mixin que detecta automáticamente el tipo de archivo por extensión."""
     def save(self, *args, **kwargs):
-        if self.archivo.name:
-            ext = os.path.splitext(self.archivo.name)[1].lower()
+        archivo = getattr(self, 'archivo', None)
+        if archivo and hasattr(archivo, 'name') and archivo.name:
+            ext = os.path.splitext(archivo.name)[1].lower()
             if ext in ['.pdf']:
                 self.tipo = 'PDF'
             elif ext in ['.doc', '.docx']:
@@ -136,9 +127,9 @@ class DocumentoPersonal(TipoDocumentoMixin, models.Model):
         'Archivo', upload_to=personal_document_path,
         help_text='Formatos: PDF, Word (.doc, .docx), imágenes'
     )
-    tipo = models.CharField('Tipo', max_length=10, choices=TIPO_CHOICES, editable=False)
+    tipo = models.CharField('Tipo', max_length=10, choices=TIPO_CHOICES, editable=False, db_index=True)
     descripcion = models.CharField('Descripción', max_length=255, blank=True, null=True)
-    fecha_subida = models.DateTimeField('Fecha de subida', auto_now_add=True)
+    fecha_subida = models.DateTimeField('Fecha de subida', auto_now_add=True, db_index=True)
 
     class Meta:
         verbose_name = 'Documento del Personal'
@@ -172,9 +163,9 @@ class DocumentoCaso(TipoDocumentoMixin, models.Model):
         'Archivo', upload_to=caso_document_path,
         help_text='Formatos: PDF, Word (.doc, .docx), imágenes'
     )
-    tipo = models.CharField('Tipo', max_length=10, choices=TIPO_CHOICES, editable=False)
+    tipo = models.CharField('Tipo', max_length=10, choices=TIPO_CHOICES, editable=False, db_index=True)
     descripcion = models.CharField('Descripción', max_length=255, blank=True, null=True)
-    fecha_subida = models.DateTimeField('Fecha de subida', auto_now_add=True)
+    fecha_subida = models.DateTimeField('Fecha de subida', auto_now_add=True, db_index=True)
 
     class Meta:
         verbose_name = 'Documento del Caso'
@@ -188,12 +179,12 @@ class DocumentoCaso(TipoDocumentoMixin, models.Model):
 
 class Caso(models.Model):
     """Agrupa varias personas investigadas bajo un mismo caso."""
-    nombre = models.CharField('Nombre del caso', max_length=200)
+    nombre = models.CharField('Nombre del caso', max_length=200, db_index=True)
     descripcion = models.TextField('Descripción', blank=True, null=True)
     fecha_apertura = models.DateField('Fecha de apertura', blank=True, null=True)
-    fecha_creacion = models.DateTimeField('Fecha de creación', auto_now_add=True)
+    fecha_creacion = models.DateTimeField('Fecha de creación', auto_now_add=True, db_index=True)
     fecha_actualizacion = models.DateTimeField('Fecha de actualización', auto_now=True)
-    activo = models.BooleanField('Activo', default=True)
+    activo = models.BooleanField('Activo', default=True, db_index=True)
 
     class Meta:
         verbose_name = 'Caso'
@@ -228,8 +219,8 @@ class Investigado(models.Model):
         'Foto', upload_to=investigado_photo_path, blank=True, null=True,
         help_text='Formatos: .jpg, .jpeg, .png'
     )
-    apellidos = models.CharField('Apellidos', max_length=150)
-    nombres = models.CharField('Nombres', max_length=150)
+    apellidos = models.CharField('Apellidos', max_length=150, db_index=True)
+    nombres = models.CharField('Nombres', max_length=150, db_index=True)
     entrada_investigacion = models.TextField(
         'Entrada a investigación', blank=True, null=True,
         help_text='Breve resumen del caso'
@@ -246,9 +237,9 @@ class Investigado(models.Model):
         'Partida de nacimiento', max_length=255, blank=True, null=True,
         help_text='Tomo, folio o datos de acta'
     )
-    fecha_creacion = models.DateTimeField('Fecha de creación', auto_now_add=True)
+    fecha_creacion = models.DateTimeField('Fecha de creación', auto_now_add=True, db_index=True)
     fecha_actualizacion = models.DateTimeField('Fecha de actualización', auto_now=True)
-    activo = models.BooleanField('Activo', default=True)
+    activo = models.BooleanField('Activo', default=True, db_index=True)
 
     class Meta:
         verbose_name = 'Persona Investigada'
@@ -292,10 +283,10 @@ class DocumentoDireccion(TipoDocumentoMixin, models.Model):
         'Archivo', upload_to=direccion_document_path,
         help_text='Formatos: PDF, Word (.doc, .docx), imágenes'
     )
-    tipo = models.CharField('Tipo', max_length=10, choices=TIPO_CHOICES, editable=False)
-    categoria = models.CharField('Categoría', max_length=20, choices=CATEGORIA_CHOICES, default='DOCUMENTOS')
+    tipo = models.CharField('Tipo', max_length=10, choices=TIPO_CHOICES, editable=False, db_index=True)
+    categoria = models.CharField('Categoría', max_length=20, choices=CATEGORIA_CHOICES, default='DOCUMENTOS', db_index=True)
     descripcion = models.CharField('Descripción', max_length=255, blank=True, null=True)
-    fecha_subida = models.DateTimeField('Fecha de subida', auto_now_add=True)
+    fecha_subida = models.DateTimeField('Fecha de subida', auto_now_add=True, db_index=True)
 
     class Meta:
         verbose_name = 'Documento de la Dirección'
@@ -326,13 +317,13 @@ class AuditLog(models.Model):
         verbose_name='Usuario', related_name='audit_logs'
     )
     username = models.CharField('Nombre de usuario', max_length=150, blank=True)
-    accion = models.CharField('Acci\u00f3n', max_length=20, choices=ACCIONES)
-    modelo = models.CharField('Modelo', max_length=100, blank=True)
+    accion = models.CharField('Acci\u00f3n', max_length=20, choices=ACCIONES, db_index=True)
+    modelo = models.CharField('Modelo', max_length=100, blank=True, db_index=True)
     objeto_id = models.PositiveIntegerField('ID del objeto', null=True, blank=True)
     objeto_repr = models.CharField('Representaci\u00f3n', max_length=255, blank=True)
     detalle = models.TextField('Detalle', blank=True)
     direccion_ip = models.GenericIPAddressField('Direcci\u00f3n IP', blank=True, null=True)
-    fecha = models.DateTimeField('Fecha', auto_now_add=True)
+    fecha = models.DateTimeField('Fecha', auto_now_add=True, db_index=True)
 
     class Meta:
         verbose_name = 'Registro de Auditor\u00eda'
@@ -352,10 +343,10 @@ class Tarea(models.Model):
     ]
 
     descripcion = models.TextField('Descripción')
-    completada = models.BooleanField('Completada', default=False)
+    completada = models.BooleanField('Completada', default=False, db_index=True)
     prioridad = models.CharField('Prioridad', max_length=10, choices=PRIORIDAD_CHOICES, default='MEDIO')
     creado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, verbose_name='Creado por')
-    fecha_creacion = models.DateTimeField('Fecha de creación', auto_now_add=True)
+    fecha_creacion = models.DateTimeField('Fecha de creación', auto_now_add=True, db_index=True)
     fecha_actualizacion = models.DateTimeField('Fecha de actualización', auto_now=True)
 
     class Meta:
@@ -383,11 +374,11 @@ class TicketSoporte(models.Model):
 
     asunto = models.CharField('Asunto', max_length=200)
     descripcion = models.TextField('Descripción')
-    estado = models.CharField('Estado', max_length=20, choices=ESTADO_CHOICES, default='ABIERTO')
-    prioridad = models.CharField('Prioridad', max_length=10, choices=PRIORIDAD_CHOICES, default='MEDIO')
+    estado = models.CharField('Estado', max_length=20, choices=ESTADO_CHOICES, default='ABIERTO', db_index=True)
+    prioridad = models.CharField('Prioridad', max_length=10, choices=PRIORIDAD_CHOICES, default='MEDIO', db_index=True)
     creado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='tickets_creados', verbose_name='Creado por')
     asignado_a = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='tickets_asignados', verbose_name='Asignado a')
-    fecha_creacion = models.DateTimeField('Fecha de creación', auto_now_add=True)
+    fecha_creacion = models.DateTimeField('Fecha de creación', auto_now_add=True, db_index=True)
     fecha_actualizacion = models.DateTimeField('Fecha de actualización', auto_now=True)
 
     class Meta:
@@ -464,8 +455,8 @@ class Notificacion(models.Model):
     usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notificaciones', verbose_name='Usuario')
     mensaje = models.CharField('Mensaje', max_length=255)
     link = models.CharField('Enlace', max_length=255, blank=True, null=True)
-    leida = models.BooleanField('Leída', default=False)
-    fecha_creacion = models.DateTimeField('Fecha de creación', auto_now_add=True)
+    leida = models.BooleanField('Leída', default=False, db_index=True)
+    fecha_creacion = models.DateTimeField('Fecha de creación', auto_now_add=True, db_index=True)
 
     class Meta:
         verbose_name = 'Notificación'
@@ -498,12 +489,12 @@ class InformeDiario(models.Model):
         blank=True, null=True,
         help_text='Opcional: PDF, Word, imagen...'
     )
-    fecha = models.DateField('Fecha del informe')
+    fecha = models.DateField('Fecha del informe', db_index=True)
     creado_por = models.ForeignKey(
         User, on_delete=models.SET_NULL, null=True, blank=True,
         verbose_name='Creado por'
     )
-    fecha_creacion = models.DateTimeField('Fecha de creación', auto_now_add=True)
+    fecha_creacion = models.DateTimeField('Fecha de creación', auto_now_add=True, db_index=True)
     fecha_actualizacion = models.DateTimeField('Fecha de actualización', auto_now=True)
 
     class Meta:
@@ -539,9 +530,9 @@ class DocumentoInvestigado(TipoDocumentoMixin, models.Model):
         'Archivo', upload_to=investigado_document_path,
         help_text='Formatos: PDF, Word (.doc, .docx), imágenes'
     )
-    tipo = models.CharField('Tipo', max_length=10, choices=TIPO_CHOICES, editable=False)
+    tipo = models.CharField('Tipo', max_length=10, choices=TIPO_CHOICES, editable=False, db_index=True)
     descripcion = models.CharField('Descripción', max_length=255, blank=True, null=True)
-    fecha_subida = models.DateTimeField('Fecha de subida', auto_now_add=True)
+    fecha_subida = models.DateTimeField('Fecha de subida', auto_now_add=True, db_index=True)
 
     class Meta:
         verbose_name = 'Documento de Evidencia'
@@ -585,23 +576,27 @@ class Bien(models.Model):
         ('OBSOLETO', 'Obsoleto'),
     ]
 
+    caso = models.ForeignKey(
+        'Caso', on_delete=models.SET_NULL, null=True, blank=True,
+        verbose_name='Caso', related_name='bienes'
+    )
     nombre = models.CharField('Nombre del bien', max_length=200)
     descripcion = models.TextField('Descripción', blank=True, null=True)
     foto = models.ImageField(
         'Foto', upload_to=bien_photo_path, blank=True, null=True,
         help_text='Formatos: .jpg, .jpeg, .png'
     )
-    categoria = models.CharField('Categoría', max_length=20, choices=CATEGORIA_CHOICES, default='OTRO')
+    categoria = models.CharField('Categoría', max_length=20, choices=CATEGORIA_CHOICES, default='OTRO', db_index=True)
     codigo_inventario = models.CharField('Código de inventario', max_length=50, unique=True, blank=True, null=True)
     serial = models.CharField('Serial', max_length=100, blank=True, null=True)
     marca = models.CharField('Marca', max_length=100, blank=True, null=True)
     modelo_bien = models.CharField('Modelo', max_length=100, blank=True, null=True)
     ubicacion = models.CharField('Ubicación', max_length=200, blank=True, null=True)
-    estado = models.CharField('Estado', max_length=20, choices=ESTADO_CHOICES, default='BUENO')
+    estado = models.CharField('Estado', max_length=20, choices=ESTADO_CHOICES, default='BUENO', db_index=True)
     fecha_adquisicion = models.DateField('Fecha de adquisición', blank=True, null=True)
     valor = models.DecimalField('Valor (Bs.)', max_digits=14, decimal_places=2, blank=True, null=True)
-    activo = models.BooleanField('Activo', default=True)
-    fecha_creacion = models.DateTimeField('Fecha de creación', auto_now_add=True)
+    activo = models.BooleanField('Activo', default=True, db_index=True)
+    fecha_creacion = models.DateTimeField('Fecha de creación', auto_now_add=True, db_index=True)
     fecha_actualizacion = models.DateTimeField('Fecha de actualización', auto_now=True)
 
     class Meta:
@@ -639,9 +634,9 @@ class DocumentoBien(TipoDocumentoMixin, models.Model):
         'Archivo', upload_to=bien_document_path,
         help_text='Formatos: PDF, Word (.doc, .docx), imágenes'
     )
-    tipo = models.CharField('Tipo', max_length=10, choices=TIPO_CHOICES, editable=False)
+    tipo = models.CharField('Tipo', max_length=10, choices=TIPO_CHOICES, editable=False, db_index=True)
     descripcion = models.CharField('Descripción', max_length=255, blank=True, null=True)
-    fecha_subida = models.DateTimeField('Fecha de subida', auto_now_add=True)
+    fecha_subida = models.DateTimeField('Fecha de subida', auto_now_add=True, db_index=True)
 
     class Meta:
         verbose_name = 'Documento del Bien'

@@ -1,88 +1,153 @@
 {% extends 'base.html' %}
+{% load permissions_tags %}
 {% block title %}Personal de la Dirección{% endblock %}
 {% block page_title %}Personal de la Dirección{% endblock %}
 {% block content %}
-<div class="space-y-4">
-  <div class="flex items-center justify-between">
-    <form method="get" class="flex gap-2">
-      <input type="text" name="search" value="{{ search }}" placeholder="Buscar..." class="form-input max-w-md">
-      <button type="submit" class="px-4 py-2 bg-[#003363] text-white rounded-lg hover:bg-[#004a80] text-sm">Buscar</button>
-      {% if search %}<a href="{% url 'personal_list' %}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-sm">Limpiar</a>{% endif %}
+<div class="space-y-6">
+  {# ===== HEADER ===== #}
+  <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <form method="get" class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+      <div class="relative flex-1 sm:flex-none min-w-[240px]">
+        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        <input type="text" name="search" value="{{ search }}" placeholder="Buscar por nombre, apellido o cédula..." class="form-input pl-10 pr-4 py-2.5 w-full rounded-lg border border-gray-300 focus:border-[#003363] focus:ring-1 focus:ring-[#003363] transition-all text-sm">
+      </div>
+      <button type="submit" class="px-5 py-2.5 bg-[#003363] text-white rounded-lg hover:bg-[#004a80] text-sm font-medium transition-colors shadow-sm">Buscar</button>
+      {% if search %}
+      <a href="{% url 'personal_list' %}" class="px-4 py-2.5 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 text-sm font-medium transition-colors">Limpiar</a>
+      {% endif %}
     </form>
-    <div class="flex gap-2">
-      <a href="{% url 'personal_pdf' %}" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm flex items-center gap-1.5">
+    <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+      <a href="{% url 'personal_pdf' %}" class="inline-flex items-center gap-1.5 px-3.5 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm font-medium transition-colors shadow-sm">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
         PDF
       </a>
-      <a href="{% url 'personal_export' %}" class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 text-sm flex items-center gap-1.5">
+      <a href="{% url 'personal_export' %}" class="inline-flex items-center gap-1.5 px-3.5 py-2.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 text-sm font-medium transition-colors shadow-sm">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
         Excel
       </a>
-      <a href="{% url 'personal_create' %}" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm">+ Nuevo</a>
+      <a href="{% url 'personal_create' %}" class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium transition-colors shadow-sm">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        Nuevo
+      </a>
     </div>
   </div>
   <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
     <table class="w-full">
-      <thead class="bg-gray-50 border-b border-gray-200">
-        <tr>
-          <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase" style="width:60px"></th>
-          <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">Apellidos</th>
-          <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">Nombres</th>
-          <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">Cédula</th>
-          <th class="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase">Acciones</th>
-        </tr>
-      </thead>
+          <tr class="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+            <th class="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider" style="width:72px"></th>
+            <th class="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Apellidos</th>
+            <th class="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Nombres</th>
+            <th class="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Cédula</th>
+            <th class="px-5 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Grado</th>
+            <th class="px-5 py-3.5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Acciones</th>
+          </tr>
       <tbody class="divide-y divide-gray-100">
         {% for p in personal_list %}
-        <tr class="hover:bg-gray-50 transition-colors clickable-row" onclick="window.location='{% url 'personal_detail' p.pk %}'">
-          <td class="px-6 py-4">
-            <div class="w-12 h-12 rounded-full overflow-hidden bg-[#e8f0f8] flex items-center justify-center text-xs font-bold text-[#003363] flex-shrink-0">
-              {% if p.foto %}
-              <img src="{{ p.foto.url }}" alt="" class="w-full h-full object-cover">
-              {% else %}
-              {{ p.nombres|first }}{{ p.apellidos|first }}
-              {% endif %}
-            </div>
-          </td>
-          <td class="px-6 py-4 text-sm font-medium text-gray-800">{{ p.apellidos }}</td>
-          <td class="px-6 py-4 text-sm text-gray-600">{{ p.nombres }}</td>
-          <td class="px-6 py-4 text-sm text-gray-500">{{ p.cedula }}</td>
-          <td class="px-6 py-4 text-right whitespace-nowrap" onclick="event.stopPropagation()">
-            <a href="{% url 'personal_detail' p.pk %}" class="action-btn view" title="Ver detalles">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-              Ver
-            </a>
-            {% if user.profile.rol == 'ADMINISTRADOR' %}
-            <a href="{% url 'personal_edit' p.pk %}" class="action-btn edit" title="Editar">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-              Editar
-            </a>
-            <a href="{% url 'personal_delete' p.pk %}" class="action-btn delete" title="Eliminar">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-              Eliminar
-            </a>
-            {% endif %}
-          </td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="5" class="px-4 py-12 text-center text-gray-400">
-            <svg width="40" height="40" fill="none" stroke="currentColor" viewBox="0 0 24 24" class="mx-auto mb-3"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/></svg>
-            <p class="text-sm font-medium">No hay personal registrado</p>
-            <p class="text-xs mt-1">Agrega el primer registro usando el botón "+ Nuevo"</p>
-          </td>
-        </tr>
+                  <tr class="hover:bg-[#f8faff] transition-all duration-150 group cursor-pointer" onclick="window.location='{% url 'personal_detail' p.pk %}'">
+            {# Avatar #}
+            <td class="px-5 py-3.5">
+              <div class="w-11 h-11 rounded-full overflow-hidden bg-gradient-to-br from-[#e8f0f8] to-[#d0e2f0] flex items-center justify-center text-xs font-bold text-[#003363] ring-2 ring-white shadow-sm flex-shrink-0">
+                {% if p.foto %}
+                <img src="{{ p.foto.url }}" alt="" class="w-full h-full object-cover">
+                {% else %}
+                {{ p.nombres|first }}{{ p.apellidos|first }}
+                {% endif %}
+              </div>
+            </td>
+            {# Apellidos #}
+            <td class="px-5 py-3.5">
+              <span class="text-sm font-semibold text-gray-800 group-hover:text-[#003363] transition-colors">{{ p.apellidos }}</span>
+            </td>
+            {# Nombres #}
+            <td class="px-5 py-3.5 text-sm text-gray-600">{{ p.nombres }}</td>
+            {# Cédula #}
+            <td class="px-5 py-3.5">
+              <span class="inline-flex items-center gap-1.5 text-sm font-mono text-gray-500">
+                <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"/></svg>
+                {{ p.cedula }}
+              </span>
+            </td>
+            {# Grado #}
+            <td class="px-5 py-3.5">
+              <span class="text-sm text-gray-600">{{ p.grado|default:"-" }}</span>
+            </td>
+            {# Acciones #}
+            <td class="px-5 py-3.5 text-right whitespace-nowrap" onclick="event.stopPropagation()">
+              <div class="flex items-center justify-end gap-1.5">
+                <a href="{% url 'personal_detail' p.pk %}" class="action-btn view" title="Ver detalles">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                  Ver
+                </a>
+                {% if user.profile|can:'personal_editar' %}
+                <a href="{% url 'personal_edit' p.pk %}" class="action-btn edit" title="Editar">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                  Editar
+                </a>
+                {% endif %}
+                {% if user.profile|can:'personal_eliminar' %}
+                <a href="{% url 'personal_delete' p.pk %}" class="action-btn delete" title="Eliminar">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                  Eliminar
+                </a>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+        {% empty %}          <tr>
+            <td colspan="6" class="px-5 py-16 text-center">
+              <div class="max-w-sm mx-auto">
+                <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+                  <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/></svg>
+                </div>
+                <p class="text-sm font-semibold text-gray-500">No hay personal registrado</p>
+                <p class="text-xs text-gray-400 mt-1.5">Agrega el primer registro usando el botón "Nuevo"</p>
+                <a href="{% url 'personal_create' %}" class="inline-flex items-center gap-1.5 mt-4 px-4 py-2 bg-[#003363] text-white rounded-lg hover:bg-[#004a80] text-sm font-medium transition-colors">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                  Agregar Personal
+                </a>
+              </div>
+            </td>
+          </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
+  {# ===== PAGINATION ===== #}
   {% if is_paginated %}
-  <div class="pagination">
-    {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search }}{% endif %}">&laquo;</a>{% endif %}
-    {% for i in paginator.page_range %}
-      {% if page_obj.number == i %}<span class="current">{{ i }}</span>{% else %}<a href="?page={{ i }}{% if search %}&search={{ search }}{% endif %}">{{ i }}</a>{% endif %}
-    {% endfor %}
-    {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search }}{% endif %}">&raquo;</a>{% endif %}
+  <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+    <p class="text-sm text-gray-500 text-center sm:text-left">
+      Página {{ page_obj.number }} de {{ paginator.num_pages }}
+      <span class="text-gray-300 mx-1">|</span>
+      {{ paginator.count }} registro{{ paginator.count|pluralize:'s' }}
+      {% if search %}encontrado{{ paginator.count|pluralize:'s' }}{% endif %}
+    </p>
+    <div class="flex items-center gap-1.5">
+      {% if page_obj.has_previous %}
+      <a href="?page=1{% if search %}&search={{ search }}{% endif %}" class="px-3 py-2 text-sm text-gray-500 hover:text-[#003363] hover:bg-[#e8f0f8] rounded-lg transition-colors" title="Primera">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/></svg>
+      </a>
+      <a href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search }}{% endif %}" class="px-3 py-2 text-sm text-gray-500 hover:text-[#003363] hover:bg-[#e8f0f8] rounded-lg transition-colors" title="Anterior">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      </a>
+      {% endif %}
+
+      {% for i in paginator.page_range %}
+        {% if page_obj.number == i %}
+        <span class="px-3.5 py-1.5 text-sm font-semibold bg-[#003363] text-white rounded-lg shadow-sm">{{ i }}</span>
+        {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
+        <a href="?page={{ i }}{% if search %}&search={{ search }}{% endif %}" class="px-3.5 py-1.5 text-sm text-gray-600 hover:text-[#003363] hover:bg-[#e8f0f8] rounded-lg transition-colors">{{ i }}</a>
+        {% endif %}
+      {% endfor %}
+
+      {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search }}{% endif %}" class="px-3 py-2 text-sm text-gray-500 hover:text-[#003363] hover:bg-[#e8f0f8] rounded-lg transition-colors" title="Siguiente">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+      </a>
+      <a href="?page={{ paginator.num_pages }}{% if search %}&search={{ search }}{% endif %}" class="px-3 py-2 text-sm text-gray-500 hover:text-[#003363] hover:bg-[#e8f0f8] rounded-lg transition-colors" title="Última">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"/></svg>
+      </a>
+      {% endif %}
+    </div>
   </div>
   {% endif %}
 </div>

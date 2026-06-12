@@ -9,6 +9,7 @@ from io import BytesIO
 from datetime import date, datetime, timedelta
 
 from django.shortcuts import render, redirect, get_object_or_404
+from django.http import HttpResponse
 from django.contrib import messages
 from django.conf import settings
 

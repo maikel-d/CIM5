@@ -99,32 +99,29 @@ class CasoDeleteView(PermissionRequiredMixin, DeleteView):
 # ============================================================
 
 class InvestigadoListView(PermissionRequiredMixin, ListView):
-    model = Investigado
+    model = Caso
     template_name = "direccion/investigado_list.html"
-    context_object_name = "investigado_list"
+    context_object_name = "casos"
     login_url = reverse_lazy("login")
     paginate_by = 25
     permisos_requeridos = [perms.INVESTIGADOS_VER]
 
     def get_queryset(self):
-        queryset = Investigado.objects.filter(activo=True).select_related("caso")
-        caso_id = self.request.GET.get("caso", "")
+        queryset = Caso.objects.filter(activo=True).annotate(
+            count_investigados=Count("investigados", filter=Q(investigados__activo=True)),
+            count_documentos=Count("documentos")
+        )
         search = self.request.GET.get("search", "")
-        if caso_id:
-            queryset = queryset.filter(caso_id=caso_id)
         if search:
             queryset = queryset.filter(
-                Q(apellidos__icontains=search) |
-                Q(nombres__icontains=search) |
-                Q(cedula__icontains=search)
+                Q(nombre__icontains=search) |
+                Q(descripcion__icontains=search)
             )
-        return queryset.order_by("apellidos", "nombres")
+        return queryset.order_by("-fecha_creacion")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["search"] = self.request.GET.get("search", "")
-        context["caso_filtro"] = self.request.GET.get("caso", "")
-        context["casos"] = Caso.objects.filter(activo=True).order_by("nombre")
         return context
 
 
@@ -134,6 +131,16 @@ class InvestigadoCreateView(PermissionRequiredMixin, CreateView):
     template_name = "direccion/investigado_form.html"
     login_url = reverse_lazy("login")
     permisos_requeridos = [perms.INVESTIGADOS_CREAR]
+
+    def get_initial(self):
+        initial = super().get_initial()
+        caso_id = self.request.GET.get("caso")
+        if caso_id:
+            try:
+                initial["caso"] = int(caso_id)
+            except (ValueError, TypeError):
+                pass
+        return initial
 
     def get_success_url(self):
         return reverse_lazy("investigado_detail", kwargs={"pk": self.object.pk})

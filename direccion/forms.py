@@ -95,15 +95,21 @@ class PersonalForm(forms.ModelForm):
     class Meta:
         model = Personal
         fields = [
-            "foto", "apellidos", "nombres", "cedula", "rango",
-            "telefonos", "fecha_nacimiento"
+            "foto", "apellidos", "nombres", "cedula", "grado",
+            "fecha_nacimiento", "direccion", "telefonos",
+            "fecha_ingreso", "contacto_emergencia"
         ]
         widgets = {
             "fecha_nacimiento": forms.DateInput(
                 attrs={"type": "date", "class": "form-input"}
             ),
+            "fecha_ingreso": forms.DateInput(
+                attrs={"type": "date", "class": "form-input"}
+            ),
             "telefonos": forms.Textarea(attrs={"rows": 2, "class": "form-input", "placeholder": "Ej: 0412-1234567, 0212-7654321"}),
-            "rango": forms.Select(attrs={"class": "form-input"}),
+            "direccion": forms.Textarea(attrs={"rows": 2, "class": "form-input", "placeholder": "Dirección de domicilio"}),
+            "contacto_emergencia": forms.Textarea(attrs={"rows": 2, "class": "form-input", "placeholder": "Nombre, parentesco y teléfono"}),
+            "grado": forms.TextInput(attrs={"class": "form-input", "placeholder": "Ej: Inspector, Sub-Comisario, T.S.U...."}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -283,11 +289,12 @@ class BienForm(forms.ModelForm):
     class Meta:
         model = Bien
         fields = [
-            "nombre", "descripcion", "foto", "categoria",
+            "caso", "nombre", "descripcion", "foto", "categoria",
             "codigo_inventario", "serial", "marca", "modelo_bien",
             "ubicacion", "estado", "fecha_adquisicion", "valor"
         ]
         widgets = {
+            "caso": forms.Select(attrs={"class": "form-input"}),
             "descripcion": forms.Textarea(attrs={
                 "rows": 3, "class": "form-input",
                 "placeholder": "Descripción del bien..."
@@ -298,7 +305,6 @@ class BienForm(forms.ModelForm):
             "categoria": forms.Select(attrs={"class": "form-input"}),
             "estado": forms.Select(attrs={"class": "form-input"}),
         }
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():

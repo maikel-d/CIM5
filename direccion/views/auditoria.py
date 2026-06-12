@@ -11,6 +11,7 @@ from django.core.paginator import Paginator
 from ..models import AuditLog
 from ..decorators import permiso_required
 from .. import permissions as perms
+from ..audit import auditar
 from .export import _build_excel_response, _build_pdf_response
 
 

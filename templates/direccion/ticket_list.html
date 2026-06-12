@@ -1,11 +1,12 @@
 {% extends 'base.html' %}
+{% load permissions_tags %}
 {% block title %}Tickets de Soporte - Direccion General{% endblock %}
 {% block page_title %}Tickets de Soporte{% endblock %}
 {% block content %}
 <div class="space-y-6">
     <div class="flex items-center justify-between">
         <p class="text-sm text-gray-500">{{ tickets.count }} ticket(s) registrados</p>
-        {% if user.profile.rol != 'ADMINISTRADOR' %}
+        {% if user.profile|can:'tickets_crear' %}
         <a href="{% url 'ticket_create' %}" class="px-4 py-2 bg-[#003363] text-white rounded-lg hover:bg-[#002244] transition-colors text-sm font-medium">
             + Nuevo Ticket
         </a>
@@ -24,7 +25,7 @@
                     {% endfor %}
                 </select>
             </div>
-            {% if user.profile.rol == 'ADMINISTRADOR' %}
+            {% if user.profile|can:'tickets_asignar' %}
             <div class="flex-1 min-w-[160px]">
                 <label class="block text-xs font-medium text-gray-500 mb-1">Usuario</label>
                 <select name="usuario" class="form-input text-sm">
@@ -82,7 +83,7 @@
                             <svg class="w-3.5 h-3.5 inline-block mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                             Detalle
                         </a>
-                        {% if user.profile.rol == 'ADMINISTRADOR' %}
+                        {% if user.profile|can:'tickets_resolver' %}
                             {% if t.estado == 'ABIERTO' or t.estado == 'EN_PROCESO' %}
                             <a href="{% url 'ticket_resolver' t.pk %}" class="px-2.5 py-1 text-[11px] font-medium rounded-md bg-green-50 text-green-700 hover:bg-green-100 transition-colors">
                                 Resolver
@@ -92,6 +93,8 @@
                                 Reabrir
                             </a>
                             {% endif %}
+                        {% endif %}
+                        {% if user.profile|can:'tickets_asignar' %}
                         <a href="{% url 'ticket_asignar' t.pk %}" class="px-2.5 py-1 text-[11px] font-medium rounded-md text-[#003363] hover:bg-[#e8f0f8] transition-colors">Asignar</a>
                         {% endif %}
                     </div>

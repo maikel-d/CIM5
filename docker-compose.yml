@@ -209,9 +209,7 @@ services:
       - media_data:/DATA/CIM5NV/media:ro
     entrypoint: ["/bin/sh", "/entrypoint.sh"]
     healthcheck:
-      # Verifica que nginx responda (HTTP mode: 200, SSL mode: 301 redirect)
-      # Usa --max-redirs 0 para no seguir la redirección HTTP->HTTPS
-      test: ["CMD", "curl", "-sf", "--max-redirs", "0", "http://localhost/"]
+      test: ["CMD", "curl", "-sf", "http://localhost/"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -236,6 +234,31 @@ services:
             es_es: Puerto de la interfaz web (HTTP)
           host_default: 80
 
+  # ============================================
+  #   Cloudflare Tunnel
+  #   Conecta cimcinco.com con nginx sin abrir puertos.
+  # ============================================
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: direccion-cloudflared
+    restart: unless-stopped
+    profiles:
+      - cloudflare
+    volumes:
+      - ./cloudflared:/etc/cloudflared
+    environment:
+      - TUNNEL_ORIGIN_CERT=/etc/cloudflared/cert.pem
+    command: tunnel --config /etc/cloudflared/config.yml run
+    depends_on:
+      - nginx
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 64M
+        reservations:
+          cpus: '0.1'
+          memory: 32M
 volumes:
   pg_data:
   certbot_www:

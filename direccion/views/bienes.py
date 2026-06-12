@@ -21,12 +21,13 @@ class BienListView(PermissionRequiredMixin, ListView):
     template_name = "direccion/bien_list.html"
     context_object_name = "bienes"
     login_url = reverse_lazy("login")
-    paginate_by = 25
     permisos_requeridos = [perms.BIENES_VER]
 
     def get_queryset(self):
-        queryset = Bien.objects.filter(activo=True)
+        """Retorna todos los bienes activos (usado para el listado completo)."""
+        queryset = Bien.objects.filter(activo=True).select_related('caso')
         search = self.request.GET.get("search", "")
+        caso_id = self.request.GET.get("caso", "")
         categoria = self.request.GET.get("categoria", "")
         if search:
             queryset = queryset.filter(
@@ -36,15 +37,34 @@ class BienListView(PermissionRequiredMixin, ListView):
                 Q(marca__icontains=search) |
                 Q(ubicacion__icontains=search)
             )
+        if caso_id:
+            queryset = queryset.filter(caso_id=caso_id)
         if categoria:
             queryset = queryset.filter(categoria=categoria)
+        estado = self.request.GET.get("estado", "")
+        if estado:
+            queryset = queryset.filter(estado=estado)
         return queryset.order_by("-fecha_creacion")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        from ..models import Caso
         context["search"] = self.request.GET.get("search", "")
         context["categoria_filtro"] = self.request.GET.get("categoria", "")
+        context["estado_filtro"] = self.request.GET.get("estado", "")
         context["categorias"] = Bien.CATEGORIA_CHOICES
+        context["estados"] = Bien.ESTADO_CHOICES
+        # Agrupar bienes por caso para la vista de carpetas
+        todos_bienes = self.get_queryset()
+        bienes_sin_caso = todos_bienes.filter(caso__isnull=True)
+        casos_con_bienes = []
+        for c in Caso.objects.filter(activo=True, bienes__in=todos_bienes).distinct().order_by('nombre'):
+            casos_con_bienes.append({
+                'caso': c,
+                'bienes': todos_bienes.filter(caso=c),
+            })
+        context['bienes_sin_caso'] = bienes_sin_caso
+        context['casos_con_bienes'] = casos_con_bienes
         return context
 
 

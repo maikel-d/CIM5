@@ -34,6 +34,9 @@
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
       <h3 class="font-semibold text-gray-800 mb-4">Informacion del Bien</h3>
       <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {% if bien.caso %}
+        <div><dt class="text-xs text-gray-500 uppercase">Caso Asignado</dt><dd class="text-sm font-medium text-gray-800"><a href="{% url 'caso_detail' bien.caso.pk %}" class="text-[#003363] hover:underline">{{ bien.caso.nombre }}</a></dd></div>
+        {% endif %}
         <div><dt class="text-xs text-gray-500 uppercase">Nombre</dt><dd class="text-sm font-medium text-gray-800">{{ bien.nombre }}</dd></div>
         <div><dt class="text-xs text-gray-500 uppercase">Categoria</dt><dd class="text-sm font-medium text-gray-800">{{ bien.get_categoria_display }}</dd></div>
         <div><dt class="text-xs text-gray-500 uppercase">Estado</dt><dd class="text-sm">{{ bien.get_estado_display }}</dd></div>
