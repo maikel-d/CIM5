@@ -8,24 +8,6 @@
 {% endblock %}
 {% block content %}
 <div class="space-y-6">
-    <!-- Welcome Banner -->
-    <div class="bg-gradient-to-r from-[#003363] to-[#004a80] rounded-xl shadow-sm p-4 sm:p-5 text-white">
-        <div class="flex items-center gap-3 sm:gap-4">
-            <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/20 flex items-center justify-center text-base sm:text-xl font-bold shrink-0">
-                {{ user.get_full_name|default:user.username|first|upper }}
-            </div>
-            <p class="text-sm sm:text-base md:text-lg font-medium leading-tight">
-                Bienvenido, {{ user.get_full_name|default:user.username }} -
-                <span class="font-semibold">
-                    {% if user.profile.rol == 'ADMINISTRADOR' %}Administrador
-                    {% elif user.profile.rol == 'ANALISTA' %}Analista
-                    {% elif user.profile.rol == 'ADMINISTRATIVO' %}Administrativo
-                    {% endif %}
-                </span>
-            </p>
-        </div>
-    </div>
-
     <!-- Stats Cards -->
     <div class="form-card">
       <div class="form-card-header">
@@ -116,6 +98,21 @@
             </div>
         </a>
         {% endif %}
+        <div class="stat-card bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="stat-accent" style="background:#059669"></div>
+            <div class="flex items-center gap-4 relative">
+                <div class="stat-icon" style="background:#ecfdf5;color:#059669">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                </div>
+                <div class="min-w-0">
+                    <p class="stat-label text-gray-500 text-xs sm:text-sm">Usuarios Conectados</p>
+                    <p class="stat-value text-gray-800 text-xl sm:text-2xl flex items-center gap-2">
+                        {{ usuarios_online }}
+                        <span class="inline-block w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                    </p>
+                </div>
+            </div>
+        </div>
         {% if user.profile|can:'usuarios_ver' %}
         <a href="{% url 'usuario_list' %}" class="stat-card bg-white rounded-xl shadow-sm border border-gray-200 p-6 cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 block">
             <div class="stat-accent" style="background:#ea580c"></div>
@@ -131,18 +128,54 @@
     </div>
     </div>
 
-    {% if user.profile|can:'documentos_direccion_ver' or user.profile|can:'personal_ver' or user.profile|can:'investigados_ver' or user.profile|can:'casos_ver' %}
-    <!-- Charts Section -->
+    {% if user.profile|can:'tareas_ver' or user.profile|can:'personal_ver' or user.profile|can:'investigados_ver' or user.profile|can:'casos_ver' %}
+    <!-- Tareas Pendientes + Registros -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {% if user.profile|can:'tareas_ver' %}
+        <!-- Tareas Pendientes -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-200">
             <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-100 flex items-center justify-between">
-                <h3 class="font-semibold text-gray-800 text-sm sm:text-base">Distribución de Documentos por Tipo</h3>
-                <a href="{% url 'documentos_direccion' %}" class="text-xs text-[#003363] hover:text-[#002244]">Ver todos</a>
+                <h3 class="font-semibold text-gray-800 text-sm sm:text-base">
+                    <span class="flex items-center gap-2">
+                        Tareas Pendientes
+                        {% if tareas_pendientes %}
+                        <span class="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-amber-50 text-amber-600">{{ tareas_pendientes.count }} pendientes</span>
+                        {% endif %}
+                    </span>
+                </h3>
+                <a href="{% url 'tareas_list' %}" class="text-xs text-[#003363] hover:text-[#002244]">Ver todas</a>
             </div>
-            <div class="p-4 sm:p-6 flex items-center justify-center">
-                <canvas id="docTypeChart" height="200" class="max-h-[180px] sm:max-h-[220px] w-full"></canvas>
+            <div class="p-4 sm:p-6">
+                {% if tareas_pendientes %}
+                <div class="space-y-2">
+                    {% for t in tareas_pendientes|slice:":6" %}
+                    <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors">
+                        <a href="{% url 'tarea_completar' t.pk %}" class="shrink-0">
+                            <div class="w-4 h-4 rounded border-2 border-gray-300 hover:border-[#003363] flex items-center justify-center transition-colors"></div>
+                        </a>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm text-gray-700 truncate">{{ t.descripcion }}</p>
+                            <p class="text-[11px] text-gray-400 flex items-center gap-1.5">
+                                <span class="inline-block w-2 h-2 rounded-full
+                                    {% if t.prioridad == 'ALTO' %}bg-red-500
+                                    {% elif t.prioridad == 'MEDIO' %}bg-amber-400
+                                    {% else %}bg-green-500{% endif %}"></span>
+                                {{ t.get_prioridad_display }}
+                                · {{ t.fecha_creacion|date:"d/m/Y" }}
+                            </p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <p class="text-sm text-gray-400">No hay tareas pendientes.</p>
+                    <a href="{% url 'tareas_list' %}" class="text-xs text-[#003363] hover:text-[#002244] mt-1 inline-block">Crear una tarea</a>
+                </div>
+                {% endif %}
             </div>
         </div>
+        {% endif %}
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
             <h3 class="font-semibold text-gray-800 mb-4 text-sm sm:text-base">Registros por Mes (últimos 6 meses)</h3>
             <canvas id="monthlyChart" height="200" class="w-full"></canvas>
@@ -152,53 +185,7 @@
     </div>
     {% endif %}
 
-    {% if user.profile|can:'tickets_ver' %}
-    <!-- Tickets por Estado -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-            <h3 class="font-semibold text-gray-800 mb-4 text-sm sm:text-base">Tickets por Estado</h3>
-            <canvas id="ticketStatusChart" height="180" class="w-full"></canvas>
-        </div>
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-            <h3 class="font-semibold text-gray-800 mb-4 text-sm sm:text-base">Resumen de Tickets</h3>
-            <div class="space-y-3">
-                <div class="flex items-center justify-between p-3 bg-red-50 rounded-lg">
-                    <div class="flex items-center gap-2">
-                        <span class="w-3 h-3 rounded-full bg-red-500"></span>
-                        <span class="text-sm text-gray-700">Abiertos</span>
-                    </div>
-                    <span class="text-sm font-bold text-red-600">{{ tickets_abiertos_count|default:total_tickets_abiertos }}</span>
-                </div>
-                <div class="flex items-center justify-between p-3 bg-amber-50 rounded-lg">
-                    <div class="flex items-center gap-2">
-                        <span class="w-3 h-3 rounded-full bg-amber-500"></span>
-                        <span class="text-sm text-gray-700">En proceso</span>
-                    </div>
-                    <span class="text-sm font-bold text-amber-600">{{ tickets_proceso_count }}</span>
-                </div>
-                <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                    <div class="flex items-center gap-2">
-                        <span class="w-3 h-3 rounded-full bg-green-500"></span>
-                        <span class="text-sm text-gray-700">Resueltos</span>
-                    </div>
-                    <span class="text-sm font-bold text-green-600">{{ tickets_resueltos_count }}</span>
-                </div>
-                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div class="flex items-center gap-2">
-                        <span class="w-3 h-3 rounded-full bg-gray-400"></span>
-                        <span class="text-sm text-gray-700">Cerrados</span>
-                    </div>
-                    <span class="text-sm font-bold text-gray-500">{{ tickets_cerrados_count }}</span>
-                </div>
-                <div class="pt-2 border-t border-gray-100">
-                    <a href="{% url 'ticket_list' %}" class="block text-center text-xs text-[#003363] hover:text-[#002244] font-medium py-2">
-                        Ver todos los tickets →
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-    {% endif %}
+
 
     {% if user.profile|can:'documentos_direccion_ver' %}
     <!-- Últimos Documentos por Tipo -->
@@ -297,109 +284,58 @@
     </div>
     {% endif %}
 
-    {% if user.profile|can:'tareas_ver' or user.profile|can:'tickets_ver' %}
-    <!-- Tareas & Tickets Section -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {% if user.profile|can:'tareas_ver' %}
-        <!-- Tareas Pendientes -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200">
-            <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-100 flex items-center justify-between">
-                <h3 class="font-semibold text-gray-800 text-sm sm:text-base">
-                    <span class="flex items-center gap-2">
-                        Tareas Pendientes
-                        {% if tareas_pendientes %}
-                        <span class="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-amber-50 text-amber-600">{{ tareas_pendientes.count }} pendientes</span>
-                        {% endif %}
-                    </span>
-                </h3>
-                <a href="{% url 'tareas_list' %}" class="text-xs text-[#003363] hover:text-[#002244]">Ver todas</a>
-            </div>
-            <div class="p-4 sm:p-6">
-                {% if tareas_pendientes %}
-                <div class="space-y-2">
-                    {% for t in tareas_pendientes|slice:":6" %}
-                    <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors">
-                        <a href="{% url 'tarea_completar' t.pk %}" class="shrink-0">
-                            <div class="w-4 h-4 rounded border-2 border-gray-300 hover:border-[#003363] flex items-center justify-center transition-colors"></div>
-                        </a>
-                        <div class="flex-1 min-w-0">
-                            <p class="text-sm text-gray-700 truncate">{{ t.descripcion }}</p>
-                            <p class="text-[11px] text-gray-400 flex items-center gap-1.5">
-                                <span class="inline-block w-2 h-2 rounded-full
-                                    {% if t.prioridad == 'ALTO' %}bg-red-500
-                                    {% elif t.prioridad == 'MEDIO' %}bg-amber-400
-                                    {% else %}bg-green-500{% endif %}"></span>
-                                {{ t.get_prioridad_display }}
-                                · {{ t.fecha_creacion|date:"d/m/Y" }}
-                            </p>
-                        </div>
+    {% if user.profile|can:'tickets_ver' %}
+    <!-- Tickets Recientes -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+        <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-100 flex items-center justify-between">
+            <h3 class="font-semibold text-gray-800 text-sm sm:text-base">Tickets de Soporte</h3>
+            <a href="{% url 'ticket_list' %}" class="text-xs text-[#003363] hover:text-[#002244]">Ver todos</a>
+        </div>
+        <div class="p-4 sm:p-6">
+            {% if tickets_recientes %}
+            <div class="space-y-2">
+                {% for t in tickets_recientes %}
+                <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors">
+                    <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0
+                        {% if t.estado == 'ABIERTO' %}bg-red-50
+                        {% elif t.estado == 'EN_PROCESO' %}bg-amber-50
+                        {% elif t.estado == 'RESUELTO' %}bg-green-50
+                        {% else %}bg-gray-50{% endif %}">
+                        <span class="text-[10px] font-bold
+                            {% if t.estado == 'ABIERTO' %}text-red-600
+                            {% elif t.estado == 'EN_PROCESO' %}text-amber-600
+                            {% elif t.estado == 'RESUELTO' %}text-green-600
+                            {% else %}text-gray-500{% endif %}">#{{ t.pk }}</span>
                     </div>
-                    {% endfor %}
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-gray-800 truncate flex items-center gap-1.5">
+                            {{ t.asunto }}
+                            <span class="inline-block w-2 h-2 rounded-full shrink-0
+                                {% if t.prioridad == 'ALTO' %}bg-red-500
+                                {% elif t.prioridad == 'MEDIO' %}bg-amber-400
+                                {% else %}bg-green-500{% endif %}"></span>
+                        </p>
+                        <p class="text-[11px] text-gray-400">
+                            {% if t.estado == 'ABIERTO' %}Abierto
+                            {% elif t.estado == 'EN_PROCESO' %}En proceso
+                            {% elif t.estado == 'RESUELTO' %}Resuelto
+                            {% else %}Cerrado{% endif %}
+                            · {{ t.fecha_creacion|date:"d/m/Y" }}
+                        </p>
+                    </div>
+                    <svg class="w-3.5 h-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                 </div>
-                {% else %}
-                <div class="text-center py-4">
-                    <p class="text-sm text-gray-400">No hay tareas pendientes.</p>
-                    <a href="{% url 'tareas_list' %}" class="text-xs text-[#003363] hover:text-[#002244] mt-1 inline-block">Crear una tarea</a>
-                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-4">
+                <p class="text-sm text-gray-400">No hay tickets recientes.</p>
+                {% if user.profile|can:'tickets_crear' %}
+                <a href="{% url 'ticket_create' %}" class="text-xs text-[#003363] hover:text-[#002244] mt-1 inline-block">Crear un ticket</a>
                 {% endif %}
             </div>
+            {% endif %}
         </div>
-
-        {% endif %}
-        {% if user.profile|can:'tickets_ver' %}
-        <!-- Tickets Recientes -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200">
-            <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-100 flex items-center justify-between">
-                <h3 class="font-semibold text-gray-800 text-sm sm:text-base">Tickets de Soporte</h3>
-                <a href="{% url 'ticket_list' %}" class="text-xs text-[#003363] hover:text-[#002244]">Ver todos</a>
-            </div>
-            <div class="p-4 sm:p-6">
-                {% if tickets_recientes %}
-                <div class="space-y-2">
-                    {% for t in tickets_recientes %}
-                    <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors">
-                        <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0
-                            {% if t.estado == 'ABIERTO' %}bg-red-50
-                            {% elif t.estado == 'EN_PROCESO' %}bg-amber-50
-                            {% elif t.estado == 'RESUELTO' %}bg-green-50
-                            {% else %}bg-gray-50{% endif %}">
-                            <span class="text-[10px] font-bold
-                                {% if t.estado == 'ABIERTO' %}text-red-600
-                                {% elif t.estado == 'EN_PROCESO' %}text-amber-600
-                                {% elif t.estado == 'RESUELTO' %}text-green-600
-                                {% else %}text-gray-500{% endif %}">#{{ t.pk }}</span>
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <p class="text-sm font-medium text-gray-800 truncate flex items-center gap-1.5">
-                                {{ t.asunto }}
-                                <span class="inline-block w-2 h-2 rounded-full shrink-0
-                                    {% if t.prioridad == 'ALTO' %}bg-red-500
-                                    {% elif t.prioridad == 'MEDIO' %}bg-amber-400
-                                    {% else %}bg-green-500{% endif %}"></span>
-                            </p>
-                            <p class="text-[11px] text-gray-400">
-                                {% if t.estado == 'ABIERTO' %}Abierto
-                                {% elif t.estado == 'EN_PROCESO' %}En proceso
-                                {% elif t.estado == 'RESUELTO' %}Resuelto
-                                {% else %}Cerrado{% endif %}
-                                · {{ t.fecha_creacion|date:"d/m/Y" }}
-                            </p>
-                        </div>
-                        <svg class="w-3.5 h-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                    </div>
-                    {% endfor %}
-                </div>
-                {% else %}
-                <div class="text-center py-4">
-                    <p class="text-sm text-gray-400">No hay tickets recientes.</p>
-                    {% if user.profile.rol != 'ADMINISTRADOR' %}
-                    <a href="{% url 'ticket_create' %}" class="text-xs text-[#003363] hover:text-[#002244] mt-1 inline-block">Crear un ticket</a>
-                    {% endif %}
-                </div>
-                {% endif %}
-            </div>
-        </div>
-        {% endif %}
     </div>
     {% endif %}
 
@@ -522,7 +458,7 @@
                 Usuarios del Sistema
                 <span class="text-sm font-normal text-gray-400 ml-2">({{ total_usuarios }})</span>
             </h3>
-            {% if user.profile.rol == 'ADMINISTRADOR' %}
+            {% if user.profile|can:'usuarios_ver' %}
             <a href="{% url 'usuario_list' %}" class="text-xs text-[#003363] hover:text-[#002244]">Gestionar</a>
             {% endif %}
         </div>
@@ -564,27 +500,6 @@
 {% block extra_scripts %}
 <script>
 const chartData = {{ chart_data_json|safe }};
-
-{% if user.profile|can:'documentos_direccion_ver' %}
-// Document Type Distribution (Doughnut)
-new Chart(document.getElementById('docTypeChart'), {
-    type: 'doughnut',
-    data: {
-        labels: ['PDF', 'Word', 'Imagen'],
-        datasets: [{
-            data: [chartData.docTypes.pdf, chartData.docTypes.word, chartData.docTypes.img],
-            backgroundColor: ['#EF4444', '#003363', '#10B981'],
-            borderWidth: 0
-        }]
-    },
-    options: {
-        responsive: true,
-        plugins: {
-            legend: { position: 'bottom', labels: { padding: 20, usePointStyle: true } }
-        }
-    }
-});
-{% endif %}
 
 {% if user.profile|can:'personal_ver' or user.profile|can:'investigados_ver' or user.profile|can:'casos_ver' %}
 // Monthly Registrations (Line)
@@ -646,44 +561,6 @@ new Chart(document.getElementById('docTypeChart'), {
 })();
 {% endif %}
 
-{% if user.profile|can:'tickets_ver' %}
-// Tickets by Status (Horizontal Bar)
-new Chart(document.getElementById('ticketStatusChart'), {
-    type: 'bar',
-    data: {
-        labels: ['Abierto', 'En proceso', 'Resuelto', 'Cerrado'],
-        datasets: [{
-            label: 'Tickets',
-            data: [
-                chartData.ticketsEstado.abierto,
-                chartData.ticketsEstado.proceso,
-                chartData.ticketsEstado.resuelto,
-                chartData.ticketsEstado.cerrado
-            ],
-            backgroundColor: ['#EF4444', '#F59E0B', '#10B981', '#9CA3AF'],
-            borderRadius: 6,
-            borderSkipped: false
-        }]
-    },
-    options: {
-        indexAxis: 'y',
-        responsive: true,
-        plugins: {
-            legend: { display: false }
-        },
-        scales: {
-            x: {
-                beginAtZero: true,
-                ticks: { stepSize: 1 },
-                grid: { display: false }
-            },
-            y: {
-                grid: { display: false },
-                ticks: { font: { size: 12, weight: 'bold' } }
-            }
-        }
-    }
-});
-{% endif %}
+
 </script>
 {% endblock %}

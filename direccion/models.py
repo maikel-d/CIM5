@@ -646,3 +646,59 @@ class DocumentoBien(TipoDocumentoMixin, models.Model):
     def __str__(self):
         nombre = os.path.basename(self.archivo.name) if self.archivo.name else '(sin archivo)'
         return f"{self.bien} - {nombre}"
+
+
+# ============================================================
+# CARPETAS DE USUARIO ("Mis Documentos" - carpetas)
+# ============================================================
+
+
+class CarpetaUsuario(models.Model):
+    usuario = models.ForeignKey(
+        User, on_delete=models.CASCADE,
+        related_name='carpetas_usuario', verbose_name='Usuario'
+    )
+    nombre = models.CharField('Nombre', max_length=100)
+    parent = models.ForeignKey(
+        'self', on_delete=models.CASCADE,
+        null=True, blank=True,
+        related_name='subcarpetas', verbose_name='Carpeta padre'
+    )
+    orden = models.IntegerField('Orden', default=0)
+    fecha_creacion = models.DateTimeField('Fecha de creacion', auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Carpeta de Usuario'
+        verbose_name_plural = 'Carpetas de Usuarios'
+        ordering = ['orden', 'nombre']
+        unique_together = ['usuario', 'nombre', 'parent']
+
+    def __str__(self):
+        return f'{self.usuario.username} - {self.nombre}'
+
+def usuario_document_path(instance, filename):
+    return "usuarios/documentos/%s/%s" % (instance.usuario.pk, filename)
+
+class DocumentoUsuario(TipoDocumentoMixin, models.Model):
+    TIPO_CHOICES = [("PDF","PDF"),("WORD","Word"),("IMAGEN","Imagen"),("OTRO","Otro")]
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name="documentos_usuario", verbose_name="Usuario")
+    archivo = models.FileField("Archivo", upload_to=usuario_document_path, help_text="PDF, Word, imagenes")
+    tipo = models.CharField("Tipo", max_length=10, choices=TIPO_CHOICES, editable=False, db_index=True)
+    descripcion = models.CharField("Descripcion", max_length=255, blank=True, null=True)
+    carpeta = models.ForeignKey(
+        CarpetaUsuario, on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name="documentos", verbose_name="Carpeta"
+    )
+    fecha_subida = models.DateTimeField("Fecha de subida", auto_now_add=True, db_index=True)
+    class Meta:
+        verbose_name = "Documento del Usuario"
+        verbose_name_plural = "Documentos de Usuarios"
+        ordering = ["-fecha_subida"]
+    def __str__(self):
+        import os
+        n = os.path.basename(self.archivo.name) if self.archivo.name else "(sin archivo)"
+        return self.usuario.username + " - " + n
+
+
+

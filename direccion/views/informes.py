@@ -27,6 +27,9 @@ from ..decorators import permiso_required
 from ..audit import auditar
 from .. import permissions as perms
 
+MESES_ESPANOL = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+
 
 def _generar_pdf_informe(informe):
     """Genera un PDF en memoria para un InformeDiario y devuelve los bytes."""
@@ -141,13 +144,18 @@ def exportar_informes_descargar(request):
         except (ValueError, TypeError):
             pass
         nombre_zip = f"informes_semana_{semana}_{anio}.zip"
+    elif tipo == 'anio':
+        informes = InformeDiario.objects.filter(
+            fecha__year=int(anio)
+        ).order_by('fecha')
+        nombre_zip = f"informes_{anio}.zip"
     else:  # mes
         if not mes:
             mes = str(hoy.month)
         informes = InformeDiario.objects.filter(
             fecha__year=int(anio), fecha__month=int(mes)
         ).order_by('fecha')
-        nombre_mes = calendar.month_name[int(mes)].capitalize()
+        nombre_mes = MESES_ESPANOL[int(mes) - 1]
         nombre_zip = f"informes_{nombre_mes.lower()}_{anio}.zip"
 
     buf = BytesIO()
@@ -190,11 +198,9 @@ def eliminar_informe_diario(request, pk):
 
 @permiso_required(perms.INFORMES_VER)
 def informes_diarios_list(request):
-    """Lista de informes diarios con filtros por semana, mes y año."""
-    periodo = request.GET.get('periodo', 'mes')
+    """Lista de informes diarios organizados en carpetas por mes."""
     anio = request.GET.get('anio', '')
     mes = request.GET.get('mes', '')
-    semana = request.GET.get('semana', '')
 
     informes = InformeDiario.objects.all()
     hoy = date.today()
@@ -202,43 +208,71 @@ def informes_diarios_list(request):
     # Valores por defecto
     if not anio:
         anio = str(hoy.year)
-    if not mes:
-        mes = str(hoy.month)
 
-    # Aplicar filtros
-    informes = informes.filter(fecha__year=int(anio))
+    # Filtrar por año — una sola query para todo el año
+    informes_anio = list(informes.filter(fecha__year=int(anio)).order_by('fecha'))
 
-    if periodo == 'semana' and semana:
-        try:
-            semana_int = int(semana)
-            # Calcular rango de fechas para la semana ISO
-            from datetime import timedelta
-            # Primero obtenemos el primer día del año
-            primer_dia = date(int(anio), 1, 1)
-            # Ajustar al lunes de la semana 1 ISO
-            dias_restar = primer_dia.weekday()  # 0 = lunes
-            if dias_restar <= 3:
-                lunes_sem1 = primer_dia - timedelta(days=dias_restar)
-            else:
-                lunes_sem1 = primer_dia + timedelta(days=(7 - dias_restar))
-            lunes = lunes_sem1 + timedelta(weeks=semana_int - 1)
-            domingo = lunes + timedelta(days=6)
-            informes = informes.filter(fecha__gte=lunes, fecha__lte=domingo)
-        except (ValueError, TypeError):
-            pass
+    # Agrupar por mes en Python (evita 12 queries extra)
+    informes_por_mes = {i: [] for i in range(1, 13)}
+    for inf in informes_anio:
+        informes_por_mes[inf.fecha.month].append(inf)
 
-    if periodo == 'mes' and mes:
-        informes = informes.filter(fecha__month=int(mes))
+    # Filtrar informes por el mes seleccionado (usa la lista ya cargada)
+    if mes:
+        mes_int = int(mes)
+        informes = [inf for inf in informes_anio if inf.fecha.month == mes_int]
+    else:
+        mes = ''
+        informes = informes_anio
 
-    # Generar opciones para los filtros
-    anios_disponibles = InformeDiario.objects.dates('fecha', 'year', order='DESC')
-    if not anios_disponibles:
-        anios_disponibles = [hoy]
+    # Generar opciones de años disponibles (incluye años sin informes)
+    anios_bd = list(InformeDiario.objects.dates('fecha', 'year', order='DESC'))
+    anios_disponibles = set(anios_bd)
+    for extra in range(3):
+        anios_disponibles.add(date(hoy.year + extra, 1, 1))
+    anios_disponibles.add(date(hoy.year - 1, 1, 1))
+    anios_disponibles = sorted(anios_disponibles, reverse=True)
 
-    # Meses en español
+    # Paleta de colores para cada mes
+    colores_meses = [
+        ('bg-blue-50', 'text-blue-600', 'hover:bg-blue-100', 'border-blue-200', 'bg-blue-100', 'text-blue-700'),
+        ('bg-indigo-50', 'text-indigo-600', 'hover:bg-indigo-100', 'border-indigo-200', 'bg-indigo-100', 'text-indigo-700'),
+        ('bg-violet-50', 'text-violet-600', 'hover:bg-violet-100', 'border-violet-200', 'bg-violet-100', 'text-violet-700'),
+        ('bg-teal-50', 'text-teal-600', 'hover:bg-teal-100', 'border-teal-200', 'bg-teal-100', 'text-teal-700'),
+        ('bg-emerald-50', 'text-emerald-600', 'hover:bg-emerald-100', 'border-emerald-200', 'bg-emerald-100', 'text-emerald-700'),
+        ('bg-green-50', 'text-green-600', 'hover:bg-green-100', 'border-green-200', 'bg-green-100', 'text-green-700'),
+        ('bg-amber-50', 'text-amber-600', 'hover:bg-amber-100', 'border-amber-200', 'bg-amber-100', 'text-amber-700'),
+        ('bg-orange-50', 'text-orange-600', 'hover:bg-orange-100', 'border-orange-200', 'bg-orange-100', 'text-orange-700'),
+        ('bg-rose-50', 'text-rose-600', 'hover:bg-rose-100', 'border-rose-200', 'bg-rose-100', 'text-rose-700'),
+        ('bg-pink-50', 'text-pink-600', 'hover:bg-pink-100', 'border-pink-200', 'bg-pink-100', 'text-pink-700'),
+        ('bg-fuchsia-50', 'text-fuchsia-600', 'hover:bg-fuchsia-100', 'border-fuchsia-200', 'bg-fuchsia-100', 'text-fuchsia-700'),
+        ('bg-cyan-50', 'text-cyan-600', 'hover:bg-cyan-100', 'border-cyan-200', 'bg-cyan-100', 'text-cyan-700'),
+    ]
+
+    # Construir las 12 carpetas de meses con su resumen e informes completos
+    meses_con_informes = []
+    for mes_num in range(1, 13):
+        mes_informes = informes_por_mes[mes_num]
+        primer_informe = mes_informes[0] if mes_informes else None
+        bg, icon_color, hover_bg, border_accent, badge_bg, badge_text = colores_meses[mes_num - 1]
+        meses_con_informes.append({
+            'numero': mes_num,
+            'nombre': MESES_ESPANOL[mes_num - 1],
+            'count': len(mes_informes),
+            'informes': mes_informes,  # lista completa para el acordeón
+            'primer_informe': primer_informe,
+            'ultima_fecha': primer_informe.fecha if primer_informe else None,
+            'bg_color': bg,
+            'icon_color': icon_color,
+            'hover_bg': hover_bg,
+            'border_accent': border_accent,
+            'badge_bg': badge_bg,
+            'badge_text': badge_text,
+        })
+
     meses_opciones = []
     for i in range(1, 13):
-        meses_opciones.append((i, calendar.month_name[i].capitalize()))
+        meses_opciones.append((i, MESES_ESPANOL[i - 1]))
 
     # Gestión de creación/edición
     if request.method == "POST":
@@ -251,21 +285,20 @@ def informes_diarios_list(request):
             auditar(request, "CREAR", "InformeDiario", informe.pk, str(informe), f"Título: {informe.titulo}")
         else:
             messages.error(request, "Error al crear el informe. Verifica los datos.")
-        return redirect(request.path + (f'?periodo={periodo}&anio={anio}&mes={mes}&semana={semana}' if periodo else ''))
+        return redirect(request.path + f'?anio={anio}&mes={mes}')
     else:
         form = InformeDiarioForm()
 
     return render(request, "direccion/informes_diarios.html", {
         "informes": informes,
         "form": form,
-        "periodo": periodo,
         "anio_actual": anio,
         "mes_actual": mes,
-        "semana_actual": semana,
+        "semana_actual": str(hoy.isocalendar()[1]),
         "anios_disponibles": anios_disponibles,
         "meses_opciones": meses_opciones,
+        "meses_con_informes": meses_con_informes,
         "hoy": hoy,
-
     })
 
 

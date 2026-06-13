@@ -96,3 +96,45 @@ To https://github.com/maikel-d/CIM5.git
 [2026-06-12 05:50:02] [3/5] Rotando backups antiguos en Google Drive...
 [2026-06-12 05:50:02] Backups en Drive: 2, se eliminaran: -1
 [2026-06-12 05:50:02] [4/5] Git commit + push...
+[main 4049855] auto: cambios 2026-06-12
+ 26 files changed, 3452 insertions(+), 2987 deletions(-)
+ create mode 100644 cloudflared/cert.pem
+ create mode 100644 cloudflared/cimcinco.json
+ create mode 100644 cloudflared/config.yml
+ create mode 100644 direccion/migrations/0015_remove_personal_rango_bien_caso_and_more.py
+ create mode 100644 templates/403.html
+To https://github.com/maikel-d/CIM5.git
+   f8af184..4049855  main -> main
+[2026-06-12 05:50:02] Git push completado
+[2026-06-12 05:50:02] FIN
+
+========================================
+[2026-06-12 06:00:01] INICIO
+[2026-06-12 06:00:01] [5/5] Reiniciando contenedores Docker...
+ Container direccion-app Restarting 
+ Container direccion-nginx Restarting 
+ Container direccion-db Restarting 
+ Container direccion-nginx Started 
+ Container direccion-db Started 
+ Container direccion-app Started 
+[2026-06-12 06:00:01] Contenedores reiniciados
+[2026-06-12 06:00:01] FIN
+
+========================================
+[2026-06-13 05:50:01] INICIO
+[2026-06-13 05:50:01] [1/5] Backup completo (PostgreSQL + codigo + volumenes)...
+[2026-06-13 05:50:01] 1a. Dump PostgreSQL...
+[2026-06-13 05:50:01] PostgreSQL dump: 100K
+[2026-06-13 05:50:01] 1b. Copiando codigo del proyecto...
+[2026-06-13 05:50:01] 1c. Backupeando volumenes Docker...
+[2026-06-13 05:50:01]     Volumen: cim5nv_media_data
+[2026-06-13 05:50:01]     Backup OK: 1.8M
+[2026-06-13 05:50:01]     Volumen: cim5nv_static_data
+[2026-06-13 05:50:01]     Backup OK: 1.9M
+[2026-06-13 05:50:01] 1d. Comprimiendo backup...
+[2026-06-13 05:50:01] Backup completo creado: 5.6M
+[2026-06-13 05:50:01] [2/5] Subiendo backup a Google Drive...
+[2026-06-13 05:50:01] Backup subido a Drive: backup_completo_2026-06-13.tar.gz
+[2026-06-13 05:50:01] [3/5] Rotando backups antiguos en Google Drive...
+[2026-06-13 05:50:01] Backups en Drive: 3, se eliminaran: 0
+[2026-06-13 05:50:01] [4/5] Git commit + push...

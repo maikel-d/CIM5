@@ -1,0 +1,3 @@
+
+    path("mis-documentos/", views.mis_documentos_list, name="mis_documentos"),
+    path("mis-documentos/<int:doc_pk>/eliminar/", views.eliminar_documento_usuario, name="eliminar_documento_usuario"),

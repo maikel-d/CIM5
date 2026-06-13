@@ -2,14 +2,14 @@
 # Casos e Investigados CRUD
 # ============================================================
 
-from django.shortcuts import redirect, get_object_or_404
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.db.models import Q, Count
 from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
 
-from ..models import Caso, Investigado, DocumentoInvestigado, DocumentoCaso
-from ..forms import CasoForm, InvestigadoForm, DocumentoInvestigadoForm, DocumentoCasoForm
+from ..models import Caso, Investigado, DocumentoInvestigado, DocumentoCaso, DocumentoDireccion, Bien, DocumentoBien
+from ..forms import CasoForm, InvestigadoForm, DocumentoInvestigadoForm, DocumentoCasoForm, DocumentoDireccionForm
 from .mixins import PermissionRequiredMixin
 from ..decorators import permiso_required
 from ..audit import auditar
@@ -87,7 +87,18 @@ class CasoDeleteView(PermissionRequiredMixin, DeleteView):
         for doc in DocumentoCaso.objects.filter(caso=obj):
             if doc.archivo:
                 doc.archivo.delete(False)
-        Investigado.objects.filter(caso=obj).update(caso=None)
+        for inv in Investigado.objects.filter(caso=obj):
+            for doc in DocumentoInvestigado.objects.filter(investigado=inv):
+                if doc.archivo:
+                    doc.archivo.delete(False)
+            inv.delete()
+        for b in Bien.objects.filter(caso=obj):
+            for doc in DocumentoBien.objects.filter(bien=b):
+                if doc.archivo:
+                    doc.archivo.delete(False)
+            if b.foto:
+                b.foto.delete(False)
+            b.delete()
         obj.delete()
         messages.success(self.request, f"Expediente eliminado permanentemente: {repr_}")
         auditar(self.request, "ELIMINAR", "Caso", pk_val, repr_, f"Nombre: {nombre}")
@@ -309,5 +320,3 @@ def eliminar_documento_caso(request, pk, doc_pk):
     messages.success(request, "Documento eliminado del caso exitosamente.")
     auditar(request, "ELIMINAR", "DocumentoCaso", pk_val, doc_repr, f"Caso: {caso_repr}")
     return redirect("caso_detail", pk=pk)
-
-

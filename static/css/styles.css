@@ -5,6 +5,15 @@
     --color-brand-bg: #e8f0f8;
     --color-brand-ring: rgba(0, 51, 99, 0.2);
 }
+/* Utility: hide elements */
+.hidden { display: none !important; }
+
+/* ========================================
+   SIDEBAR - Transition control
+   ======================================== */
+#sidebar { transition: none !important; }
+#sidebar.sidebar-ready { transition: transform 300ms ease-in-out !important; }
+
 
 
 .form-input{width:100%;padding:0.5rem 0.75rem;border:1px solid #d1d5db;border-radius:0.5rem;font-size:0.875rem;transition:all .2s;outline:none;box-sizing:border-box}
@@ -459,6 +468,195 @@ nav a:active{transform:scale(0.97)}
 .section-fade-d3{animation:fadeInUp 0.5s ease-out 0.15s both}
 .section-fade-d4{animation:fadeInUp 0.5s ease-out 0.2s both}
 
+
+/* ========================================
+   DRAG & DROP UPLOAD ZONE
+   ======================================== */
+.drop-zone {
+  border: 2px dashed #cbd5e1;
+  border-radius: 12px;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  background: #fafbfc;
+  position: relative;
+  overflow: hidden;
+}
+.drop-zone:hover {
+  border-color: #003363;
+  background: #f0f4f8;
+}
+.drop-zone.drag-over {
+  border-color: #003363;
+  border-style: solid;
+  background: #e8f0f8;
+  transform: scale(1.015);
+  box-shadow: 0 4px 20px rgba(0,51,99,0.1);
+}
+.drop-zone-content svg {
+  color: #94a3b8;
+  display: block;
+  margin: 0 auto 0.75rem;
+  transition: color 0.2s ease;
+}
+.drop-zone.drag-over .drop-zone-content svg {
+  color: #003363;
+}
+.drop-zone-title {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #475569;
+  margin: 0;
+  transition: color 0.2s ease;
+}
+.drop-zone-hint {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  margin: 0.25rem 0 0;
+}
+.drop-zone.drag-over .drop-zone-title {
+  color: #003363;
+}
+
+.file-selected-card {
+  display: none;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  animation: fadeInUp 0.25s ease;
+}
+.file-selected-card.show {
+  display: flex;
+}
+.file-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.file-name {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #1e293b;
+  word-break: break-all;
+  margin: 0;
+}
+.file-size {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin: 0.125rem 0 0;
+}
+.remove-file-btn {
+  margin-left: auto;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: #f1f5f9;
+  color: #94a3b8;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+.remove-file-btn:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+
+
+
+/* ========================================
+   FOLDER GRID - Mis Documentos
+   ======================================== */
+.folder-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.75rem;
+}
+.folder-card {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1rem;
+  position: relative;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+.folder-card:hover {
+  border-color: #003363;
+  box-shadow: 0 4px 12px rgba(0,51,99,0.1);
+  transform: translateY(-1px);
+}
+.folder-card-link {
+  text-decoration: none;
+  display: block;
+}
+.folder-icon {
+  width: 48px;
+  height: 48px;
+  background: #e8f0f8;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #003363;
+  margin-bottom: 0.5rem;
+}
+.folder-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+  word-break: break-word;
+}
+.folder-count {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin: 0.125rem 0 0;
+}
+.folder-actions {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  display: flex;
+  gap: 0.25rem;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.folder-card:hover .folder-actions {
+  opacity: 1;
+}
+.folder-action-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  background: white;
+  color: #64748b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+.folder-action-btn:hover {
+  background: #f1f5f9;
+  color: #003363;
+}
+
+
 /* Responsive */
 @media(max-width:640px){
 .doc-grid{grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:0.7rem}
@@ -477,4 +675,39 @@ nav a:active{transform:scale(0.97)}
 
 @media(min-width:641px)and(max-width:1023px){
 .stat-card .stat-value{font-size:1.5rem}
+}
+
+
+/* ==========================================
+   Progress Bar & Upload Queue Styles
+   ========================================== */
+#batch-progress-bar { transition: width 0.3s ease; }
+#batch-progress-items .h-full { transition: width 0.2s ease; }
+#batch-progress-label { font-weight: 500; }
+@keyframes progress-pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.6; }
+  100% { opacity: 1; }
+}
+#batch-progress-global:not(.hidden) #batch-progress-label:after {
+  content: ...;
+  animation: progress-pulse 1.5s ease-in-out infinite;
+}
+.upload-drop-area.drag-over {
+  border-color: #059669 !important;
+  background: #ecfdf5 !important;
+}
+#batch-file-list {
+  scrollbar-width: thin;
+  scrollbar-color: #d1d5db transparent;
+}
+#batch-file-list::-webkit-scrollbar { width: 4px; }
+#batch-file-list::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 2px;
+}
+.animate-spin { animation: spin 1s linear infinite; }
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }

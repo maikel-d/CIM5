@@ -188,6 +188,13 @@ class DocumentoUsuarioAdmin(admin.ModelAdmin):
     date_hierarchy = "fecha_subida"
     readonly_fields = ["tipo", "fecha_subida"]
 
+@admin.register(DocumentoUsuario)
+class DocumentoUsuarioAdmin(admin.ModelAdmin):
+    list_display = ["usuario", "tipo", "descripcion", "fecha_subida"]
+    list_filter = ["tipo", "fecha_subida"]
+    search_fields = ["usuario__username", "descripcion"]
+    date_hierarchy = "fecha_subida"
+    readonly_fields = ["tipo", "fecha_subida"]
 
 @admin.register(CarpetaUsuario)
 class CarpetaUsuarioAdmin(admin.ModelAdmin):

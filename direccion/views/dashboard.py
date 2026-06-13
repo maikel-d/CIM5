@@ -19,6 +19,7 @@ from ..models import (
 )
 from ..decorators import permiso_required
 from .. import permissions as perms
+from ..middleware import usuarios_online
 
 
 @permiso_required(perms.DASHBOARD_VER)
@@ -176,6 +177,7 @@ def dashboard(request):
         "total_informes_mes": total_informes_mes,
         "auditoria_reciente": auditoria_reciente,
         "total_bienes": total_bienes,
+        "usuarios_online": usuarios_online(),
         "mes_actual_nombre": calendar.month_name[hoy.month].capitalize(),
     }
     return render(request, "dashboard.html", context)

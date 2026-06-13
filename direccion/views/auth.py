@@ -2,6 +2,8 @@
 # Autenticación
 # ============================================================
 
+import secrets
+
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
@@ -50,6 +52,11 @@ class CustomLoginView(View):
                     # Limpiar intentos fallidos al iniciar sesión correctamente
                     cache.delete(cache_key)
                     login(request, user)
+                    # Generar token de sesión única (invalida otras sesiones)
+                    token = secrets.token_hex(16)
+                    request.session['session_token'] = token
+                    request.session.save()
+                    cache.set(f'auth_token_{user.pk}', token, 86400)
                     messages.success(
                         request,
                         f"Bienvenido, {user.get_full_name() or user.username}",

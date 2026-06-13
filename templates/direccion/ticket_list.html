@@ -74,7 +74,7 @@
                         </div>
                         <p class="text-xs text-gray-500 line-clamp-1">{{ t.descripcion|truncatechars:120 }}</p>
                         <p class="text-[11px] text-gray-400 mt-1">
-                            {{ t.fecha_creacion|date:"d/m/Y H:i" }} por {{ t.creado_por.get_full_name|default:t.creado_por.username|default:'Sistema' }}
+                            {{ t.fecha_creacion|date:"d/m/Y H:i" }} por {% if t.creado_por %}{{ t.creado_por.get_full_name|default:t.creado_por.username }}{% else %}Sistema{% endif %}
                             {% if t.asignado_a %} &middot; Asignado: {{ t.asignado_a.get_full_name|default:t.asignado_a.username }}{% endif %}
                         </p>
                     </div>

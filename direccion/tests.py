@@ -861,7 +861,7 @@ class InformeDiarioExportZipTest(TestCase):
         response = self.client.get(
             reverse("informes_descargar") + "?tipo=mes&mes=1&anio=2025"
         )
-        names = self._check_zip_response(response, 2, "january")
+        names =        self._check_zip_response(response, 2, "enero")
         self.assertIn("2025-01-15", names[0])
         self.assertIn("2025-01-20", names[1])
 
@@ -871,7 +871,7 @@ class InformeDiarioExportZipTest(TestCase):
         response = self.client.get(
             reverse("informes_descargar") + "?tipo=mes&mes=6&anio=2025"
         )
-        self._check_zip_response(response, 1, "june")
+        self._check_zip_response(response, 1, "junio")
 
     def test_export_mes_empty_month(self):
         """Mes sin informes devuelve ZIP vacio."""
@@ -879,7 +879,7 @@ class InformeDiarioExportZipTest(TestCase):
         response = self.client.get(
             reverse("informes_descargar") + "?tipo=mes&mes=3&anio=2025"
         )
-        self._check_zip_response(response, 0, "march")
+        self._check_zip_response(response, 0, "marzo")
 
     def test_export_mes_defaults_to_current_month(self):
         """Sin parametros tipo=mes, usa mes/anio actual."""

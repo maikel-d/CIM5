@@ -19,7 +19,7 @@ from .casos import (
     InvestigadoUpdateView, InvestigadoDeleteView,
     agregar_documento_investigado, eliminar_documento_investigado,
 )
-from .documentos import documentos_direccion_list, eliminar_documento_direccion
+from .documentos import documentos_direccion_list, eliminar_documento_direccion, mis_documentos, mis_documentos_subir, mis_documentos_eliminar
 from .usuarios import (
     UserListView, UserCreateView, UserUpdateView,
     user_toggle_active, user_delete,

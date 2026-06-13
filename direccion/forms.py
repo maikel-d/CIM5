@@ -6,7 +6,7 @@ from .models import (
     UserProfile, Personal, DocumentoPersonal,
     Caso, Investigado, DocumentoInvestigado, DocumentoDireccion,
     DocumentoCaso, Tarea, TicketSoporte, InformeDiario,
-    Bien, DocumentoBien
+    Bien, DocumentoBien, DocumentoUsuario
 )
 
 
@@ -327,6 +327,16 @@ class DocumentoBienForm(forms.ModelForm):
         return _validar_tamano_archivo(self.cleaned_data.get("archivo"))
 
 
+
+class DocumentoUsuarioForm(forms.ModelForm):
+    class Meta:
+        model = DocumentoUsuario
+        fields = ["archivo", "descripcion"]
+        widgets = {"descripcion": forms.TextInput(attrs={"class": "form-input", "placeholder": "Descripcion"})}
+    def clean_archivo(self):
+        return _validar_tamano_archivo(self.cleaned_data.get("archivo"))
+
+
 class LoginForm(forms.Form):
     username = forms.CharField(
         label="Usuario",
@@ -344,3 +354,13 @@ class LoginForm(forms.Form):
             "autocomplete": "current-password"
         })
     )
+
+
+class CarpetaForm(forms.ModelForm):
+    class Meta:
+        model = None
+        fields = ["nombre"]
+        widgets = {"nombre": forms.TextInput(attrs={"class": "form-input", "placeholder": "Nombre de la carpeta"})}
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["nombre"].label = "Nombre"

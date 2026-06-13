@@ -100,4 +100,14 @@ urlpatterns = [
     path("backup/", views.backup_view, name="backup"),
     path("backup/descargar/", views.descargar_backup, name="backup_descargar"),
     path("backup/restaurar/", views.restaurar_backup, name="backup_restaurar"),
+
+    # Mis Documentos (por usuario)
+    path("mis-documentos/", views.mis_documentos, name="mis_documentos"),
+    path("mis-documentos/subir/", views.mis_documentos_subir, name="mis_documentos_subir"),
+    path("mis-documentos/carpeta/crear/", views.mis_documentos_crear_carpeta, name="mis_documentos_crear_carpeta"),
+    path("mis-documentos/carpeta/<int:carpeta_pk>/", views.mis_documentos, name="mis_documentos_carpeta"),
+    path("mis-documentos/carpeta/<int:carpeta_pk>/renombrar/", views.mis_documentos_renombrar_carpeta, name="mis_documentos_renombrar_carpeta"),
+    path("mis-documentos/carpeta/<int:carpeta_pk>/eliminar/", views.mis_documentos_eliminar_carpeta, name="mis_documentos_eliminar_carpeta"),
+
+    path("mis-documentos/<int:doc_pk>/eliminar/", views.mis_documentos_eliminar, name="mis_documentos_eliminar"),
 ]
