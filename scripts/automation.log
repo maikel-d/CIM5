@@ -138,3 +138,48 @@ To https://github.com/maikel-d/CIM5.git
 [2026-06-13 05:50:01] [3/5] Rotando backups antiguos en Google Drive...
 [2026-06-13 05:50:01] Backups en Drive: 3, se eliminaran: 0
 [2026-06-13 05:50:01] [4/5] Git commit + push...
+[main ac80cf5] auto: cambios 2026-06-13
+ 34 files changed, 4801 insertions(+), 3364 deletions(-)
+ create mode 100644 direccion/admin.py.bak
+ create mode 100644 direccion/migrations/0016_documentousuario_carpetausuario.py
+ create mode 100644 direccion/views/documentos_usuario.py
+ create mode 100644 templates/direccion/mis_documentos.html
+ create mode 100644 tmp_frm.txt
+ create mode 100644 tmp_side.txt
+ create mode 100644 tmp_url.txt
+To https://github.com/maikel-d/CIM5.git
+   4049855..ac80cf5  main -> main
+[2026-06-13 05:50:01] Git push completado
+[2026-06-13 05:50:01] FIN
+
+========================================
+[2026-06-13 06:00:01] INICIO
+[2026-06-13 06:00:01] [5/5] Reiniciando contenedores Docker...
+ Container direccion-db Restarting 
+ Container direccion-nginx Restarting 
+ Container direccion-app Restarting 
+ Container direccion-app Started 
+ Container direccion-db Started 
+ Container direccion-nginx Started 
+[2026-06-13 06:00:01] Contenedores reiniciados
+[2026-06-13 06:00:01] FIN
+
+========================================
+[2026-06-14 05:50:01] INICIO
+[2026-06-14 05:50:01] [1/5] Backup completo (PostgreSQL + codigo + volumenes)...
+[2026-06-14 05:50:01] 1a. Dump PostgreSQL...
+[2026-06-14 05:50:01] PostgreSQL dump: 114K
+[2026-06-14 05:50:01] 1b. Copiando codigo del proyecto...
+[2026-06-14 05:50:01] 1c. Backupeando volumenes Docker...
+[2026-06-14 05:50:01]     Volumen: cim5nv_media_data
+[2026-06-14 05:50:01]     Backup OK: 1.8M
+[2026-06-14 05:50:01]     Volumen: cim5nv_static_data
+[2026-06-14 05:50:01]     Backup OK: 1.9M
+[2026-06-14 05:50:01] 1d. Comprimiendo backup...
+[2026-06-14 05:50:01] Backup completo creado: 5.6M
+[2026-06-14 05:50:01] [2/5] Subiendo backup a Google Drive...
+[2026-06-14 05:50:01] Backup subido a Drive: backup_completo_2026-06-14.tar.gz
+[2026-06-14 05:50:01] [3/5] Rotando backups antiguos en Google Drive...
+[2026-06-14 05:50:01] Backups en Drive: 4, se eliminaran: 1
+[2026-06-14 05:50:01] Eliminando: backup_completo_2026-06-11.tar.gz
+[2026-06-14 05:50:01] [4/5] Git commit + push...

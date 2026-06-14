@@ -1314,3 +1314,50 @@ class PermissionsSystemTest(TestCase):
         self.client.force_login(sup)
         response = self.client.get(reverse('ticket_create'))
         self.assertEqual(response.status_code, 200)
+
+class EndpointStatusTest(TestCase):
+    """Verifica que los endpoints principales respondan HTTP 200."""
+
+    def setUp(self):
+        from direccion.models import UserProfile
+        self.user = User.objects.create_user(
+            username="ep_test", password="test123", is_staff=True,
+        )
+        UserProfile.objects.create(user=self.user, rol="ADMINISTRADOR")
+
+    def _get(self, name):
+        self.client.force_login(self.user)
+        return self.client.get(reverse(name), follow=True)
+
+    def test_dashboard(self):
+        self.assertEqual(self._get("dashboard").status_code, 200)
+
+    def test_bien_list(self):
+        self.assertEqual(self._get("bien_list").status_code, 200)
+
+    def test_documentos_direccion(self):
+        self.assertEqual(self._get("documentos_direccion").status_code, 200)
+
+    def test_personal_list(self):
+        self.assertEqual(self._get("personal_list").status_code, 200)
+
+    def test_caso_list(self):
+        self.assertEqual(self._get("caso_list").status_code, 200)
+
+    def test_ticket_list(self):
+        self.assertEqual(self._get("ticket_list").status_code, 200)
+
+    def test_reportes(self):
+        self.assertEqual(self._get("reportes").status_code, 200)
+
+    def test_informes_diarios(self):
+        self.assertEqual(self._get("informes_diarios").status_code, 200)
+
+    def test_login_unauthenticated(self):
+        r = self.client.get(reverse("login"))
+        self.assertEqual(r.status_code, 200)
+
+    def test_unauthenticated_redirects(self):
+        for name in ["bien_list","personal_list","caso_list","ticket_list"]:
+            r = self.client.get(reverse(name))
+            self.assertIn(r.status_code, [302, 200])

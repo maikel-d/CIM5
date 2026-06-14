@@ -33,7 +33,7 @@ class Migration(migrations.Migration):
             name="DocumentoUsuario",
             fields=[
                 ("id", models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
-                ("archivo", models.FileField(upload_to=direccion.models.usuario_document_path, verbose_name="Archivo")),
+                ("archivo", models.FileField(upload_to='documentos_usuario/', verbose_name="Archivo")),
                 ("tipo", models.CharField(choices=[("PDF", "PDF"), ("WORD", "Word"), ("IMAGEN", "Imagen"), ("OTRO", "Otro")], db_index=True, editable=False, max_length=10, verbose_name="Tipo")),
                 ("descripcion", models.CharField(blank=True, max_length=255, null=True, verbose_name="Descripcion")),
                 ("fecha_subida", models.DateTimeField(auto_now_add=True, db_index=True, verbose_name="Fecha de subida")),

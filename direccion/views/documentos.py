@@ -15,9 +15,30 @@ from .. import permissions as perms
 @permiso_required(perms.DOCUMENTOS_DIRECCION_VER)
 def documentos_direccion_list(request):
     categoria_filtro = request.GET.get('categoria', '')
+    carpeta_filtro = request.GET.get('carpeta', '')
     documentos = DocumentoDireccion.objects.all().order_by('-fecha_subida')
     if categoria_filtro:
         documentos = documentos.filter(categoria=categoria_filtro)
+    if carpeta_filtro and carpeta_filtro.isdigit():
+        documentos = documentos.filter(carpeta_id=carpeta_filtro)
+    
+    # Subcarpetas de documentos
+    from ..models import CarpetaDireccion
+    carpeta_actual = None
+    breadcrumbs = []
+    if carpeta_filtro and carpeta_filtro.isdigit():
+        try:
+            carpeta_actual = CarpetaDireccion.objects.get(pk=carpeta_filtro)
+            temp = carpeta_actual
+            while temp:
+                breadcrumbs.insert(0, temp)
+                temp = temp.parent
+            # Show subfolders of the current folder
+            carpetas_direccion = CarpetaDireccion.objects.filter(parent=carpeta_actual).order_by('nombre')
+        except CarpetaDireccion.DoesNotExist:
+            carpetas_direccion = CarpetaDireccion.objects.filter(parent__isnull=True).order_by('nombre')
+    else:
+        carpetas_direccion = CarpetaDireccion.objects.filter(parent__isnull=True).order_by('nombre')
     if request.method == "POST":
         form = DocumentoDireccionForm(request.POST, request.FILES)
         if form.is_valid():
@@ -26,14 +47,24 @@ def documentos_direccion_list(request):
             auditar(request, "CREAR", "DocumentoDireccion", form.instance.pk, str(form.instance), "Documento Direccion")
         else:
             messages.error(request, "Error al subir el documento. Verifique el formato.")
-        return redirect("documentos_direccion" + (f'?categoria={categoria_filtro}' if categoria_filtro else ''))
+        params = []
+        if categoria_filtro:
+            params.append(f'categoria={categoria_filtro}')
+        if carpeta_filtro:
+            params.append(f'carpeta={carpeta_filtro}')
+        qs = '?' + '&'.join(params) if params else ''
+        return redirect(f"documentos_direccion{qs}")
     else:
         form = DocumentoDireccionForm()
     return render(request, "direccion/documentos_direccion.html", {
         "documentos": documentos,
+        "carpetas_direccion": carpetas_direccion,
         "form": form,
         "categoria_filtro": categoria_filtro,
+        "carpeta_filtro": carpeta_filtro,
         "categorias": DocumentoDireccion.CATEGORIA_CHOICES,
+        "carpeta_actual": carpeta_actual,
+        "breadcrumbs": breadcrumbs,
     })
 
 
@@ -57,91 +88,9 @@ def eliminar_documento_direccion(request, doc_pk):
 
 
 
-def mis_documentos_subir(request):
-    """Subir archivo(s) a Mis Documentos."""
-    if not request.user.is_authenticated:
-        from django.shortcuts import redirect
-        return redirect("login")
-    
-    from ..models import DocumentoUsuario, CarpetaUsuario
-    from ..audit import auditar
-    from django.contrib import messages
-    from django.shortcuts import redirect
-    
-    if request.method == "POST":
-        archivos = request.FILES.getlist("archivos")
-        carpeta_id = request.POST.get("carpeta_id")
-        carpeta = None
-        if carpeta_id:
-            carpeta = CarpetaUsuario.objects.filter(pk=carpeta_id, usuario=request.user).first()
-        
-        for archivo in archivos:
-            doc = DocumentoUsuario(
-                usuario=request.user,
-                archivo=archivo,
-                carpeta=carpeta,
-            )
-            doc.save()
-            auditar(request, "CREAR", "DocumentoUsuario", doc.pk, str(doc), "Archivo: " + archivo.name)
-        
-        if len(archivos) == 1:
-            msg = "1 archivo subido exitosamente."
-        else:
-            msg = str(len(archivos)) + " archivos subidos exitosamente."
-        messages.success(request, msg)
-    return redirect("mis_documentos")
-
-
-def mis_documentos_eliminar(request, doc_pk):
-    """Eliminar un documento."""
-    if not request.user.is_authenticated:
-        from django.shortcuts import redirect
-        return redirect("login")
-    
-    from ..models import DocumentoUsuario
-    from ..audit import auditar
-    from django.contrib import messages
-    from django.shortcuts import redirect, get_object_or_404
-    
-    documento = get_object_or_404(DocumentoUsuario, pk=doc_pk, usuario=request.user)
-    if request.method == "POST":
-        doc_repr = str(documento)
-        pk_val = documento.pk
-        if documento.archivo:
-            documento.archivo.delete()
-        documento.delete()
-        messages.success(request, "Documento eliminado exitosamente.")
-        auditar(request, "ELIMINAR", "DocumentoUsuario", pk_val, doc_repr, "Documento de usuario")
-    return redirect("mis_documentos")
-
-
-
-def mis_documentos(request, carpeta_pk=None):
-    """Vista principal con soporte para subcarpetas."""
-    if not request.user.is_authenticated:
-        from django.shortcuts import redirect
-        return redirect("login")
-    from ..models import CarpetaUsuario, DocumentoUsuario
-    carpeta_actual = None
-    breadcrumbs = []
-    if carpeta_pk:
-        from django.shortcuts import get_object_or_404
-        carpeta_actual = get_object_or_404(CarpetaUsuario, pk=carpeta_pk, usuario=request.user)
-        temp = carpeta_actual
-        while temp:
-            breadcrumbs.insert(0, temp)
-            temp = temp.parent
-    carpetas = CarpetaUsuario.objects.filter(usuario=request.user, parent=carpeta_actual).order_by("orden", "nombre")
-    documentos = DocumentoUsuario.objects.filter(usuario=request.user, carpeta=carpeta_actual).order_by("-fecha_subida")
-    carpetas_data = [{"carpeta": c, "subcarpetas": CarpetaUsuario.objects.filter(parent=c).order_by("orden", "nombre"), "documentos": DocumentoUsuario.objects.filter(carpeta=c).order_by("-fecha_subida")} for c in carpetas]
-    return render(request, "direccion/mis_documentos.html", {"carpetas": carpetas_data, "documentos": documentos, "carpeta_actual": carpeta_actual, "breadcrumbs": breadcrumbs})
-
-def mis_documentos_crear_carpeta(request):
-    """Crear una carpeta o subcarpeta."""
-    if not request.user.is_authenticated:
-        from django.shortcuts import redirect
-        return redirect("login")
-    from ..models import CarpetaUsuario
+@permiso_required(perms.DOCUMENTOS_DIRECCION_CARPETAS_CREAR)
+def carpeta_direccion_crear(request):
+    from ..models import CarpetaDireccion
     from ..audit import auditar
     if request.method == "POST":
         nombre = request.POST.get("nombre", "").strip()
@@ -151,62 +100,39 @@ def mis_documentos_crear_carpeta(request):
         else:
             parent = None
             if parent_id:
-                parent = CarpetaUsuario.objects.filter(pk=parent_id, usuario=request.user).first()
-            carpeta = CarpetaUsuario(usuario=request.user, nombre=nombre, parent=parent)
+                parent = CarpetaDireccion.objects.filter(pk=parent_id).first()
+            carpeta = CarpetaDireccion(nombre=nombre, parent=parent)
             carpeta.save()
-            messages.success(request, "Carpeta creada exitosamente.")
-            auditar(request, "CREAR", "CarpetaUsuario", carpeta.pk, str(carpeta), "Carpeta: " + nombre)
-    if parent_id:
-        from django.shortcuts import redirect
-        return redirect("mis_documentos_carpeta", carpeta_pk=parent_id)
-    return redirect("mis_documentos")
+            messages.success(request, f'Carpeta "{nombre}" creada.')
+            auditar(request, "CREAR", "CarpetaDireccion", carpeta.pk, str(carpeta), "Carpeta de Documento: " + nombre)
+    return redirect("documentos_direccion")
 
-def mis_documentos_renombrar_carpeta(request, carpeta_pk):
-    """Renombrar una carpeta."""
-    if not request.user.is_authenticated:
-        from django.shortcuts import redirect
-        return redirect("login")
-    from ..models import CarpetaUsuario
+
+@permiso_required(perms.DOCUMENTOS_DIRECCION_CARPETAS_RENOMBRAR)
+def carpeta_direccion_renombrar(request, pk):
+    from ..models import CarpetaDireccion
     from ..audit import auditar
-    from django.shortcuts import get_object_or_404
-    carpeta = get_object_or_404(CarpetaUsuario, pk=carpeta_pk, usuario=request.user)
+    carpeta = get_object_or_404(CarpetaDireccion, pk=pk)
     if request.method == "POST":
         nombre = request.POST.get("nombre", "").strip()
         if nombre:
-            old = str(carpeta.nombre)
+            viejo = carpeta.nombre
             carpeta.nombre = nombre
             carpeta.save()
-            messages.success(request, "Carpeta renombrada exitosamente.")
-            auditar(request, "ACTUALIZAR", "CarpetaUsuario", carpeta.pk, str(carpeta), "Renombrar: " + old + " -> " + nombre)
-        else:
-            messages.error(request, "El nombre es obligatorio.")
-    if carpeta.parent:
-        return redirect("mis_documentos_carpeta", carpeta_pk=carpeta.parent.pk)
-    return redirect("mis_documentos")
+            messages.success(request, f'Carpeta renombrada a "{nombre}".')
+            auditar(request, "EDITAR", "CarpetaDireccion", carpeta.pk, f"{viejo} -> {nombre}", "Carpeta de Documento")
+    return redirect("documentos_direccion")
 
-def mis_documentos_eliminar_carpeta(request, carpeta_pk):
-    """Eliminar carpeta y todo su contenido."""
-    if not request.user.is_authenticated:
-        from django.shortcuts import redirect
-        return redirect("login")
-    from ..models import CarpetaUsuario, DocumentoUsuario
+
+@permiso_required(perms.DOCUMENTOS_DIRECCION_CARPETAS_ELIMINAR)
+def carpeta_direccion_eliminar(request, pk):
+    from ..models import CarpetaDireccion
     from ..audit import auditar
-    from django.shortcuts import get_object_or_404
-    carpeta = get_object_or_404(CarpetaUsuario, pk=carpeta_pk, usuario=request.user)
-    parent = carpeta.parent
-    if request.method == "POST":
-        def eliminar_recursivo(obj):
-            for d in DocumentoUsuario.objects.filter(carpeta=obj):
-                if d.archivo:
-                    d.archivo.delete()
-                d.delete()
-            for s in CarpetaUsuario.objects.filter(parent=obj):
-                eliminar_recursivo(s)
-                s.delete()
-        eliminar_recursivo(carpeta)
-        auditar(request, "ELIMINAR", "CarpetaUsuario", carpeta.pk, str(carpeta), "Eliminar carpeta")
-        carpeta.delete()
-        messages.success(request, "Carpeta eliminada exitosamente.")
-    if parent:
-        return redirect("mis_documentos_carpeta", carpeta_pk=parent.pk)
-    return redirect("mis_documentos")
+    carpeta = get_object_or_404(CarpetaDireccion, pk=pk)
+    nombre = str(carpeta)
+    pk_val = carpeta.pk
+    carpeta.delete()
+    messages.success(request, f'Carpeta "{nombre}" eliminada.')
+    auditar(request, "ELIMINAR", "CarpetaDireccion", pk_val, nombre, "Carpeta de Documento: " + nombre)
+    return redirect("documentos_direccion")
+

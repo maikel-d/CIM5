@@ -2,17 +2,88 @@
 {% load permissions_tags %}
 {% load direccion_extras %}
 {% block title %}Bienes{% endblock %}
-{% block page_title %}Bienes{% endblock %}
 {% block content %}
+{% if breadcrumbs %}
+<nav class="flex items-center gap-1.5 text-sm text-gray-500 mb-4">
+  <a href="{% url 'bien_list' %}" class="hover:text-blue-700 transition-colors">Raiz</a>
+  {% for bc in breadcrumbs %}
+  <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+  {% if forloop.last %}
+  <span class="font-medium text-gray-700">{{ bc.nombre }}</span>
+  {% else %}
+  <a href="{% url "bien_carpeta_detail" bc.pk %}" class="hover:text-blue-700 transition-colors">{{ bc.nombre }}</a>
+  {% endif %}
+  {% endfor %}
+</nav>
+{% endif %}
+
+{% block page_title %}Bienes{% endblock %}
+
+<!-- Modal Crear Carpeta -->
 <div class="space-y-6">
   <!-- Header -->
   <div class="flex items-center justify-between">
-    <p class="text-sm text-gray-500">{{ bienes_sin_caso.count }} bien(es)</p>
-    <a href="{% url 'bien_create' %}" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm flex items-center gap-1.5 transition-colors">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-      Nuevo Bien
-    </a>
+    <p class="text-sm text-gray-500">{{ bienes_sin_caso.count }} bien(es) sin carpeta</p>
+    <div class="flex items-center gap-2">
+      {% with can_bienes_carpetas_crear=user.profile|can:'bienes_carpetas_crear' %}{% if can_bienes_carpetas_crear %}
+      <button type="button" onclick="abrirModalCrearCarpeta()" class="px-3 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 text-sm flex items-center gap-1.5 transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 0v4m0-4h4m-4 0H8"/></svg>
+        Nueva Carpeta
+      </button>
+      {% endif %}{% endwith %}
+      <a href="{% url 'bien_create' %}" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm flex items-center gap-1.5 transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        Nuevo Bien
+      </a>
+    </div>
   </div>
+
+  <!-- Carpetas de Bienes -->
+  {% if carpetas_bien %}
+  <div>
+    <h4 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+      <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+      Carpetas de Bienes
+      <span class="text-xs text-gray-400 font-normal">({{ carpetas_bien|length }})</span>
+    </h4>
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 mb-6">
+      {% for carpeta in carpetas_bien %}
+      <a href="{% url "bien_carpeta_detail" carpeta.pk %}" class="group relative block bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 p-4">
+        <div class="flex flex-col items-center text-center">
+          <div class="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center mb-2 group-hover:bg-amber-100 transition-colors">
+            <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+            </svg>
+          </div>
+          <span class="text-sm font-medium text-gray-700 truncate max-w-full">{{ carpeta.nombre }}</span>
+          {% if carpeta.subcarpetas.count %}
+          <span class="text-xs text-gray-400 mt-1">{{ carpeta.subcarpetas.count }} subcarpeta(s)</span>
+          {% endif %}
+        </div>
+        {% with can_renombrar_carpeta=user.profile|can:'bienes_carpetas_renombrar' %}{% with can_eliminar_carpeta=user.profile|can:'bienes_carpetas_eliminar' %}{% if can_renombrar_carpeta or can_eliminar_carpeta %}
+        <div class="absolute top-1 right-1 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+          {% if can_renombrar_carpeta %}
+          <button type="button" onclick="abrirModalRenombrarCarpeta({{ carpeta.pk }}, '{{ carpeta.nombre|escapejs }}')" class="p-1 bg-white/90 backdrop-blur-sm text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded shadow-sm border border-gray-200 transition-colors" title="Renombrar">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+          </button>
+          {% endif %}
+          {% if can_eliminar_carpeta %}
+          <form method="post" action="{% url 'bien_carpeta_eliminar' carpeta.pk %}" onsubmit="return confirm('&iquest;Eliminar la carpeta "{{ carpeta.nombre|escapejs }}"?')">
+            {% csrf_token %}
+            <button type="submit" class="p-1 bg-white/90 backdrop-blur-sm text-gray-500 hover:text-red-600 hover:bg-red-50 rounded shadow-sm border border-gray-200 transition-colors" title="Eliminar">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </button>
+          </form>
+          {% endif %}
+        </div>
+        {% endif %}
+        {% endwith %}
+        {% endwith %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
 
   <!-- Folder Grid -->
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -53,14 +124,14 @@
         {% endif %}
       </div>
     </a>
-      {% if user.profile|can:'casos_eliminar' %}
+      {% with can_casos_eliminar=user.profile|can:'casos_eliminar' %}{% if can_casos_eliminar %}
       <form method="post" action="{% url 'caso_delete' item.caso.pk %}" onsubmit="return confirm('&iquest;Eliminar la carpeta del caso \"{{ item.caso.nombre|escapejs }}\"? Se eliminar&aacute;n todos los investigados, bienes y documentos asociados. Esta acci&oacute;n no se puede deshacer.')" class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
         {% csrf_token %}
         <button type="submit" class="p-1.5 bg-white/90 backdrop-blur-sm text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg shadow-sm border border-gray-200 transition-colors" title="Eliminar caso">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
         </button>
       </form>
-      {% endif %}
+      {% endif %}{% endwith %}
     </div>
     {% empty %}
     <div class="col-span-full flex flex-col items-center justify-center py-16 text-gray-400">
@@ -119,16 +190,16 @@
                 <a href="{% url 'bien_detail' b.pk %}" class="action-btn view p-1.5" title="Ver">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/></svg>
                 </a>
-                {% if user.profile|can:'bienes_editar' %}
+                {% with can_bienes_editar=user.profile|can:'bienes_editar' %}{% if can_bienes_editar %}
                 <a href="{% url 'bien_edit' b.pk %}" class="action-btn view p-1.5" title="Editar">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                 </a>
-                {% endif %}
-                {% if user.profile|can:'bienes_eliminar' %}
+                {% endif %}{% endwith %}
+                {% with can_bienes_eliminar=user.profile|can:'bienes_eliminar' %}{% if can_bienes_eliminar %}
                 <a href="{% url 'bien_delete' b.pk %}" class="action-btn delete p-1.5" title="Eliminar">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                 </a>
-                {% endif %}
+                {% endif %}{% endwith %}
               </div>
             </td>
           </tr>
@@ -139,4 +210,82 @@
   </div>
   {% endif %}
 </div>
+
+<!-- Modal Crear Carpeta -->
+<div id="modal-crear-carpeta" class="fixed inset-0 z-50 flex items-center justify-center" style="display:none" onclick="if(event.target===this)cerrarModalCrearCarpeta()">
+  <div class="bg-white rounded-2xl shadow-xl border border-gray-200 w-full max-w-md mx-4 p-6" onclick="event.stopPropagation()">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
+        <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+        {% if carpeta_actual %}Nueva Subcarpeta{% else %}Nueva Carpeta de Bienes{% endif %}
+      </h3>
+      <button type="button" onclick="cerrarModalCrearCarpeta()" class="text-gray-400 hover:text-gray-600">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <form method="post" action="{% url 'bien_carpeta_crear' %}">
+          <input type="hidden" name="parent_id" value="{{ carpeta_actual.pk }}">
+      {% csrf_token %}
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Nombre de la carpeta</label>
+        <input type="text" name="nombre" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm" placeholder="Ej: Vehículos operativos">
+      </div>
+      <div class="flex justify-end gap-2">
+        <button type="button" onclick="cerrarModalCrearCarpeta()" class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Cancelar</button>
+        <button type="submit" class="px-4 py-2 text-sm text-white bg-amber-500 hover:bg-amber-600 rounded-lg transition-colors">Crear Carpeta</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Renombrar Carpeta -->
+<div id="modal-renombrar-carpeta" class="fixed inset-0 z-50 flex items-center justify-center" style="display:none" onclick="if(event.target===this)cerrarModalRenombrarCarpeta()">
+  <div class="bg-white rounded-2xl shadow-xl border border-gray-200 w-full max-w-md mx-4 p-6" onclick="event.stopPropagation()">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
+        <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+        Renombrar Carpeta
+      </h3>
+      <button type="button" onclick="cerrarModalRenombrarCarpeta()" class="text-gray-400 hover:text-gray-600">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <form method="post" action="" id="form-renombrar-carpeta">
+      {% csrf_token %}
+      <div class="mb-4">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Nuevo nombre</label>
+        <input type="text" name="nombre" id="input-renombrar-carpeta" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
+      </div>
+      <div class="flex justify-end gap-2">
+        <button type="button" onclick="cerrarModalRenombrarCarpeta()" class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Cancelar</button>
+        <button type="submit" class="px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors">Renombrar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function abrirModalCrearCarpeta() {
+  document.getElementById('modal-crear-carpeta').style.display = 'flex';
+}
+function cerrarModalCrearCarpeta() {
+  document.getElementById('modal-crear-carpeta').style.display = 'none';
+}
+function abrirModalRenombrarCarpeta(pk, nombre) {
+  var form = document.getElementById('form-renombrar-carpeta');
+  form.action = "{% url 'bien_carpeta_renombrar' 0 %}".replace('0', pk);
+  document.getElementById('input-renombrar-carpeta').value = nombre;
+  document.getElementById('modal-renombrar-carpeta').style.display = 'flex';
+}
+function cerrarModalRenombrarCarpeta() {
+  document.getElementById('modal-renombrar-carpeta').style.display = 'none';
+}
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    cerrarModalCrearCarpeta();
+    cerrarModalRenombrarCarpeta();
+  }
+});
+</script>
+
 {% endblock %}

@@ -160,6 +160,16 @@
             <dd class="text-sm font-semibold text-gray-800 mt-1">{{ personal.fecha_ingreso|date:"d/m/Y"|default:"-" }}</dd>
           </div>
           <div class="bg-gray-50 rounded-lg p-3.5">
+            <dt class="text-xs text-gray-500 uppercase tracking-wider">Correo Electrónico</dt>
+            <dd class="text-sm font-semibold text-gray-800 mt-1">
+              {% if personal.correo %}
+                <a href="mailto:{{ personal.correo }}" class="text-blue-600 hover:text-blue-800 underline">{{ personal.correo }}</a>
+              {% else %}
+                -
+              {% endif %}
+            </dd>
+          </div>
+          <div class="bg-gray-50 rounded-lg p-3.5">
             <dt class="text-xs text-gray-500 uppercase tracking-wider">Contacto de Emergencia</dt>
             <dd class="text-sm font-semibold text-gray-800 mt-1">{{ personal.contacto_emergencia|default:"-"|linebreaksbr }}</dd>
           </div>

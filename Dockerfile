@@ -44,6 +44,8 @@ COPY . .
 
 RUN mkdir -p /DATA/CIM5NV/media /DATA/CIM5NV/staticfiles /DATA/CIM5NV/logs /DATA/CIM5NV/data
 
+# Collectstatic se ejecuta en entrypoint.sh
+
 # Copiar entrypoint a la raiz (única copia) y hacerlo ejecutable
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh

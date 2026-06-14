@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.models import User
+from direccion.models import AuditLog, Bien, Caso, DocumentoBien, DocumentoCaso, DocumentoDireccion, DocumentoInvestigado, DocumentoPersonal, InformeDiario, Investigado, Notificacion, Personal, Tarea, TicketHistorial, TicketSoporte, UserProfile
 from django.contrib.auth.admin import UserAdmin
-from .models import CarpetaUsuario,  UserProfile, Personal, DocumentoPersonal, Caso, Investigado, DocumentoInvestigado, DocumentoDireccion, DocumentoCaso, AuditLog, TicketSoporte, TicketHistorial, Tarea, Notificacion, InformeDiario, Bien, DocumentoBien, DocumentoUsuario, DocumentoUsuario
 
 
 class UserProfileInline(admin.StackedInline):
@@ -165,9 +165,6 @@ class NotificacionAdmin(admin.ModelAdmin):
 
 @admin.register(AuditLog)
 class AuditLogAdmin(admin.ModelAdmin):
-    list_display = ["fecha", "username", "accion", "modelo", "objeto_repr"]
-    list_filter = ["accion", "modelo"]
-    search_fields = ["username", "objeto_repr", "detalle"]
     readonly_fields = ["fecha", "usuario", "username", "accion", "modelo", "objeto_id", "objeto_repr", "detalle", "direccion_ip"]
     date_hierarchy = "fecha"
 
@@ -180,17 +177,5 @@ class AuditLogAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         return False
 
-@admin.register(DocumentoUsuario)
-class DocumentoUsuarioAdmin(admin.ModelAdmin):
-    list_display = ["usuario", "tipo", "descripcion", "fecha_subida"]
-    list_filter = ["tipo", "fecha_subida"]
-    search_fields = ["usuario__username", "descripcion"]
-    date_hierarchy = "fecha_subida"
-    readonly_fields = ["tipo", "fecha_subida"]
 
 
-@admin.register(CarpetaUsuario)
-class CarpetaUsuarioAdmin(admin.ModelAdmin):
-    list_display = ["nombre", "usuario", "parent", "fecha_creacion"]
-    list_filter = ["usuario"]
-    search_fields = ["nombre", "usuario__username"]

@@ -6,7 +6,7 @@ from .models import (
     UserProfile, Personal, DocumentoPersonal,
     Caso, Investigado, DocumentoInvestigado, DocumentoDireccion,
     DocumentoCaso, Tarea, TicketSoporte, InformeDiario,
-    Bien, DocumentoBien, DocumentoUsuario
+    Bien, DocumentoBien,
 )
 
 
@@ -97,7 +97,7 @@ class PersonalForm(forms.ModelForm):
         fields = [
             "foto", "apellidos", "nombres", "cedula", "grado",
             "fecha_nacimiento", "direccion", "telefonos",
-            "fecha_ingreso", "contacto_emergencia"
+            "fecha_ingreso", "correo", "contacto_emergencia"
         ]
         widgets = {
             "fecha_nacimiento": forms.DateInput(
@@ -108,6 +108,7 @@ class PersonalForm(forms.ModelForm):
             ),
             "telefonos": forms.Textarea(attrs={"rows": 2, "class": "form-input", "placeholder": "Ej: 0412-1234567, 0212-7654321"}),
             "direccion": forms.Textarea(attrs={"rows": 2, "class": "form-input", "placeholder": "Dirección de domicilio"}),
+            "correo": forms.EmailInput(attrs={"class": "form-input", "placeholder": "correo@ejemplo.com"}),
             "contacto_emergencia": forms.Textarea(attrs={"rows": 2, "class": "form-input", "placeholder": "Nombre, parentesco y teléfono"}),
             "grado": forms.TextInput(attrs={"class": "form-input", "placeholder": "Ej: Inspector, Sub-Comisario, T.S.U...."}),
         }
@@ -328,9 +329,7 @@ class DocumentoBienForm(forms.ModelForm):
 
 
 
-class DocumentoUsuarioForm(forms.ModelForm):
     class Meta:
-        model = DocumentoUsuario
         fields = ["archivo", "descripcion"]
         widgets = {"descripcion": forms.TextInput(attrs={"class": "form-input", "placeholder": "Descripcion"})}
     def clean_archivo(self):

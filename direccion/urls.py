@@ -9,6 +9,7 @@ urlpatterns = [
 
     # Dashboard
     path("", views.dashboard, name="dashboard"),
+    path("dashboard/", views.dashboard, name="dashboard_alt"),
 
     # User management (Admin only)
     path("usuarios/", views.UserListView.as_view(), name="usuario_list"),
@@ -19,6 +20,9 @@ urlpatterns = [
 
     # Documentacion de la Direccion
     path("documentos-direccion/", views.documentos_direccion_list, name="documentos_direccion"),
+    path("documentos-direccion/carpeta/crear/", views.carpeta_direccion_crear, name="doc_carpeta_crear"),
+    path("documentos-direccion/carpeta/<int:pk>/renombrar/", views.carpeta_direccion_renombrar, name="doc_carpeta_renombrar"),
+    path("documentos-direccion/carpeta/<int:pk>/eliminar/", views.carpeta_direccion_eliminar, name="doc_carpeta_eliminar"),
     path("documentos-direccion/<int:doc_pk>/eliminar/", views.eliminar_documento_direccion, name="documento_direccion_delete"),
 
     # Personal CRUD
@@ -87,6 +91,10 @@ urlpatterns = [
     path("bienes/<int:pk>/eliminar/", views.BienDeleteView.as_view(), name="bien_delete"),
     path("bienes/<int:pk>/documento/agregar/", views.agregar_documento_bien, name="bien_documento_add"),
     path("bienes/<int:pk>/documento/<int:doc_pk>/eliminar/", views.eliminar_documento_bien, name="bien_documento_delete"),
+    path("bienes/carpeta/<int:pk>/", views.CarpetaBienDetailView.as_view(), name="bien_carpeta_detail"),
+    path("bienes/carpeta/crear/", views.carpeta_bien_crear, name="bien_carpeta_crear"),
+    path("bienes/carpeta/<int:pk>/renombrar/", views.carpeta_bien_renombrar, name="bien_carpeta_renombrar"),
+    path("bienes/carpeta/<int:pk>/eliminar/", views.carpeta_bien_eliminar, name="bien_carpeta_eliminar"),
 
     # Reports Center
     path("reportes/", views.panel_reportes, name="reportes"),
@@ -101,13 +109,6 @@ urlpatterns = [
     path("backup/descargar/", views.descargar_backup, name="backup_descargar"),
     path("backup/restaurar/", views.restaurar_backup, name="backup_restaurar"),
 
-    # Mis Documentos (por usuario)
-    path("mis-documentos/", views.mis_documentos, name="mis_documentos"),
-    path("mis-documentos/subir/", views.mis_documentos_subir, name="mis_documentos_subir"),
-    path("mis-documentos/carpeta/crear/", views.mis_documentos_crear_carpeta, name="mis_documentos_crear_carpeta"),
-    path("mis-documentos/carpeta/<int:carpeta_pk>/", views.mis_documentos, name="mis_documentos_carpeta"),
-    path("mis-documentos/carpeta/<int:carpeta_pk>/renombrar/", views.mis_documentos_renombrar_carpeta, name="mis_documentos_renombrar_carpeta"),
-    path("mis-documentos/carpeta/<int:carpeta_pk>/eliminar/", views.mis_documentos_eliminar_carpeta, name="mis_documentos_eliminar_carpeta"),
+    #  (por usuario)
 
-    path("mis-documentos/<int:doc_pk>/eliminar/", views.mis_documentos_eliminar, name="mis_documentos_eliminar"),
 ]
