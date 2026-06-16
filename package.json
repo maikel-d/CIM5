@@ -1,0 +1,25 @@
+{
+  "name": "nuevo-proyecto",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build:css": "npx tailwindcss -i ./static/css/tailwind-input.css -o ./static/css/tailwind.css --minify",
+    "watch:css": "npx tailwindcss -i ./static/css/tailwind-input.css -o ./static/css/tailwind.css --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/maikel-d/CIM5.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/maikel-d/CIM5/issues"
+  },
+  "homepage": "https://github.com/maikel-d/CIM5#readme",
+  "devDependencies": {
+    "tailwindcss": "^3.4.17"
+  }
+}

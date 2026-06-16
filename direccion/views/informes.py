@@ -253,15 +253,18 @@ def informes_diarios_list(request):
     meses_con_informes = []
     for mes_num in range(1, 13):
         mes_informes = informes_por_mes[mes_num]
+        # Ordenar informes del dia 1 al ultimo del mes
+        mes_informes.sort(key=lambda x: x.fecha)
         primer_informe = mes_informes[0] if mes_informes else None
+        ultimo_informe = mes_informes[-1] if mes_informes else None
         bg, icon_color, hover_bg, border_accent, badge_bg, badge_text = colores_meses[mes_num - 1]
         meses_con_informes.append({
             'numero': mes_num,
             'nombre': MESES_ESPANOL[mes_num - 1],
             'count': len(mes_informes),
-            'informes': mes_informes,  # lista completa para el acordeón
+            'informes': mes_informes,  # lista completa ordenada dia 1 -> ultimo
             'primer_informe': primer_informe,
-            'ultima_fecha': primer_informe.fecha if primer_informe else None,
+            'ultima_fecha': ultimo_informe.fecha if ultimo_informe else None,  # CORREGIDO: antes era primer_informe.fecha
             'bg_color': bg,
             'icon_color': icon_color,
             'hover_bg': hover_bg,

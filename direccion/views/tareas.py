@@ -3,6 +3,10 @@
 # ============================================================
 
 from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from ..decorators import permiso_required
+from .. import permissions as perms
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 
 from ..models import Tarea
@@ -11,6 +15,8 @@ from ..decorators import permiso_required
 from .. import permissions as perms
 
 
+@permiso_required(perms.TAREAS_VER)
+@login_required
 @permiso_required(perms.TAREAS_VER)
 def tareas_list(request):
     """Lista todas las tareas pendientes. Cualquier usuario puede añadir."""

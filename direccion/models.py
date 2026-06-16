@@ -59,8 +59,8 @@ class Personal(models.Model):
     grado = models.CharField('Grado', max_length=100, blank=True, default='', help_text='Grado profesional / jerárquico')
     direccion = models.TextField('Dirección', blank=True, null=True, help_text='Dirección de domicilio')
     fecha_ingreso = models.DateField('Fecha de Ingreso', blank=True, null=True)
-    correo = models.EmailField('Correo Electrónico', max_length=254, unique=True, blank=True, null=True, help_text='Correo electrónico institucional o personal')
     contacto_emergencia = models.TextField('Contacto de Emergencia', blank=True, null=True, help_text='Nombre, parentesco y teléfono')
+    correo = models.EmailField('Correo Electrónico', max_length=254, blank=True, null=True, help_text='Correo electrónico institucional o personal')
     fecha_creacion = models.DateTimeField('Fecha de creación', auto_now_add=True, db_index=True)
     fecha_actualizacion = models.DateTimeField('Fecha de actualización', auto_now=True)
     activo = models.BooleanField('Activo', default=True, db_index=True)
@@ -286,11 +286,6 @@ class DocumentoDireccion(TipoDocumentoMixin, models.Model):
     )
     tipo = models.CharField('Tipo', max_length=10, choices=TIPO_CHOICES, editable=False, db_index=True)
     categoria = models.CharField('Categoría', max_length=20, choices=CATEGORIA_CHOICES, default='DOCUMENTOS', db_index=True)
-    carpeta = models.ForeignKey(
-        'CarpetaDireccion', on_delete=models.SET_NULL,
-        null=True, blank=True,
-        related_name='documentos', verbose_name='Carpeta',
-    )
     descripcion = models.CharField('Descripción', max_length=255, blank=True, null=True)
     fecha_subida = models.DateTimeField('Fecha de subida', auto_now_add=True, db_index=True)
 
@@ -304,6 +299,25 @@ class DocumentoDireccion(TipoDocumentoMixin, models.Model):
         return f"{self.descripcion or 'Sin descripción'} - {nombre}"
 
 
+class CarpetaDireccion(models.Model):
+    """Carpeta dinámica para organizar documentos de la dirección."""
+    nombre = models.CharField('Nombre', max_length=100)
+    categoria = models.CharField('Categoría', max_length=20, blank=True, null=True)
+    parent = models.ForeignKey(
+        'self', on_delete=models.CASCADE,
+        null=True, blank=True,
+        related_name='subcarpetas', verbose_name='Carpeta padre'
+    )
+    orden = models.IntegerField('Orden', default=0)
+    fecha_creacion = models.DateTimeField('Fecha de creación', auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Carpeta de Documento'
+        verbose_name_plural = 'Carpetas de Documentos'
+        ordering = ['orden', 'nombre']
+
+    def __str__(self):
+        return self.nombre
 
 
 class AuditLog(models.Model):
@@ -586,10 +600,6 @@ class Bien(models.Model):
         'Caso', on_delete=models.SET_NULL, null=True, blank=True,
         verbose_name='Caso', related_name='bienes'
     )
-    carpeta = models.ForeignKey(
-        'CarpetaBien', on_delete=models.SET_NULL, null=True, blank=True,
-        verbose_name='Carpeta', related_name='bienes'
-    )
     nombre = models.CharField('Nombre del bien', max_length=200)
     descripcion = models.TextField('Descripción', blank=True, null=True)
     foto = models.ImageField(
@@ -605,6 +615,10 @@ class Bien(models.Model):
     estado = models.CharField('Estado', max_length=20, choices=ESTADO_CHOICES, default='BUENO', db_index=True)
     fecha_adquisicion = models.DateField('Fecha de adquisición', blank=True, null=True)
     valor = models.DecimalField('Valor (Bs.)', max_digits=14, decimal_places=2, blank=True, null=True)
+    carpeta = models.ForeignKey(
+        'CarpetaBien', on_delete=models.SET_NULL, null=True, blank=True,
+        verbose_name='Carpeta', related_name='bienes'
+    )
     activo = models.BooleanField('Activo', default=True, db_index=True)
     fecha_creacion = models.DateTimeField('Fecha de creación', auto_now_add=True, db_index=True)
     fecha_actualizacion = models.DateTimeField('Fecha de actualización', auto_now=True)
@@ -658,11 +672,12 @@ class DocumentoBien(TipoDocumentoMixin, models.Model):
         return f"{self.bien} - {nombre}"
 
 
-# ============================================================
-# ============================================================
+def carpeta_bien_document_path(instance, filename):
+    return f'bienes/carpetas/{instance.carpeta.pk}/{filename}'
 
 
 class CarpetaBien(models.Model):
+    """Carpeta dinámica para organizar bienes."""
     nombre = models.CharField('Nombre', max_length=100)
     parent = models.ForeignKey(
         'self', on_delete=models.CASCADE,
@@ -670,28 +685,43 @@ class CarpetaBien(models.Model):
         related_name='subcarpetas', verbose_name='Carpeta padre'
     )
     orden = models.IntegerField('Orden', default=0)
-    fecha_creacion = models.DateTimeField('Fecha de creacion', auto_now_add=True)
+    fecha_creacion = models.DateTimeField('Fecha de creación', auto_now_add=True)
+
     class Meta:
         verbose_name = 'Carpeta de Bien'
         verbose_name_plural = 'Carpetas de Bienes'
         ordering = ['orden', 'nombre']
+
     def __str__(self):
         return self.nombre
 
-class CarpetaDireccion(models.Model):
-    nombre = models.CharField('Nombre', max_length=100)
-    categoria = models.CharField('Categoria', max_length=20, blank=True, null=True)
-    parent = models.ForeignKey(
-        'self', on_delete=models.CASCADE,
-        null=True, blank=True,
-        related_name='subcarpetas', verbose_name='Carpeta padre'
+
+class DocumentoCarpetaBien(TipoDocumentoMixin, models.Model):
+    """Documento dentro de una carpeta de bienes."""
+    TIPO_CHOICES = [
+        ('PDF', 'PDF'),
+        ('WORD', 'Word'),
+        ('IMAGEN', 'Imagen'),
+        ('OTRO', 'Otro'),
+    ]
+
+    carpeta = models.ForeignKey(
+        CarpetaBien, on_delete=models.CASCADE, related_name='documentos',
+        verbose_name='Carpeta'
     )
-    orden = models.IntegerField('Orden', default=0)
-    fecha_creacion = models.DateTimeField('Fecha de creacion', auto_now_add=True)
-    class Meta:
-        verbose_name = 'Carpeta de Documento'
-        verbose_name_plural = 'Carpetas de Documentos'
-        ordering = ['orden', 'nombre']
-    def __str__(self):
-        return self.nombre
+    archivo = models.FileField(
+        'Archivo', upload_to=carpeta_bien_document_path,
+        help_text='Formatos: PDF, Word (.doc, .docx), imágenes'
+    )
+    tipo = models.CharField('Tipo', max_length=10, choices=TIPO_CHOICES, editable=False, db_index=True)
+    descripcion = models.CharField('Descripción', max_length=255, blank=True, null=True)
+    fecha_subida = models.DateTimeField('Fecha de subida', auto_now_add=True, db_index=True)
 
+    class Meta:
+        verbose_name = 'Documento de Carpeta'
+        verbose_name_plural = 'Documentos de Carpetas'
+        ordering = ['-fecha_subida']
+
+    def __str__(self):
+        nombre = os.path.basename(self.archivo.name) if self.archivo.name else '(sin archivo)'
+        return f"{self.carpeta} - {nombre}"

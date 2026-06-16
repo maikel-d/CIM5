@@ -8,18 +8,23 @@ import tempfile
 from datetime import datetime
 from pathlib import Path
 
-from django.shortcuts import render, redirect
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from ..decorators import permiso_required
+from .. import permissions as perms
+from django.shortcuts import redirect
 from django.contrib import messages
 from django.http import HttpResponse
 from django.conf import settings
 from django.core.management import call_command
 
-from ..decorators import permiso_required
 from ..audit import auditar
 from .. import permissions as perms
 from .export import _human_size
 
 
+@permiso_required(perms.BACKUP_DESCARGAR)
+@login_required
 @permiso_required(perms.BACKUP_DESCARGAR)
 def backup_view(request):
     """Panel de copias de seguridad: descargar backup o restaurar.
@@ -50,6 +55,8 @@ def backup_view(request):
     return render(request, 'direccion/backup.html', context)
 
 
+@permiso_required(perms.BACKUP_DESCARGAR)
+@login_required
 @permiso_required(perms.BACKUP_DESCARGAR)
 def descargar_backup(request):
     """Genera y descarga un archivo ZIP con dump de la BD y los archivos media.
@@ -101,6 +108,8 @@ def descargar_backup(request):
         return response
 
 
+@permiso_required(perms.BACKUP_RESTAURAR)
+@login_required
 @permiso_required(perms.BACKUP_RESTAURAR)
 def restaurar_backup(request):
     """Recibe un archivo ZIP de respaldo y restaura la BD y media.

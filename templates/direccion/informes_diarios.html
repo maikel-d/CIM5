@@ -2,6 +2,51 @@
 {% load permissions_tags %}
 {% block title %}Informes Diarios{% endblock %}
 {% block page_title %}Informes Diarios{% endblock %}
+{% block extra_head %}
+<style>
+  /* Rotate chevron 180 degrees when accordion is open */
+  .rotate-180 {
+    transform: rotate(180deg) !important;
+  }
+  
+  /* Active folder card style */
+  .mes-active {
+    border-color: #003363 !important;
+    background-color: rgba(232, 240, 248, 0.3) !important;
+    box-shadow: 0 1px 3px rgba(0, 51, 99, 0.08) !important;
+  }
+  
+  /* Month folder card hover enhancement */
+  .mes-active .mes-folder-icon {
+    transform: scale(1.05);
+  }
+  
+  /* Report list items staggered animation on open */
+  .mes-content-open .mes-report-item {
+    animation: slideInItem 0.3s ease-out both;
+  }
+  .mes-content-open .mes-report-item:nth-child(1) { animation-delay: 0.02s; }
+  .mes-content-open .mes-report-item:nth-child(2) { animation-delay: 0.04s; }
+  .mes-content-open .mes-report-item:nth-child(3) { animation-delay: 0.06s; }
+  .mes-content-open .mes-report-item:nth-child(4) { animation-delay: 0.08s; }
+  .mes-content-open .mes-report-item:nth-child(5) { animation-delay: 0.10s; }
+  .mes-content-open .mes-report-item:nth-child(6) { animation-delay: 0.12s; }
+  .mes-content-open .mes-report-item:nth-child(7) { animation-delay: 0.14s; }
+  .mes-content-open .mes-report-item:nth-child(8) { animation-delay: 0.16s; }
+  
+  @keyframes slideInItem {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="space-y-6">
   <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
@@ -77,7 +122,7 @@
       {% for mes in meses_con_informes %}
       <button type="button" onclick="toggleMes({{ mes.numero }})"
          class="text-left group bg-white rounded-xl border-2 hover:shadow-md hover:-translate-y-1 transition-all duration-200 p-5 cursor-pointer
-                {% if mes_actual|stringformat:'s' == mes.numero|stringformat:'s' %}border-[#003363]/30 bg-[#e8f0f8]/30 shadow-sm{% else %}border-gray-200 hover:border-{{ mes.border_accent|cut:'border-' }}{% endif %}"
+                {% if mes_actual|stringformat:'s' == mes.numero|stringformat:'s' %}border-[#003363]/30 bg-[#e8f0f8]/30 shadow-sm{% else %}border-gray-200 hover:border-gray-300{% endif %}"
          id="mes-card-{{ mes.numero }}">
         <!-- Icon + Count -->
         <div class="flex items-start justify-between mb-3">
@@ -86,7 +131,7 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
             </svg>
           </div>
-          <span class="text-xs font-medium {% if mes.count > 0 %}{{ mes.badge_text }} {{ mes.badge_bg }}{% else %}text-gray-400 bg-gray-50{% endif %} px-2 py-0.5 rounded-full">
+          <span class="text-xs font-medium mes-count-badge {% if mes.count > 0 %}{{ mes.badge_text }} {{ mes.badge_bg }}{% else %}text-gray-400 bg-gray-50{% endif %} px-2 py-0.5 rounded-full">
             {{ mes.count }} info.
           </span>
         </div>
@@ -122,7 +167,7 @@
         </div>
         <div class="space-y-2">
           {% for informe in mes.informes %}
-          <div class="border border-gray-200 rounded-lg hover:border-[#003363]/30 transition-colors group">
+          <div class="mes-report-item border border-gray-200 rounded-lg hover:border-[#003363]/30 transition-colors group">
             <div class="p-3.5">
               <div class="flex items-center justify-between gap-2 mb-1">
                 <div class="flex items-center gap-2">
@@ -278,8 +323,8 @@
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Contenido</label>
-          <textarea name="contenido" rows="8" required class="form-input w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#003363]/20 focus:border-[#003363]" placeholder="Redacta el contenido del informe aqu&iacute;..."></textarea>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Descripci&oacute;n <span class="text-gray-400 font-normal">(opcional)</span></label>
+          <textarea name="contenido" rows="4" class="form-input w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#003363]/20 focus:border-[#003363]" placeholder="Breve descripci&oacute;n del informe (opcional)"></textarea>
         </div>
 
         <div>
@@ -305,12 +350,14 @@ var mesAbierto = null;
 function toggleMes(numero) {
   var content = document.getElementById('mes-content-' + numero);
   var chevron = document.getElementById('mes-chevron-' + numero);
+  var card = document.getElementById('mes-card-' + numero);
   if (!content || !chevron) return;
 
   // Close previous if different
   if (mesAbierto !== null && mesAbierto !== numero) {
     var prevContent = document.getElementById('mes-content-' + mesAbierto);
     var prevChevron = document.getElementById('mes-chevron-' + mesAbierto);
+    var prevCard = document.getElementById('mes-card-' + mesAbierto);
     if (prevContent) {
       prevContent.style.maxHeight = '0';
       prevContent.style.opacity = '0';
@@ -318,24 +365,38 @@ function toggleMes(numero) {
     if (prevChevron) {
       prevChevron.classList.remove('rotate-180');
     }
+    if (prevCard) {
+      prevCard.classList.remove('mes-active');
+    }
   }
 
   // Toggle current
   if (mesAbierto === numero) {
     content.style.maxHeight = '0';
     content.style.opacity = '0';
+    content.classList.remove('mes-content-open');
     chevron.classList.remove('rotate-180');
+    if (card) card.classList.remove('mes-active');
     mesAbierto = null;
   } else {
-    content.style.maxHeight = content.scrollHeight + 'px';
+    // Reset height first for proper animation
+    content.style.maxHeight = '0';
+    content.style.opacity = '0';
+    content.classList.remove('mes-content-open');
+    // Force reflow
+    void content.offsetHeight;
+    // Then expand
+    content.style.maxHeight = '999px';
     content.style.opacity = '1';
+    content.classList.add('mes-content-open');
     chevron.classList.add('rotate-180');
+    if (card) card.classList.add('mes-active');
     mesAbierto = numero;
 
     // Scroll to content after a short delay
     setTimeout(function() {
       content.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }, 100);
+    }, 150);
   }
 }
 
@@ -398,6 +459,23 @@ document.addEventListener('DOMContentLoaded', function() {
       if (chevron) chevron.classList.remove('rotate-180');
     }
   });
+
+  // Auto-open current month if no month selected
+  var mesParam = '{{ mes_actual }}';
+  if (!mesParam) {
+    var hoy = new Date();
+    var mesActualNum = hoy.getMonth() + 1;
+    // Only auto-open if there are reports for this month
+    var card = document.getElementById('mes-card-' + mesActualNum);
+    if (card) {
+      var badge = card.querySelector('.mes-count-badge');
+      if (badge && parseInt(badge.textContent) > 0) {
+        setTimeout(function() {
+          toggleMes(mesActualNum);
+        }, 300);
+      }
+    }
+  }
 });
 
 function toggleDownloadDropdown() {

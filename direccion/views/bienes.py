@@ -7,9 +7,10 @@ from django.contrib import messages
 from django.db.models import Q
 from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
+from django.contrib.auth.decorators import login_required
 
-from ..models import Bien, CarpetaBien, DocumentoBien
-from ..forms import BienForm, DocumentoBienForm
+from ..models import Bien, CarpetaBien, DocumentoBien, DocumentoCarpetaBien
+from ..forms import BienForm, DocumentoBienForm, CarpetaForm, CarpetaBienDocumentForm
 from .mixins import PermissionRequiredMixin
 from ..decorators import permiso_required
 from ..audit import auditar
@@ -233,6 +234,27 @@ def carpeta_bien_renombrar(request, pk):
     return redirect("bien_list")
 
 
+
+
+class CarpetaBienUpdateView(PermissionRequiredMixin, UpdateView):
+    """Vista para editar/renombrar una carpeta de bienes."""
+    model = CarpetaBien
+    form_class = CarpetaForm
+    template_name = 'direccion/bien_carpeta_form.html'
+    permission_required = perms.BIENES_CARPETAS_RENOMBRAR
+
+    def get_success_url(self):
+        return reverse_lazy('bien_carpeta_detail', kwargs={'pk': self.object.pk})
+
+    def form_valid(self, form):
+        messages.success(self.request, f'Carpeta renombrada a "{form.instance.nombre}".')
+        auditar(
+            self.request, "EDITAR", "CarpetaBien", form.instance.pk,
+            f'Renombrada de "{CarpetaBien.objects.get(pk=form.instance.pk).nombre}" a "{form.instance.nombre}"',
+            "Carpeta de Bien"
+        )
+        return super().form_valid(form)
+
 class CarpetaBienDetailView(PermissionRequiredMixin, DetailView):
     """
     Vista de detalle de una carpeta de bienes.
@@ -281,5 +303,34 @@ def carpeta_bien_eliminar(request, pk):
     auditar(request, "ELIMINAR", "CarpetaBien", pk_val, nombre, "Carpeta de Bien: " + nombre)
     return redirect("bien_list")
 
+@login_required
+@permiso_required(perms.BIENES_DOCUMENTOS_AGREGAR)
+def agregar_documento_carpeta(request, pk):
+    carpeta = get_object_or_404(CarpetaBien, pk=pk)
+    if request.method == "POST":
+        form = CarpetaBienDocumentForm(request.POST, request.FILES)
+        if form.is_valid():
+            documento = form.save(commit=False)
+            documento.carpeta = carpeta
+            documento.save()
+            messages.success(request, "Documento agregado exitosamente.")
+            auditar(request, "CREAR", "DocumentoCarpetaBien", documento.pk, str(documento), f"Carpeta: {carpeta}")
+        else:
+            messages.error(request, "Error al subir el documento. Verifique el formato.")
+    return redirect("bien_carpeta_detail", pk=pk)
 
+
+@login_required
+@permiso_required(perms.BIENES_DOCUMENTOS_ELIMINAR)
+def eliminar_documento_carpeta(request, pk, doc_pk):
+    documento = get_object_or_404(DocumentoCarpetaBien, pk=doc_pk, carpeta_id=pk)
+    doc_repr = str(documento)
+    pk_val = documento.pk
+    carpeta_repr = str(documento.carpeta)
+    if documento.archivo:
+        documento.archivo.delete()
+    documento.delete()
+    messages.success(request, "Documento eliminado exitosamente.")
+    auditar(request, "ELIMINAR", "DocumentoCarpetaBien", pk_val, doc_repr, f"Carpeta: {carpeta_repr}")
+    return redirect("bien_carpeta_detail", pk=pk)
 

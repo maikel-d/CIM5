@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.models import User
-from direccion.models import AuditLog, Bien, Caso, DocumentoBien, DocumentoCaso, DocumentoDireccion, DocumentoInvestigado, DocumentoPersonal, InformeDiario, Investigado, Notificacion, Personal, Tarea, TicketHistorial, TicketSoporte, UserProfile
+from direccion.models import AuditLog, Bien, Caso, DocumentoCarpetaBien, DocumentoBien, DocumentoCaso, DocumentoDireccion, DocumentoInvestigado, DocumentoPersonal, InformeDiario, Investigado, Notificacion, Personal, Tarea, TicketHistorial, TicketSoporte, UserProfile
 from django.contrib.auth.admin import UserAdmin
 
 
@@ -177,5 +177,9 @@ class AuditLogAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         return False
 
-
-
+@admin.register(DocumentoCarpetaBien)
+class DocumentoCarpetaBienAdmin(admin.ModelAdmin):
+    list_display = ["descripcion", "carpeta", "tipo", "fecha_subida"]
+    list_filter = ["tipo", "fecha_subida"]
+    search_fields = ["descripcion", "carpeta__nombre"]
+    readonly_fields = ["tipo", "fecha_subida"]

@@ -6,9 +6,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Sistema de Gestión Dirección General{% endblock %}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="icon" type="image/png" sizes="32x32" href="{% static 'images/favicon.png' %}">
     <link rel="apple-touch-icon" sizes="180x180" href="{% static 'images/apple-touch-icon.png' %}">
+    <link rel="stylesheet" href="{% static 'css/tailwind.css' %}">
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
     {% block extra_head %}{% endblock %}
 </head>
@@ -19,7 +19,7 @@
     
     <div class="flex h-screen overflow-hidden">
         <!-- Sidebar -->
-        <aside id="sidebar" class="w-64 bg-[#003363] text-white flex-shrink-0 overflow-y-auto fixed lg:static inset-y-0 left-0 z-40 -translate-x-full lg:translate-x-0">
+        <aside id="sidebar" class="w-64 bg-[#003363] text-white flex-shrink-0 overflow-y-auto fixed lg:static inset-y-0 left-0 z-40 -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out">
             <div class="pt-3 pb-2 px-4 border-b border-white/10 text-center">
                 <div class="mb-2">
                     <img src="{% static 'images/logo_acceso.png' %}" alt="Logo" class="w-36 h-auto mx-auto object-contain">
@@ -88,7 +88,6 @@
                 {% endif %}
                 
                 {% if user.profile|can:'usuarios_ver' %}
-
                 <div class="pt-4 mt-4 border-t border-white/10">
                     <p class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Administración</p>
                 </div>
@@ -167,12 +166,6 @@
     <script>
     // Auto-dismiss messages after 3 seconds
     document.addEventListener('DOMContentLoaded', function() {
-        // Activar transiciones del sidebar luego del render inicial
-        setTimeout(function() {
-            var sb = document.getElementById('sidebar');
-            if (sb) sb.classList.add('sidebar-ready');
-        }, 150);
-
         const successMessages = document.querySelectorAll('.message-dismiss-success');
         successMessages.forEach(function(msg) {
             setTimeout(function() {

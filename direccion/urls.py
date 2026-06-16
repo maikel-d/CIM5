@@ -9,7 +9,6 @@ urlpatterns = [
 
     # Dashboard
     path("", views.dashboard, name="dashboard"),
-    path("dashboard/", views.dashboard, name="dashboard_alt"),
 
     # User management (Admin only)
     path("usuarios/", views.UserListView.as_view(), name="usuario_list"),
@@ -20,9 +19,10 @@ urlpatterns = [
 
     # Documentacion de la Direccion
     path("documentos-direccion/", views.documentos_direccion_list, name="documentos_direccion"),
-    path("documentos-direccion/carpeta/crear/", views.carpeta_direccion_crear, name="doc_carpeta_crear"),
-    path("documentos-direccion/carpeta/<int:pk>/renombrar/", views.carpeta_direccion_renombrar, name="doc_carpeta_renombrar"),
-    path("documentos-direccion/carpeta/<int:pk>/eliminar/", views.carpeta_direccion_eliminar, name="doc_carpeta_eliminar"),
+    path("documentos-direccion/batch-upload/", views.batch_upload_documentos, name="batch_upload_documentos"),
+    path("documentos-direccion/carpeta/crear/", views.carpeta_direccion_crear, name="carpeta_direccion_crear"),
+    path("documentos-direccion/carpeta/<int:pk>/renombrar/", views.carpeta_direccion_renombrar, name="carpeta_direccion_renombrar"),
+    path("documentos-direccion/carpeta/<int:pk>/eliminar/", views.carpeta_direccion_eliminar, name="carpeta_direccion_eliminar"),
     path("documentos-direccion/<int:doc_pk>/eliminar/", views.eliminar_documento_direccion, name="documento_direccion_delete"),
 
     # Personal CRUD
@@ -91,10 +91,10 @@ urlpatterns = [
     path("bienes/<int:pk>/eliminar/", views.BienDeleteView.as_view(), name="bien_delete"),
     path("bienes/<int:pk>/documento/agregar/", views.agregar_documento_bien, name="bien_documento_add"),
     path("bienes/<int:pk>/documento/<int:doc_pk>/eliminar/", views.eliminar_documento_bien, name="bien_documento_delete"),
-    path("bienes/carpeta/<int:pk>/", views.CarpetaBienDetailView.as_view(), name="bien_carpeta_detail"),
     path("bienes/carpeta/crear/", views.carpeta_bien_crear, name="bien_carpeta_crear"),
     path("bienes/carpeta/<int:pk>/renombrar/", views.carpeta_bien_renombrar, name="bien_carpeta_renombrar"),
     path("bienes/carpeta/<int:pk>/eliminar/", views.carpeta_bien_eliminar, name="bien_carpeta_eliminar"),
+    path("bienes/carpeta/<int:pk>/", views.BienListView.as_view(), name="bien_carpeta_detail"),
 
     # Reports Center
     path("reportes/", views.panel_reportes, name="reportes"),
@@ -108,7 +108,4 @@ urlpatterns = [
     path("backup/", views.backup_view, name="backup"),
     path("backup/descargar/", views.descargar_backup, name="backup_descargar"),
     path("backup/restaurar/", views.restaurar_backup, name="backup_restaurar"),
-
-    #  (por usuario)
-
 ]

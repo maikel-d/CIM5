@@ -6,7 +6,8 @@ from .models import (
     UserProfile, Personal, DocumentoPersonal,
     Caso, Investigado, DocumentoInvestigado, DocumentoDireccion,
     DocumentoCaso, Tarea, TicketSoporte, InformeDiario,
-    Bien, DocumentoBien,
+    Bien, DocumentoBien, CarpetaBien, DocumentoCarpetaBien,
+    CarpetaDireccion
 )
 
 
@@ -97,7 +98,7 @@ class PersonalForm(forms.ModelForm):
         fields = [
             "foto", "apellidos", "nombres", "cedula", "grado",
             "fecha_nacimiento", "direccion", "telefonos",
-            "fecha_ingreso", "correo", "contacto_emergencia"
+            "fecha_ingreso", "contacto_emergencia"
         ]
         widgets = {
             "fecha_nacimiento": forms.DateInput(
@@ -108,7 +109,6 @@ class PersonalForm(forms.ModelForm):
             ),
             "telefonos": forms.Textarea(attrs={"rows": 2, "class": "form-input", "placeholder": "Ej: 0412-1234567, 0212-7654321"}),
             "direccion": forms.Textarea(attrs={"rows": 2, "class": "form-input", "placeholder": "Dirección de domicilio"}),
-            "correo": forms.EmailInput(attrs={"class": "form-input", "placeholder": "correo@ejemplo.com"}),
             "contacto_emergencia": forms.Textarea(attrs={"rows": 2, "class": "form-input", "placeholder": "Nombre, parentesco y teléfono"}),
             "grado": forms.TextInput(attrs={"class": "form-input", "placeholder": "Ej: Inspector, Sub-Comisario, T.S.U...."}),
         }
@@ -276,14 +276,36 @@ class InformeDiarioForm(forms.ModelForm):
             "titulo": forms.TextInput(attrs={"class": "form-input", "placeholder": "Título del informe"}),
             "contenido": forms.Textarea(attrs={
                 "rows": 8, "class": "form-input",
-                "placeholder": "Redacta el contenido del informe aquí..."
+                "placeholder": "Breve descripción del informe (opcional)"
             }),
             "fecha": forms.DateInput(attrs={"type": "date", "class": "form-input"}),
             "archivo": forms.FileInput(attrs={"class": "form-input"}),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['contenido'].required = False
+        self.fields['contenido'].label = 'Descripción'
+
+    def clean_contenido(self):
+        """Si no hay descripción, guarda un valor por defecto para evitar error de modelo blank=False."""
+        return self.cleaned_data.get('contenido') or 'Sin descripción'
+
     def clean_archivo(self):
         return _validar_tamano_archivo(self.cleaned_data.get("archivo"))
+
+
+class CarpetaForm(forms.ModelForm):
+    class Meta:
+        model = CarpetaBien
+        fields = ["nombre"]
+        widgets = {"nombre": forms.TextInput(attrs={"class": "form-input", "placeholder": "Nombre de la carpeta"})}
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["nombre"].label = "Nombre"
+        for field in self.fields.values():
+            if not hasattr(field.widget.attrs, "get") or not field.widget.attrs.get("class"):
+                field.widget.attrs.update({"class": "form-input"})
 
 
 class BienForm(forms.ModelForm):
@@ -298,7 +320,7 @@ class BienForm(forms.ModelForm):
             "caso": forms.Select(attrs={"class": "form-input"}),
             "descripcion": forms.Textarea(attrs={
                 "rows": 3, "class": "form-input",
-                "placeholder": "Descripción del bien..."
+                "placeholder": "Descripción del bien (opcional)"
             }),
             "fecha_adquisicion": forms.DateInput(
                 attrs={"type": "date", "class": "form-input"}
@@ -308,12 +330,45 @@ class BienForm(forms.ModelForm):
         }
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['descripcion'].required = False
+        self.fields['descripcion'].label = 'Descripción'
         for field in self.fields.values():
             if not hasattr(field.widget.attrs, "get") or not field.widget.attrs.get("class"):
                 field.widget.attrs.update({"class": "form-input"})
 
     def clean_foto(self):
         return _validar_tamano_archivo(self.cleaned_data.get("foto"))
+
+
+class CarpetaBienDocumentForm(forms.ModelForm):
+    class Meta:
+        model = DocumentoCarpetaBien
+        fields = ["archivo", "descripcion"]
+        widgets = {
+            "descripcion": forms.TextInput(attrs={"class": "form-input", "placeholder": "Descripción opcional"}),
+        }
+
+    def clean_archivo(self):
+        return _validar_tamano_archivo(self.cleaned_data.get("archivo"))
+
+
+class CarpetaDireccionForm(forms.ModelForm):
+    class Meta:
+        model = CarpetaDireccion
+        fields = ["nombre", "categoria"]
+        widgets = {
+            "nombre": forms.TextInput(attrs={
+                "class": "form-input",
+                "placeholder": "Nombre de la carpeta"
+            }),
+            "categoria": forms.Select(attrs={"class": "form-input"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["categoria"].required = False
+        self.fields["categoria"].empty_label = "--- Sin categoría ---"
+        self.fields["nombre"].label = "Nombre de la carpeta"
 
 
 class DocumentoBienForm(forms.ModelForm):
@@ -324,14 +379,6 @@ class DocumentoBienForm(forms.ModelForm):
             "descripcion": forms.TextInput(attrs={"class": "form-input", "placeholder": "Descripción opcional"}),
         }
 
-    def clean_archivo(self):
-        return _validar_tamano_archivo(self.cleaned_data.get("archivo"))
-
-
-
-    class Meta:
-        fields = ["archivo", "descripcion"]
-        widgets = {"descripcion": forms.TextInput(attrs={"class": "form-input", "placeholder": "Descripcion"})}
     def clean_archivo(self):
         return _validar_tamano_archivo(self.cleaned_data.get("archivo"))
 
@@ -353,13 +400,3 @@ class LoginForm(forms.Form):
             "autocomplete": "current-password"
         })
     )
-
-
-class CarpetaForm(forms.ModelForm):
-    class Meta:
-        model = None
-        fields = ["nombre"]
-        widgets = {"nombre": forms.TextInput(attrs={"class": "form-input", "placeholder": "Nombre de la carpeta"})}
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields["nombre"].label = "Nombre"

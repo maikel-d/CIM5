@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% load permissions_tags %}
+{% block title %}Editar Carpeta{% endblock %}
+{% block page_title %}Editar Carpeta{% endblock %}
+{% block content %}
+<div class="mb-4 flex items-center gap-3">
+  <a href="{% url 'bien_carpeta_detail' object.pk %}" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 hover:text-[#003363] hover:bg-[#e8f0f8] rounded-lg transition-colors">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+    Volver a la carpeta
+  </a>
+</div>
+
+<div class="max-w-lg mx-auto">
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <div class="flex items-center gap-3 mb-6">
+      <div class="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
+        <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+      </div>
+      <div>
+        <h2 class="text-lg font-semibold text-gray-800">Renombrar Carpeta</h2>
+        <p class="text-sm text-gray-500">Cambia el nombre de "{{ object.nombre }}"</p>
+      </div>
+    </div>
+
+    <form method="post" class="space-y-4">
+      {% csrf_token %}
+      
+      <div>
+        <label for="{{ form.nombre.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Nombre de la carpeta</label>
+        {{ form.nombre }}
+        {% if form.nombre.errors %}
+        <p class="text-red-500 text-xs mt-1">{{ form.nombre.errors.0 }}</p>
+        {% endif %}
+      </div>
+
+      <div class="flex items-center gap-3 pt-2">
+        <button type="submit" class="px-4 py-2 bg-[#003363] text-white rounded-lg hover:bg-[#004a80] transition-colors text-sm font-medium">
+          Guardar Cambios
+        </button>
+        <a href="{% url 'bien_carpeta_detail' object.pk %}" class="px-4 py-2 text-gray-600 hover:text-gray-800 rounded-lg border border-gray-300 hover:border-gray-400 transition-colors text-sm">
+          Cancelar
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

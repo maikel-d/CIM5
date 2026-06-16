@@ -61,4 +61,6 @@ echo "============================================"
 echo ""
 
 # Iniciar Gunicorn
-exec gunicorn core.wsgi:application     --bind 0.0.0.0:8000     --workers ${GUNICORN_WORKERS:-4}     --timeout ${GUNICORN_TIMEOUT:-120}     --access-logfile -     --error-logfile -     --log-level ${GUNICORN_LOG_LEVEL:-info}
+# Redirigir stderr a archivo de log para capturar errores de import/startup
+exec 2>> /DATA/CIM5NV/logs/startup.log
+exec gunicorn core.wsgi:application     --bind 0.0.0.0:8000     --workers ${GUNICORN_WORKERS:-4}     --timeout ${GUNICORN_TIMEOUT:-120}     --access-logfile /DATA/CIM5NV/logs/gunicorn_access.log     --error-logfile /DATA/CIM5NV/logs/gunicorn_error.log     --log-level ${GUNICORN_LOG_LEVEL:-info}

@@ -6,6 +6,9 @@ from io import BytesIO
 from datetime import datetime
 
 from django.http import HttpResponse
+from django.contrib.auth.decorators import login_required
+from ..decorators import permiso_required
+from .. import permissions as perms
 from django.conf import settings
 
 import openpyxl
@@ -174,6 +177,8 @@ def _human_size(size_bytes):
 # ============================================================
 
 @permiso_required(perms.EXPORTAR_PERSONAL_EXCEL)
+@login_required
+@permiso_required(perms.EXPORTAR_PERSONAL_EXCEL)
 def exportar_personal_excel(request):
     headers = ["Apellidos", "Nombres", "Cedula", "Telefonos", "Fecha Nacimiento", "Fecha Registro"]
     rows = []
@@ -194,6 +199,8 @@ def exportar_personal_excel(request):
     )
 
 
+@permiso_required(perms.EXPORTAR_INVESTIGADOS_EXCEL)
+@login_required
 @permiso_required(perms.EXPORTAR_INVESTIGADOS_EXCEL)
 def exportar_investigados_excel(request):
     headers = ["Apellidos", "Nombres", "Cedula", "RIF", "Partida Nacimiento", "Entrada Investigacion", "Fecha Registro"]
@@ -221,6 +228,8 @@ def exportar_investigados_excel(request):
 # ============================================================
 
 @permiso_required(perms.EXPORTAR_PERSONAL_PDF)
+@login_required
+@permiso_required(perms.EXPORTAR_PERSONAL_PDF)
 def exportar_personal_pdf(request):
     qs = Personal.objects.filter(activo=True).order_by("apellidos", "nombres")
     headers = ["Apellidos", "Nombres", "Cédula", "Teléfonos", "Fecha Nac.", "Fecha Registro"]
@@ -241,6 +250,8 @@ def exportar_personal_pdf(request):
     )
 
 
+@permiso_required(perms.EXPORTAR_INVESTIGADOS_PDF)
+@login_required
 @permiso_required(perms.EXPORTAR_INVESTIGADOS_PDF)
 def exportar_investigados_pdf(request):
     qs = Investigado.objects.filter(activo=True).order_by("apellidos", "nombres")

@@ -42,9 +42,10 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 
 COPY . .
 
-RUN mkdir -p /DATA/CIM5NV/media /DATA/CIM5NV/staticfiles /DATA/CIM5NV/logs /DATA/CIM5NV/data
+# Tailwind CSS ya está pre-compilado localmente (static/css/tailwind.css)
+# Se copia via COPY . . -- no necesita Node.js en build
 
-# Collectstatic se ejecuta en entrypoint.sh
+RUN mkdir -p /DATA/CIM5NV/media /DATA/CIM5NV/staticfiles /DATA/CIM5NV/logs /DATA/CIM5NV/data
 
 # Copiar entrypoint a la raiz (única copia) y hacerlo ejecutable
 COPY entrypoint.sh /entrypoint.sh

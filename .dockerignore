@@ -30,3 +30,28 @@ backups/
 ssl/
 backup_db.sh
 configurar_ssl_local.sh
+
+# Node / Tailwind (pre-compilado localmente)
+package.json
+package-lock.json
+tailwind.config.js
+node_modules/
+
+# Backups / dumps (solo en host)
+backup_*.json
+respaldo_*.json
+media_respaldo.tar.gz
+migracion_datos.json
+
+# Scripts de desarrollo / verificacion (no necesarios en produccion)
+check.py
+check_template.py
+temp_migrate_perms.py
+
+# Archivos de referencia / extraccion (srv_* = snapshot de version anterior)
+srv_direccion_*.py
+srv_templates_*.html
+
+# Basura del sistema
+nul
+^

@@ -300,6 +300,196 @@ function initDropZone(dropAreaId, fileInputId, callbackName) {
 }
 
 // ============================================
+// Batch Upload with Progress Bar
+// ============================================
+function iniciarBatchUpload() {
+  var zone = document.getElementById('batch-upload-zone');
+  if (!zone) return;
+  var input = document.getElementById('batch-file-input');
+  var preview = document.getElementById('batch-preview');
+  var progressContainer = document.getElementById('batch-progress');
+  var progressBar = document.getElementById('batch-progress-bar');
+  var progressText = document.getElementById('batch-progress-text');
+  var submitBtn = document.getElementById('batch-submit-btn');
+  var counter = document.getElementById('batch-file-count');
+
+  var selectedFiles = [];
+
+  // Click to select files
+  zone.addEventListener('click', function(e) {
+    if (e.target.closest('.batch-file-remove') || e.target.closest('#batch-submit-btn')) return;
+    input.click();
+  });
+
+  input.addEventListener('change', function() {
+    addFiles(this.files);
+    this.value = '';
+  });
+
+  // Drag & Drop on zone
+  var dragCounter = 0;
+  ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(function(ev) {
+    zone.addEventListener(ev, function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+    });
+  });
+
+  zone.addEventListener('dragenter', function(e) {
+    e.preventDefault();
+    dragCounter++;
+    zone.classList.add('drag-over');
+  });
+
+  zone.addEventListener('dragleave', function(e) {
+    e.preventDefault();
+    dragCounter--;
+    if (dragCounter <= 0) {
+      dragCounter = 0;
+      zone.classList.remove('drag-over');
+    }
+  });
+
+  zone.addEventListener('drop', function(e) {
+    e.preventDefault();
+    zone.classList.remove('drag-over');
+    dragCounter = 0;
+    addFiles(e.dataTransfer.files);
+  });
+
+  function addFiles(files) {
+    for (var i = 0; i < files.length; i++) {
+      var f = files[i];
+      // Skip duplicates
+      var dup = false;
+      for (var j = 0; j < selectedFiles.length; j++) {
+        if (selectedFiles[j].name === f.name && selectedFiles[j].size === f.size) {
+          dup = true;
+          break;
+        }
+      }
+      if (!dup) selectedFiles.push(f);
+    }
+    renderPreview();
+  }
+
+  function renderPreview() {
+    if (selectedFiles.length === 0) {
+      preview.innerHTML = '';
+      preview.style.display = 'none';
+      document.getElementById('batch-actions').style.display = 'none';
+      submitBtn.style.display = 'none';
+      counter.textContent = '0';
+      return;
+    }
+    preview.style.display = 'block';
+    document.getElementById('batch-actions').style.display = 'block';
+    submitBtn.style.display = 'flex';
+    counter.textContent = selectedFiles.length;
+
+    var html = '';
+    for (var i = 0; i < selectedFiles.length; i++) {
+      var f = selectedFiles[i];
+      var iconType = getFileIcon(f.name);
+      var iconColor = ICON_COLORS[iconType] || '#6b7280';
+      var iconBg = ICON_BGS[iconType] || '#f3f4f6';
+      html += '<div class="batch-file-item" data-index="' + i + '">' +
+        '<div class="batch-file-icon" style="color:' + iconColor + ';background:' + iconBg + '">' +
+          '<svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>' +
+        '</div>' +
+        '<div class="batch-file-info">' +
+          '<span class="batch-file-name">' + f.name + '</span>' +
+          '<span class="batch-file-size">' + formatFileSize(f.size) + '</span>' +
+        '</div>' +
+        '<button type="button" class="batch-file-remove" onclick="removeBatchFile(' + i + ')" title="Quitar">' +
+          '<svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>' +
+        '</button>' +
+      '</div>';
+    }
+    preview.innerHTML = html;
+  }
+
+  window.removeBatchFile = function(index) {
+    selectedFiles.splice(index, 1);
+    renderPreview();
+  };
+
+  // Submit upload
+  submitBtn.addEventListener('click', function() {
+    if (selectedFiles.length === 0) return;
+    uploadFiles();
+  });
+
+  function uploadFiles() {
+    var formData = new FormData();
+    for (var i = 0; i < selectedFiles.length; i++) {
+      formData.append('archivos', selectedFiles[i]);
+    }
+    var csrfInput = document.querySelector('[name=csrfmiddlewaretoken]');
+    if (csrfInput) formData.append('csrfmiddlewaretoken', csrfInput.value);
+
+    // Get selected category from active category filter
+    var catSelect = document.getElementById('batch-categoria');
+    if (catSelect) formData.append('categoria', catSelect.value);
+
+    // Show progress
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg> Subiendo...';
+    progressContainer.style.display = 'block';
+    progressBar.style.width = '0%';
+    progressText.textContent = '0 / ' + selectedFiles.length + ' archivos...';
+
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', batchUploadUrl, true);
+
+    xhr.upload.onprogress = function(e) {
+      if (e.lengthComputable) {
+        var pct = Math.round((e.loaded / e.total) * 100);
+        progressBar.style.width = pct + '%';
+        progressText.textContent = 'Subiendo... ' + pct + '%';
+      }
+    };
+
+    xhr.onload = function() {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          var data = JSON.parse(xhr.responseText);
+          if (data.success) {
+            progressBar.style.width = '100%';
+            progressText.textContent = 'Completado: ' + data.created + ' subido(s)' +
+              (data.errors > 0 ? ', ' + data.errors + ' error(es)' : '');
+            progressBar.classList.add('bg-green-500');
+            // Reload after short delay to show complete status
+            setTimeout(function() { window.location.reload(); }, 1500);
+          } else {
+            progressText.textContent = 'Error: ' + (data.error || 'Error desconocido');
+            resetButton();
+          }
+        } catch(e) {
+          progressText.textContent = 'Error al procesar respuesta';
+          resetButton();
+        }
+      } else {
+        progressText.textContent = 'Error del servidor: ' + xhr.status;
+        resetButton();
+      }
+    };
+
+    xhr.onerror = function() {
+      progressText.textContent = 'Error de conexión';
+      resetButton();
+    };
+
+    xhr.send(formData);
+  }
+
+  function resetButton() {
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg> Subir ' + selectedFiles.length + ' archivo(s)';
+  }
+}
+
+// ============================================
 // Auto-init on DOMContentLoaded
 // ============================================
 document.addEventListener('DOMContentLoaded', function() {
@@ -310,4 +500,8 @@ document.addEventListener('DOMContentLoaded', function() {
       iniciarDragDrop(grid.id, uploadUrl);
     }
   });
+  // Init batch upload zone
+  if (document.getElementById('batch-upload-zone')) {
+    iniciarBatchUpload();
+  }
 });
