@@ -14,7 +14,7 @@ from django.urls import reverse
 from .models import (
     Personal, DocumentoPersonal,
     Investigado, DocumentoInvestigado,
-    DocumentoDireccion, Caso, UserProfile,
+    Bien, DocumentoDireccion, Caso, UserProfile,
     TicketSoporte, TicketHistorial, Notificacion,
     InformeDiario, AuditLog,
 )
@@ -1361,3 +1361,297 @@ class EndpointStatusTest(TestCase):
         for name in ["bien_list","personal_list","caso_list","ticket_list"]:
             r = self.client.get(reverse(name))
             self.assertIn(r.status_code, [302, 200])
+
+
+# ============================================================
+# LOGIN TESTS
+# ============================================================
+
+class LoginTest(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="test_login", password="pass1234")
+        UserProfile.objects.create(user=self.user, rol="ADMINISTRADOR")
+
+    def test_login_success(self):
+        r = self.client.post(reverse("login"), {
+            "username": "test_login", "password": "pass1234"})
+        self.assertRedirects(r, reverse("dashboard"))
+
+    def test_login_failure(self):
+        r = self.client.post(reverse("login"), {
+            "username": "test_login", "password": "wrongpass"})
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "incorrectos")
+
+    def test_login_nonexistent_user(self):
+        r = self.client.post(reverse("login"), {
+            "username": "no_existe", "password": "pass1234"})
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "incorrectos")
+
+    def test_login_lockout_after_3_attempts(self):
+        url = reverse("login")
+        data = {"username": "test_login", "password": "wrongpass"}
+        for i in range(3):
+            self.client.post(url, data)
+        r = self.client.post(url, data)
+        self.assertContains(r, "Demasiados intentos fallidos")
+
+    def test_login_redirect_when_authenticated(self):
+        self.client.force_login(self.user)
+        r = self.client.get(reverse("login"))
+        self.assertRedirects(r, reverse("dashboard"))
+
+    def test_logout(self):
+        self.client.force_login(self.user)
+        r = self.client.post(reverse("logout"), follow=True)
+        self.assertRedirects(r, reverse("login"))
+
+    def test_login_page_loads(self):
+        r = self.client.get(reverse("login"))
+        self.assertEqual(r.status_code, 200)
+        self.assertTemplateUsed(r, "login.html")
+
+
+
+# ============================================================
+# PERSONAL CRUD TESTS
+# ============================================================
+
+class PersonalCRUDTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.admin = User.objects.create_user(
+            username="personal_admin", password="pass1234")
+        UserProfile.objects.create(user=cls.admin, rol="ADMINISTRADOR")
+        cls.personal = Personal.objects.create(
+            apellidos="Garcia", nombres="Juan",
+            cedula="V-12345678", activo=True)
+
+    def test_personal_list(self):
+        self.client.force_login(self.admin)
+        r = self.client.get(reverse("personal_list"))
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "Garcia")
+
+    def test_personal_create(self):
+        self.client.force_login(self.admin)
+        r = self.client.post(reverse("personal_create"), {
+            "apellidos": "Perez", "nombres": "Maria",
+            "cedula": "V-87654321"}, follow=True)
+        self.assertEqual(r.status_code, 200)
+        self.assertTrue(Personal.objects.filter(cedula="V-87654321").exists())
+
+    def test_personal_detail(self):
+        self.client.force_login(self.admin)
+        r = self.client.get(reverse("personal_detail", args=[self.personal.pk]))
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "Garcia")
+
+    def test_personal_update(self):
+        self.client.force_login(self.admin)
+        r = self.client.post(reverse("personal_edit", args=[self.personal.pk]),
+            {"apellidos": "Garcia Edit", "nombres": "Juan",
+             "cedula": "V-12345678"}, follow=True)
+        self.assertEqual(r.status_code, 200)
+        self.personal.refresh_from_db()
+        self.assertEqual(self.personal.apellidos, "Garcia Edit")
+
+    def test_personal_delete(self):
+        self.client.force_login(self.admin)
+        p = Personal.objects.create(
+            apellidos="Temp", nombres="Del",
+            cedula="V-99999991", activo=True)
+        r = self.client.post(reverse("personal_delete", args=[p.pk]), follow=True)
+        self.assertRedirects(r, reverse("personal_list"))
+        self.assertFalse(Personal.objects.filter(pk=p.pk).exists())
+
+    def test_personal_search(self):
+        self.client.force_login(self.admin)
+        r = self.client.get(reverse("personal_list") + "?search=Garcia")
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "Garcia")
+
+
+# ============================================================
+# CASO CRUD TESTS
+# ============================================================
+
+class CasoCRUDTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.admin = User.objects.create_user(
+            username="caso_admin", password="pass1234")
+        UserProfile.objects.create(user=cls.admin, rol="ADMINISTRADOR")
+        cls.caso = Caso.objects.create(
+            nombre="Caso de prueba", activo=True)
+
+    def test_caso_list(self):
+        self.client.force_login(self.admin)
+        r = self.client.get(reverse("caso_list"))
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "Caso de prueba")
+
+    def test_caso_create(self):
+        self.client.force_login(self.admin)
+        r = self.client.post(reverse("caso_create"), {
+            "nombre": "Nuevo caso"}, follow=True)
+        self.assertEqual(r.status_code, 200)
+        self.assertTrue(Caso.objects.filter(nombre="Nuevo caso").exists())
+
+    def test_caso_detail(self):
+        self.client.force_login(self.admin)
+        r = self.client.get(reverse("caso_detail", args=[self.caso.pk]))
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "Caso de prueba")
+
+    def test_caso_update(self):
+        self.client.force_login(self.admin)
+        r = self.client.post(reverse("caso_edit", args=[self.caso.pk]),
+            {"nombre": "Caso modificado"}, follow=True)
+        self.assertEqual(r.status_code, 200)
+        self.caso.refresh_from_db()
+        self.assertEqual(self.caso.nombre, "Caso modificado")
+
+    def test_caso_delete(self):
+        self.client.force_login(self.admin)
+        c = Caso.objects.create(nombre="Caso temporal", activo=True)
+        r = self.client.post(reverse("caso_delete", args=[c.pk]), follow=True)
+        self.assertRedirects(r, reverse("caso_list"))
+        self.assertFalse(Caso.objects.filter(pk=c.pk).exists())
+
+
+# ============================================================
+# BIEN CRUD TESTS
+# ============================================================
+
+class BienCRUDTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.admin = User.objects.create_user(
+            username="bien_admin", password="pass1234")
+        UserProfile.objects.create(user=cls.admin, rol="ADMINISTRADOR")
+        cls.bien = Bien.objects.create(
+            nombre="Bien de prueba", categoria="OTRO",
+            estado="BUENO", activo=True)
+
+    def test_bien_list(self):
+        self.client.force_login(self.admin)
+        r = self.client.get(reverse("bien_list"))
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "Bien de prueba")
+
+    def test_bien_create(self):
+        self.client.force_login(self.admin)
+        r = self.client.post(reverse("bien_create"), {
+            "nombre": "Bien nuevo", "categoria": "EQUIPO",
+            "estado": "BUENO"}, follow=True)
+        self.assertEqual(r.status_code, 200)
+        self.assertTrue(Bien.objects.filter(nombre="Bien nuevo").exists())
+
+    def test_bien_detail(self):
+        self.client.force_login(self.admin)
+        r = self.client.get(reverse("bien_detail", args=[self.bien.pk]))
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "Bien de prueba")
+
+    def test_bien_update(self):
+        self.client.force_login(self.admin)
+        r = self.client.post(reverse("bien_edit", args=[self.bien.pk]),
+            {"nombre": "Bien modificado", "categoria": "MUEBLE",
+             "estado": "REGULAR"}, follow=True)
+        self.assertEqual(r.status_code, 200)
+        self.bien.refresh_from_db()
+        self.assertEqual(self.bien.nombre, "Bien modificado")
+
+    def test_bien_delete(self):
+        self.client.force_login(self.admin)
+        b = Bien.objects.create(
+            nombre="Bien temp", categoria="OTRO", estado="BUENO")
+        r = self.client.post(reverse("bien_delete", args=[b.pk]), follow=True)
+        self.assertRedirects(r, reverse("bien_list"))
+        self.assertFalse(Bien.objects.filter(pk=b.pk).exists())
+
+
+# ============================================================
+# EXPORT TESTS
+# ============================================================
+
+class ExportTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.admin = User.objects.create_user(
+            username="export_admin", password="pass1234")
+        UserProfile.objects.create(user=cls.admin, rol="ADMINISTRADOR")
+        Personal.objects.create(
+            apellidos="Export", nombres="Test",
+            cedula="V-55555555", activo=True)
+        Investigado.objects.create(
+            apellidos="InvExp", nombres="Test",
+            cedula="V-66666666", activo=True)
+
+    def test_personal_export_excel(self):
+        self.client.force_login(self.admin)
+        r = self.client.get(reverse("personal_export"))
+        self.assertEqual(r.status_code, 200)
+        self.assertIn("spreadsheetml", r.get("Content-Type", ""))
+
+    def test_investigado_export_excel(self):
+        self.client.force_login(self.admin)
+        r = self.client.get(reverse("investigado_export"))
+        self.assertEqual(r.status_code, 200)
+        self.assertIn("spreadsheetml", r.get("Content-Type", ""))
+
+    def test_personal_export_pdf(self):
+        self.client.force_login(self.admin)
+        r = self.client.get(reverse("personal_pdf"))
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.get("Content-Type"), "application/pdf")
+
+    def test_investigado_export_pdf(self):
+        self.client.force_login(self.admin)
+        r = self.client.get(reverse("investigado_pdf"))
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.get("Content-Type"), "application/pdf")
+
+
+# ============================================================
+# DOCUMENTO DIRECCION REDIRECT TEST
+# ============================================================
+
+class DocumentoDireccionRedirectTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.admin = User.objects.create_user(username="doc_redirect_admin", password="pass1234")
+        UserProfile.objects.create(user=cls.admin, rol="ADMINISTRADOR")
+    def test_get_returns_200(self):
+        self.client.force_login(self.admin)
+        r = self.client.get(reverse("documentos_direccion"))
+        self.assertEqual(r.status_code, 200)
+    def test_post_without_categoria_redirects_clean(self):
+        self.client.force_login(self.admin)
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        pdf = SimpleUploadedFile("test.pdf", b"%PDF-1.4 test content")
+        r = self.client.post(reverse("documentos_direccion"), {"archivo": pdf, "descripcion": "Test doc"})
+        self.assertRedirects(r, reverse("documentos_direccion"))
+    def test_post_with_invalid_file_redirects_clean(self):
+        self.client.force_login(self.admin)
+        r = self.client.post(reverse("documentos_direccion"), {"descripcion": "No file"}, follow=True)
+        self.assertRedirects(r, reverse("documentos_direccion"))
+        self.assertContains(r, "Error al subir")
+    def test_post_with_categoria_filtro_preserves_param(self):
+        self.client.force_login(self.admin)
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        pdf = SimpleUploadedFile("test_ley.pdf", b"%PDF-1.4 test")
+        url = reverse("documentos_direccion") + "?categoria=LEYES"
+        r = self.client.post(url, {"archivo": pdf, "descripcion": "Test ley"})
+        expected = reverse("documentos_direccion") + "?categoria=LEYES"
+        self.assertRedirects(r, expected)
+    def test_post_with_categoria_filtro_empty_preserves_none(self):
+        self.client.force_login(self.admin)
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        pdf = SimpleUploadedFile("test.pdf", b"%PDF-1.4 test")
+        url = reverse("documentos_direccion") + "?categoria="
+        r = self.client.post(url, {"archivo": pdf, "descripcion": "Test"})
+        self.assertRedirects(r, reverse("documentos_direccion"))

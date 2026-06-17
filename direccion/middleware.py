@@ -5,6 +5,7 @@ import time
 from django.conf import settings
 from django.contrib.auth import logout
 from django.core.cache import cache
+from django.db.utils import ProgrammingError
 from django.shortcuts import redirect
 
 
@@ -13,16 +14,19 @@ ONLINE_TIMEOUT = 300  # 5 minutos sin actividad para considerarse "desconectado"
 
 def usuarios_online():
     """Retorna el número de usuarios activos en los últimos 5 minutos."""
-    online_ids = cache.get('online_users', set())
-    if not online_ids:
+    try:
+        online_ids = cache.get('online_users', set())
+        if not online_ids:
+            return 0
+        ahora = time.time()
+        activos = 0
+        for uid in list(online_ids):
+            last_seen = cache.get(f'online_{uid}', 0)
+            if ahora - last_seen < ONLINE_TIMEOUT:
+                activos += 1
+        return activos
+    except ProgrammingError:
         return 0
-    ahora = time.time()
-    activos = 0
-    for uid in list(online_ids):
-        last_seen = cache.get(f'online_{uid}', 0)
-        if ahora - last_seen < ONLINE_TIMEOUT:
-            activos += 1
-    return activos
 
 
 class UserOnlineMiddleware:
@@ -40,17 +44,23 @@ class UserOnlineMiddleware:
 
             # Verificar sesión única (una sola sesión por usuario)
             if 'session_token' in request.session:
-                stored_token = cache.get(f'auth_token_{uid}')
-                if stored_token and request.session['session_token'] != stored_token:
-                    # Esta sesión fue invalidada por un nuevo inicio de sesión
-                    logout(request)
-                    return redirect('login')
+                try:
+                    stored_token = cache.get(f'auth_token_{uid}')
+                    if stored_token and request.session['session_token'] != stored_token:
+                        # Esta sesión fue invalidada por un nuevo inicio de sesión
+                        logout(request)
+                        return redirect('login')
+                except ProgrammingError:
+                    pass  # Cache no disponible aún (transitorio en inicio)
 
-            ahora = time.time()
-            cache.set(f'online_{uid}', ahora, ONLINE_TIMEOUT * 2)
-            online_ids = cache.get('online_users', set())
-            online_ids.add(uid)
-            cache.set('online_users', online_ids, ONLINE_TIMEOUT * 2)
+            try:
+                ahora = time.time()
+                cache.set(f'online_{uid}', ahora, ONLINE_TIMEOUT * 2)
+                online_ids = cache.get('online_users', set())
+                online_ids.add(uid)
+                cache.set('online_users', online_ids, ONLINE_TIMEOUT * 2)
+            except ProgrammingError:
+                pass  # Cache no disponible aún (transitorio en inicio)
         return self.get_response(request)
 
 

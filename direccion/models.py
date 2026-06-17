@@ -60,7 +60,7 @@ class Personal(models.Model):
     direccion = models.TextField('Dirección', blank=True, null=True, help_text='Dirección de domicilio')
     fecha_ingreso = models.DateField('Fecha de Ingreso', blank=True, null=True)
     contacto_emergencia = models.TextField('Contacto de Emergencia', blank=True, null=True, help_text='Nombre, parentesco y teléfono')
-    correo = models.EmailField('Correo Electrónico', max_length=254, blank=True, null=True, help_text='Correo electrónico institucional o personal')
+    correo = models.CharField('Correo Electrónico', max_length=254, blank=True, null=True, help_text='Correo electrónico institucional o personal')
     fecha_creacion = models.DateTimeField('Fecha de creación', auto_now_add=True, db_index=True)
     fecha_actualizacion = models.DateTimeField('Fecha de actualización', auto_now=True)
     activo = models.BooleanField('Activo', default=True, db_index=True)

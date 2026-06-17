@@ -2,6 +2,7 @@ from django import forms
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
 from django.core.exceptions import ValidationError
+import re
 from .models import (
     UserProfile, Personal, DocumentoPersonal,
     Caso, Investigado, DocumentoInvestigado, DocumentoDireccion,
@@ -98,7 +99,7 @@ class PersonalForm(forms.ModelForm):
         fields = [
             "foto", "apellidos", "nombres", "cedula", "grado",
             "fecha_nacimiento", "direccion", "telefonos",
-            "fecha_ingreso", "contacto_emergencia"
+            "fecha_ingreso", "correo", "contacto_emergencia"
         ]
         widgets = {
             "fecha_nacimiento": forms.DateInput(
@@ -110,6 +111,7 @@ class PersonalForm(forms.ModelForm):
             "telefonos": forms.Textarea(attrs={"rows": 2, "class": "form-input", "placeholder": "Ej: 0412-1234567, 0212-7654321"}),
             "direccion": forms.Textarea(attrs={"rows": 2, "class": "form-input", "placeholder": "Dirección de domicilio"}),
             "contacto_emergencia": forms.Textarea(attrs={"rows": 2, "class": "form-input", "placeholder": "Nombre, parentesco y teléfono"}),
+            "correo": forms.EmailInput(attrs={"class": "form-input", "placeholder": "ejemplo@dominio.com"}),
             "grado": forms.TextInput(attrs={"class": "form-input", "placeholder": "Ej: Inspector, Sub-Comisario, T.S.U...."}),
         }
 
@@ -121,6 +123,13 @@ class PersonalForm(forms.ModelForm):
 
     def clean_foto(self):
         return _validar_tamano_archivo(self.cleaned_data.get("foto"))
+
+    def clean_correo(self):
+        correo = self.cleaned_data.get("correo")
+        if correo:
+            if not re.match(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", correo):
+                raise forms.ValidationError("Ingrese un correo electronico valido (ejemplo@dominio.com)")
+        return correo
 
 
 class DocumentoPersonalForm(forms.ModelForm):
@@ -180,6 +189,13 @@ class InvestigadoForm(forms.ModelForm):
 
     def clean_foto(self):
         return _validar_tamano_archivo(self.cleaned_data.get("foto"))
+
+    def clean_correo(self):
+        correo = self.cleaned_data.get("correo")
+        if correo:
+            if not re.match(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", correo):
+                raise forms.ValidationError("Ingrese un correo electronico valido (ejemplo@dominio.com)")
+        return correo
 
 
 class DocumentoInvestigadoForm(forms.ModelForm):
@@ -338,6 +354,13 @@ class BienForm(forms.ModelForm):
 
     def clean_foto(self):
         return _validar_tamano_archivo(self.cleaned_data.get("foto"))
+
+    def clean_correo(self):
+        correo = self.cleaned_data.get("correo")
+        if correo:
+            if not re.match(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", correo):
+                raise forms.ValidationError("Ingrese un correo electronico valido (ejemplo@dominio.com)")
+        return correo
 
 
 class CarpetaBienDocumentForm(forms.ModelForm):

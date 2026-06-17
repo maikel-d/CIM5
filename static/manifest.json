@@ -1,0 +1,13 @@
+{
+  "name": "Sistema de Gestion - Direccion General",
+  "short_name": "Gestion",
+  "description": "Sistema de gestion para la Direccion General",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#003363",
+  "theme_color": "#003363",
+  "icons": [
+    {"src": "/static/images/favicon.png","sizes": "32x32","type": "image/png"},
+    {"src": "/static/images/apple-touch-icon.png","sizes": "180x180","type": "image/png"}
+  ]
+}

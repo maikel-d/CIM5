@@ -11,6 +11,11 @@
     <link rel="stylesheet" href="{% static 'css/tailwind.css' %}">
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
     {% block extra_head %}{% endblock %}
+    <meta name="theme-color" content="#003363">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Sistema Gestion">
+    <link rel="manifest" href="/manifest.json">
 </head>
 <body class="bg-gray-50">
     {% if user.is_authenticated %}
@@ -104,6 +109,13 @@
                     Respaldos
                 </a>
                 {% endif %}
+            <!-- Online users indicator -->
+            <div class="px-4 pt-4 mt-2 border-t border-white/10">
+                <div class="flex items-center gap-2 px-3 py-2 text-xs text-gray-400">
+                    <span class="inline-block w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                    <span>{{ usuarios_online }} usuario{% if usuarios_online != 1 %}s{% endif %} conectado{% if usuarios_online != 1 %}s{% endif %}</span>
+                </div>
+            </div>
             </nav>
         </aside>
 

@@ -267,3 +267,51 @@ To https://github.com/maikel-d/CIM5.git
 [2026-06-16 05:50:01] Backups en Drive: 4, se eliminaran: 1
 [2026-06-16 05:50:01] Eliminando: backup_completo_2026-06-13.tar.gz
 [2026-06-16 05:50:01] [4/5] Git commit + push...
+[main fee0693] auto: cambios 2026-06-16
+ 36 files changed, 2141 insertions(+), 1016 deletions(-)
+ create mode 100644 direccion/management/commands/healthcheck.py
+ create mode 100644 direccion/migrations/0021_documentocarpetabien.py
+ create mode 100644 direccion/migrations/0022_carpetadireccion.py
+ mode change 100644 => 100755 entrypoint.sh
+ create mode 100644 package.json
+ create mode 100644 static/css/tailwind-input.css
+ create mode 100644 static/css/tailwind.css
+ create mode 100644 tailwind.config.js
+ create mode 100644 templates/direccion/bien_carpeta_form.html
+ create mode 100644 templates/direccion/gen_template_part1.py
+To https://github.com/maikel-d/CIM5.git
+   07f91e6..fee0693  main -> main
+[2026-06-16 05:50:01] Git push completado
+[2026-06-16 05:50:01] FIN
+
+========================================
+[2026-06-16 06:00:01] INICIO
+[2026-06-16 06:00:01] [5/5] Reiniciando contenedores Docker...
+ Container direccion-db Restarting 
+ Container direccion-app Restarting 
+ Container direccion-nginx Restarting 
+ Container direccion-app Started 
+ Container direccion-nginx Started 
+ Container direccion-db Started 
+[2026-06-16 06:00:01] Contenedores reiniciados
+[2026-06-16 06:00:01] FIN
+
+========================================
+[2026-06-17 05:50:01] INICIO
+[2026-06-17 05:50:01] [1/5] Backup completo (PostgreSQL + codigo + volumenes)...
+[2026-06-17 05:50:01] 1a. Dump PostgreSQL...
+[2026-06-17 05:50:01] PostgreSQL dump: 123K
+[2026-06-17 05:50:01] 1b. Copiando codigo del proyecto...
+[2026-06-17 05:50:01] 1c. Backupeando volumenes Docker...
+[2026-06-17 05:50:01]     Volumen: cim5nv_media_data
+[2026-06-17 05:50:01]     Backup OK: 3.7M
+[2026-06-17 05:50:01]     Volumen: cim5nv_static_data
+[2026-06-17 05:50:01]     Backup OK: 2.0M
+[2026-06-17 05:50:01] 1d. Comprimiendo backup...
+[2026-06-17 05:50:01] Backup completo creado: 7.6M
+[2026-06-17 05:50:01] [2/5] Subiendo backup a Google Drive...
+[2026-06-17 05:50:01] Backup subido a Drive: backup_completo_2026-06-17.tar.gz
+[2026-06-17 05:50:01] [3/5] Rotando backups antiguos en Google Drive...
+[2026-06-17 05:50:01] Backups en Drive: 4, se eliminaran: 1
+[2026-06-17 05:50:01] Eliminando: backup_completo_2026-06-14.tar.gz
+[2026-06-17 05:50:01] [4/5] Git commit + push...

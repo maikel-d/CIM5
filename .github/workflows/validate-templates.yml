@@ -1,13 +1,9 @@
-name: Validate Django Templates
+name: Validate Django Templates & Lint
 
 on:
   pull_request:
-    paths:
-      - 'templates/**/*.html'
   push:
     branches: [main, master]
-    paths:
-      - 'templates/**/*.html'
 
 jobs:
   validate:
@@ -24,8 +20,11 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt 2>/dev/null || true
-          pip install Django
 
       - name: Run template block validation
         run: |
-          python manage.py validate_template_blocks
+          python scripts/validate_templates.py --base-dir .
+
+      - name: Run Django linter
+        run: |
+          python scripts/lint_django.py --base-dir .

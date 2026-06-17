@@ -41,6 +41,8 @@ fi
 echo "[*] Ejecutando migraciones..."
 python manage.py migrate --noinput
 echo "[OK] Migraciones aplicadas"
+echo "n" | python manage.py createcachetable 2>&1 || true
+echo "[OK] Tabla de cache verificada"
 
 # Static files
 echo ""

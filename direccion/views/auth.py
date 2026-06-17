@@ -1,5 +1,5 @@
 # ============================================================
-# Autenticación
+# Autenticacion
 # ============================================================
 
 import secrets
@@ -7,14 +7,17 @@ import secrets
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
-from django.core.cache import cache
 from django.views import View
+from django.core.cache import cache
 
 from ..forms import LoginForm
-
-
-MAX_LOGIN_ATTEMPTS = 3
-LOCKOUT_SECONDS = 60
+from ..ratelimit import (
+    check_ip_rate_limit,
+    check_username_rate_limit,
+    record_failed_attempt,
+    clear_rate_limits,
+    MAX_USERNAME_ATTEMPTS,
+)
 
 
 class CustomLoginView(View):
@@ -34,25 +37,27 @@ class CustomLoginView(View):
             username = form.cleaned_data["username"]
             password = form.cleaned_data["password"]
 
-            # Verificar bloqueo por intentos fallidos
-            cache_key = f"login_failures_{username}"
-            intentos = cache.get(cache_key, 0)
+            # 1. Verificar rate limit por IP primero
+            ip_block = check_ip_rate_limit(request)
+            if ip_block:
+                messages.error(request, ip_block["mensaje"])
+                contexto["bloqueado"] = True
+                return render(request, self.template_name, contexto)
 
-            if intentos >= MAX_LOGIN_ATTEMPTS:
-                messages.error(
-                    request,
-                    f"Demasiados intentos fallidos. Espere {LOCKOUT_SECONDS} segundos antes de intentar de nuevo.",
-                )
+            # 2. Verificar rate limit por username
+            user_block = check_username_rate_limit(username)
+            if user_block:
+                messages.error(request, user_block["mensaje"])
                 contexto["bloqueado"] = True
                 return render(request, self.template_name, contexto)
 
             user = authenticate(request, username=username, password=password)
             if user is not None:
                 if user.is_active:
-                    # Limpiar intentos fallidos al iniciar sesión correctamente
-                    cache.delete(cache_key)
+                    # Limpiar intentos fallidos al iniciar sesion correctamente
+                    clear_rate_limits(username)
                     login(request, user)
-                    # Generar token de sesión única (invalida otras sesiones)
+                    # Generar token de sesion unica (invalida otras sesiones)
                     token = secrets.token_hex(16)
                     request.session['session_token'] = token
                     request.session.save()
@@ -64,24 +69,19 @@ class CustomLoginView(View):
                     return redirect("dashboard")
                 else:
                     messages.error(
-                        request, "Esta cuenta está desactivada. Contacte al administrador."
+                        request, "Esta cuenta esta desactivada. Contacte al administrador."
                     )
             else:
-                # Incrementar contador de intentos fallidos
-                intentos += 1
-                cache.set(cache_key, intentos, LOCKOUT_SECONDS)
-                restantes = MAX_LOGIN_ATTEMPTS - intentos
+                # Registrar intento fallido (IP + username)
+                intentos, restantes = record_failed_attempt(request, username)
                 if restantes > 0:
                     messages.error(
                         request,
-                        f"Usuario o contraseña incorrectos. Le queda{'n' if restantes > 1 else ''} {restantes} intento{'s' if restantes > 1 else ''}.",
+                        f"Usuario o contrasena incorrectos. Le queda{"n" if restantes > 1 else ""} {restantes} intento{"s" if restantes > 1 else ""}.",
                     )
                 else:
                     messages.error(
-                        request,
-                        f"Demasiados intentos fallidos. Espere {LOCKOUT_SECONDS} segundos antes de intentar de nuevo.",
+                        request, "Demasiados intentos fallidos. Espere unos minutos antes de intentar de nuevo."
                     )
                     contexto["bloqueado"] = True
         return render(request, self.template_name, contexto)
-
-

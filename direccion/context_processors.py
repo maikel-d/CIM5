@@ -1,5 +1,6 @@
 from django.core.cache import cache
 from .models import Notificacion, Caso
+from .middleware import usuarios_online
 
 def notificaciones(request):
     """Devuelve el conteo de notificaciones no leídas del usuario y
@@ -17,7 +18,10 @@ def notificaciones(request):
         context['notificaciones_no_leidas'] = no_leidas
         # Casos activos para sub-menús del sidebar
         context['sidebar_casos'] = Caso.objects.filter(activo=True).order_by('nombre')
+        # Usuarios conectados
+        context['usuarios_online'] = usuarios_online()
     else:
         context['notificaciones_no_leidas'] = 0
         context['sidebar_casos'] = []
+        context['usuarios_online'] = 0
     return context

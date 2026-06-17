@@ -54,7 +54,14 @@ def _read_env_file(key, default=None, cast=None):
                         return cast(v)
                     return v
     except (IOError, OSError, FileNotFoundError):
-        pass
+        # Fallback a variables de entorno del sistema si no existe .env
+        val = os.environ.get(key)
+        if val is not None:
+            if cast is bool:
+                return val.lower() in ('true', '1', 'yes', 'on')
+            elif callable(cast):
+                return cast(val)
+            return val
     if default is not None:
         return default
     return None
@@ -150,6 +157,13 @@ DATABASES = {
     }
 }
 
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'django_cache',
+    }
+}
+
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
@@ -222,10 +236,11 @@ if not DEBUG and _domain:
         SECURE_HSTS_INCLUDE_SUBDOMAINS = True
         SECURE_HSTS_PRELOAD = True
 
-    # Cookies seguras solo por HTTPS
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
-    CSRF_COOKIE_HTTPONLY = True
+    # Cookies seguras solo por HTTPS (activar con SECURE_COOKIES=true en .env)
+    # Nota: Si accedes por HTTP (IP local), mantener SECURE_COOKIES=false
+    SESSION_COOKIE_SECURE = _env('SECURE_COOKIES', default=False, cast=bool)
+    CSRF_COOKIE_SECURE = _env('SECURE_COOKIES', default=False, cast=bool)
+    CSRF_COOKIE_HTTPONLY = _env('SECURE_COOKIES', default=False, cast=bool)
 
     # Trusted origins para CSRF: incluir HTTP y HTTPS para la IP/dominio
     # Esto permite que la redirección HTTP→HTTPS funcione sin errores CSRF

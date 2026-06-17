@@ -5,6 +5,7 @@
 import os
 
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
 from django.contrib import messages
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
@@ -64,7 +65,10 @@ def documentos_direccion_list(request):
             auditar(request, "CREAR", "DocumentoDireccion", form.instance.pk, str(form.instance), "Documento Direccion")
         else:
             messages.error(request, "Error al subir el documento. Verifique el formato.")
-        return redirect("documentos_direccion" + (f'?categoria={categoria_filtro}' if categoria_filtro else ''))
+        url = reverse("documentos_direccion")
+        if categoria_filtro:
+            url += f"?categoria={categoria_filtro}"
+        return redirect(url)
     else:
         form = DocumentoDireccionForm()
     
