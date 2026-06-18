@@ -187,6 +187,19 @@ services:
         limits:
           memory: 128M
 
+  redis:
+    image: redis:7-alpine
+    container_name: cim5nv-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   nginx:
     image: nginx:1.27-alpine
     container_name: direccion-nginx
@@ -263,6 +276,7 @@ services:
           memory: 32M
 volumes:
   pg_data:
+  redis_data:
   certbot_www:
   certbot_conf:
   media_data:

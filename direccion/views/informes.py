@@ -265,6 +265,13 @@ def informes_diarios_list(request):
             'informes': mes_informes,  # lista completa ordenada dia 1 -> ultimo
             'primer_informe': primer_informe,
             'ultima_fecha': ultimo_informe.fecha if ultimo_informe else None,  # CORREGIDO: antes era primer_informe.fecha
+            'total_dias': calendar.monthrange(int(anio), mes_num)[1],
+            'primer_dia_semana': date(int(anio), mes_num, 1).weekday(),
+            'dias_con_informes': sorted(set(inf.fecha.day for inf in mes_informes)),
+            'dias_del_mes': [
+                {'numero': d, 'tiene_informe': d in sorted(set(inf.fecha.day for inf in mes_informes))}
+                for d in range(1, calendar.monthrange(int(anio), mes_num)[1] + 1)
+            ],
             'bg_color': bg,
             'icon_color': icon_color,
             'hover_bg': hover_bg,

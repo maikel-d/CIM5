@@ -6,21 +6,23 @@ from direccion.models import UserProfile
 
 admin = User.objects.filter(username='admin').first()
 if not admin:
-    # Usar variable de entorno ADMIN_PASSWORD, o default admin321
     password = os.environ.get('ADMIN_PASSWORD', 'admin321')
-    admin = User.objects.create_superuser('admin', 'admin@direccion.gob.ve', password)
-    print()
-    print('=' * 42)
-    print('  SUPERUSUARIO CREADO')
-    print('=' * 42)
-    print(f'  Usuario:  admin')
-    print(f'  Password: {password}')
-    print('=' * 42)
-    print('  GUARDA ESTAS CREDENCIALES EN UN LUGAR SEGURO')
-    print('=' * 42)
-    print()
-else:
-    print('[OK] Superusuario ya existe')
+    if password == 'admin321':
+        import warnings
+        warnings.warn('ADMIN_PASSWORD es el valor por defecto (admin321). Cambialo en .env')
+        admin = User.objects.create_superuser('admin', 'admin@direccion.gob.ve', password)
+        print()
+        print('=' * 42)
+        print('  SUPERUSUARIO CREADO')
+        print('=' * 42)
+        print(f'  Usuario:  admin')
+        print(f'  Password: {password}')
+        print('=' * 42)
+        print('  GUARDA ESTAS CREDENCIALES EN UN LUGAR SEGURO')
+        print('=' * 42)
+        print()
+    else:
+        print('[OK] Superusuario ya existe')
 
 if not hasattr(admin, 'profile'):
     UserProfile.objects.create(user=admin, rol='ADMINISTRADOR')

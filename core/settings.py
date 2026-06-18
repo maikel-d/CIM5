@@ -5,80 +5,56 @@ Django settings for core project.
 from pathlib import Path
 import sys
 import os
-from decouple import config, Csv
+from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# ---- Detectar entorno de ejecución ----
-# En Docker: usar variables de entorno del sistema (docker-compose las define)
-# En local: leer .env directamente, ignorando variables del sistema
-#            que puedan interferir (ej: Windows system env vars)
-#
-# NOTA: No usamos RepositoryEnv de python-decouple porque en ciertas
-# versiones tiene bugs de parseo en Windows. Implementamos nuestro
-# propio lector de .env que es robusto y predecible.
-_env_file = BASE_DIR / '.env'
-_running_in_container = os.path.exists('/.dockerenv')
 
-def _read_env_file(key, default=None, cast=None):
-    """Lee una variable SOLO del archivo .env, ignorando os.environ.
-    Esto permite que las variables del sistema (ej: Windows system env vars)
-    no interfieran con la configuración local."""
-    try:
-        with open(_env_file, 'r', encoding='utf-8') as f:
-            for line in f:
-                line = line.strip()
-                if not line or line.startswith('#') or '=' not in line:
-                    continue
-                # Soporte para 'export KEY=value'
-                if line.startswith('export '):
-                    line = line[7:]
-                k, v = line.split('=', 1)
-                k = k.strip()
-                v = v.strip()
-                # Quitar comentarios inline (ej: KEY=value # comment)
-                comment_pos = -1
-                for c in (' #', '\t#'):
-                    pos = v.find(c)
-                    if pos != -1 and (comment_pos == -1 or pos < comment_pos):
-                        comment_pos = pos
-                if comment_pos != -1:
-                    v = v[:comment_pos].strip()
-                # Quitar comillas si están presentes
-                if len(v) >= 2 and v[0] == v[-1] and v[0] in ('"', "'"):
-                    v = v[1:-1]
-                if k == key:
-                    if cast is bool:
-                        return v.lower() in ('true', '1', 'yes', 'on')
-                    elif callable(cast):
-                        return cast(v)
-                    return v
-    except (IOError, OSError, FileNotFoundError):
-        # Fallback a variables de entorno del sistema si no existe .env
-        val = os.environ.get(key)
-        if val is not None:
-            if cast is bool:
-                return val.lower() in ('true', '1', 'yes', 'on')
-            elif callable(cast):
-                return cast(val)
-            return val
-    if default is not None:
+# ---- Cargar variables de entorno ----
+# python-dotenv carga .env sin sobrescribir variables del sistema.
+# En Docker: las variables vienen de docker-compose (toman prioridad).
+# En local: .env se carga correctamente sin interferencia de vars del sistema.
+_env_file = BASE_DIR / ".env"
+if _env_file.exists():
+    load_dotenv(_env_file, override=False)
+
+
+def _env(key, default=None, cast=None):
+    """Lee variable de entorno con soporte de casteo.
+    En Docker: usa variables del sistema (docker-compose define).
+    En local: usa variables cargadas desde .env.
+    Variables del sistema tienen prioridad sobre .env."""
+    val = os.environ.get(key)
+    if val is None:
         return default
-    return None
+    if cast is bool:
+        return val.lower() in ("true", "1", "yes", "on")
+    elif callable(cast):
+        return cast(val)
+    return val
 
-if _running_in_container:
-    # En Docker: system env vars vienen de docker-compose, usar config()
-    _env = config
-else:
-    # En local: leer solo del .env (ignorar variables del sistema)
-    _env = _read_env_file
 
+def _csv(val):
+    """Parsea string separado por comas a lista (reemplaza Csv())."""
+    if isinstance(val, str):
+        return [v.strip() for v in val.split(",") if v.strip()]
+    return val
 SECRET_KEY = _env('SECRET_KEY', default='cambiar-esta-clave-en-produccion')
+
+# Validacion: advertir si se usa la SECRET_KEY por defecto
+if SECRET_KEY == 'cambiar-esta-clave-en-produccion':
+    import warnings
+    warnings.warn(
+        'SECRET_KEY tiene el valor por defecto. '
+        'Define una clave unica en .env o variable de entorno.',
+        RuntimeWarning
+    )
+
 
 DEBUG = _env('DEBUG', default=False, cast=bool)
 
 # En desarrollo, agrega tu IP local a la variable ALLOWED_HOSTS en .env
-ALLOWED_HOSTS = _env('ALLOWED_HOSTS', default='127.0.0.1,localhost', cast=Csv())
+ALLOWED_HOSTS = _env('ALLOWED_HOSTS', default='127.0.0.1,localhost', cast=_csv)
 
 # Detectar y agregar automáticamente la IP local de red para acceso desde otros dispositivos
 local_ip = ''
@@ -159,8 +135,8 @@ DATABASES = {
 
 CACHES = {
     'default': {
-        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
-        'LOCATION': 'django_cache',
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': _env('REDIS_URL', default='redis://127.0.0.1:6379/1'),
     }
 }
 
@@ -223,6 +199,11 @@ _domain = _env('DOMAIN', default='')
 if 'test' in sys.argv:
     DEBUG = True
     SECURE_SSL_REDIRECT = False
+
+# Seguridad: prevenir DEBUG=True accidental en produccion
+if DEBUG and 'test' not in sys.argv:
+    import warnings
+    warnings.warn('DEBUG=True fuera de pruebas - posible riesgo de seguridad', RuntimeWarning)
 
 if not DEBUG:
     # Content Security Policy básica

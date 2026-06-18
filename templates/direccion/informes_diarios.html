@@ -159,6 +159,45 @@
 
 
 
+    <!-- Calendar Monthly Folders -->
+    {% if not mes_actual %}
+    <div class="mb-8 content-fade-in">
+      <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+        Carpetas por Mes
+      </h3>
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+        {% for mes in meses_con_informes %}
+        <a href="?anio={{ anio_actual }}&amp;mes={{ mes.numero }}"
+           class="block rounded-xl border-2 {{ mes.border_accent }} overflow-hidden hover:shadow-lg transition-all duration-200 group bg-white"
+           title="Ver informes de {{ mes.nombre }}">
+          <div class="{{ mes.bg_color }} {{ mes.icon_color }} px-3 py-2.5 flex items-center justify-between font-bold text-sm">
+            <span class="truncate">{{ mes.nombre }}</span>
+            {% if mes.count > 0 %}
+            <span class="text-xs font-bold {{ mes.badge_bg }} {{ mes.badge_text }} px-2 py-0.5 rounded-full ml-1 flex-shrink-0">{{ mes.count }}</span>
+            {% else %}
+            <span class="text-xs text-gray-400 flex-shrink-0">0</span>
+            {% endif %}
+          </div>
+          <div class="p-2.5">
+            <div class="grid grid-cols-7 gap-0.5 text-center">
+              <span class="text-[9px] text-gray-400 font-medium pb-1">L</span>
+              <span class="text-[9px] text-gray-400 font-medium pb-1">M</span>
+              <span class="text-[9px] text-gray-400 font-medium pb-1">X</span>
+              <span class="text-[9px] text-gray-400 font-medium pb-1">J</span>
+              <span class="text-[9px] text-gray-400 font-medium pb-1">V</span>
+              <span class="text-[9px] text-gray-400 font-medium pb-1">S</span>
+              <span class="text-[9px] text-gray-400 font-medium pb-1">D</span>
+              {% for dia in mes.dias_del_mes %}
+              <span class="w-6 h-6 flex items-center justify-center text-[10px] rounded {% if dia.tiene_informe %}{{ mes.icon_color }} {{ mes.badge_bg }} font-bold{% else %}text-gray-400{% endif %}">{{ dia.numero }}</span>
+              {% endfor %}
+            </div>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
     <!-- All Reports for the selected month (below accordion) -->
     {% if informes %}
         <div class="border-t border-gray-100 pt-6 mt-4{% if mes_actual %} content-fade-in{% endif %}">
@@ -193,8 +232,6 @@
           <td class="px-4 py-3 whitespace-nowrap text-gray-500">{{ informe.fecha|date:"d/m/Y" }}</td>
           <td class="px-4 py-3">
             <div class="font-medium text-gray-900">{{ informe.titulo }}</div>
-    </div>
-    {% endif %}
             <div class="text-xs text-gray-500 line-clamp-1">{{ informe.contenido|truncatechars:100 }}</div>
           </td>
           <td class="px-4 py-3 whitespace-nowrap text-gray-500 hidden md:table-cell">{{ informe.creado_por.get_full_name|default:informe.creado_por.username|default:'---' }}</td>
