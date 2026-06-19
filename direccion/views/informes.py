@@ -9,7 +9,7 @@ from io import BytesIO
 from datetime import date, datetime, timedelta
 
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse
+from django.http import HttpResponse, FileResponse
 from django.contrib import messages
 from django.conf import settings
 
@@ -100,10 +100,27 @@ def _generar_pdf_informe(informe):
 
 @permiso_required(perms.INFORMES_PREVIEW)
 def previsualizar_informe_pdf(request, pk):
-    """Muestra un PDF inline de un informe diario individual para previsualización."""
+    """Muestra el PDF original subido o genera uno si no hay archivo adjunto."""
     informe = get_object_or_404(InformeDiario, pk=pk)
-    pdf_data = _generar_pdf_informe(informe)
 
+    # Si el informe tiene un archivo subido, servirlo directamente
+    if informe.archivo and informe.archivo.name:
+        try:
+            import mimetypes
+            import os
+            content_type, _ = mimetypes.guess_type(informe.archivo.name)
+            if not content_type:
+                content_type = "application/octet-stream"
+            response = FileResponse(informe.archivo.open('rb'), content_type=content_type)
+            original_filename = os.path.basename(informe.archivo.name)
+            response["Content-Disposition"] = f'inline; filename="{original_filename}"'
+            return response
+        except (FileNotFoundError, PermissionError, IOError, OSError):
+            # Si falla al abrir el archivo, generar uno
+            pass
+
+    # Fallback: generar PDF con los datos del informe
+    pdf_data = _generar_pdf_informe(informe)
     safe_titulo = informe.titulo.replace(' ', '_')[:60]
     filename = f"{informe.fecha}_{safe_titulo}.pdf"
 
@@ -235,18 +252,18 @@ def informes_diarios_list(request):
 
     # Paleta de colores para cada mes
     colores_meses = [
-        ('bg-blue-50', 'text-blue-600', 'hover:bg-blue-100', 'border-blue-200', 'bg-blue-100', 'text-blue-700'),
-        ('bg-indigo-50', 'text-indigo-600', 'hover:bg-indigo-100', 'border-indigo-200', 'bg-indigo-100', 'text-indigo-700'),
-        ('bg-violet-50', 'text-violet-600', 'hover:bg-violet-100', 'border-violet-200', 'bg-violet-100', 'text-violet-700'),
-        ('bg-teal-50', 'text-teal-600', 'hover:bg-teal-100', 'border-teal-200', 'bg-teal-100', 'text-teal-700'),
-        ('bg-emerald-50', 'text-emerald-600', 'hover:bg-emerald-100', 'border-emerald-200', 'bg-emerald-100', 'text-emerald-700'),
-        ('bg-green-50', 'text-green-600', 'hover:bg-green-100', 'border-green-200', 'bg-green-100', 'text-green-700'),
-        ('bg-amber-50', 'text-amber-600', 'hover:bg-amber-100', 'border-amber-200', 'bg-amber-100', 'text-amber-700'),
-        ('bg-orange-50', 'text-orange-600', 'hover:bg-orange-100', 'border-orange-200', 'bg-orange-100', 'text-orange-700'),
-        ('bg-rose-50', 'text-rose-600', 'hover:bg-rose-100', 'border-rose-200', 'bg-rose-100', 'text-rose-700'),
-        ('bg-pink-50', 'text-pink-600', 'hover:bg-pink-100', 'border-pink-200', 'bg-pink-100', 'text-pink-700'),
-        ('bg-fuchsia-50', 'text-fuchsia-600', 'hover:bg-fuchsia-100', 'border-fuchsia-200', 'bg-fuchsia-100', 'text-fuchsia-700'),
-        ('bg-cyan-50', 'text-cyan-600', 'hover:bg-cyan-100', 'border-cyan-200', 'bg-cyan-100', 'text-cyan-700'),
+        {"bg": "#E8F0F8", "icon": "#003363", "border": "#C8D8E8", "badge_bg": "#D6E4F0", "badge_text": "#003363"},
+        {"bg": "#E8F0F8", "icon": "#003363", "border": "#C8D8E8", "badge_bg": "#D6E4F0", "badge_text": "#003363"},
+        {"bg": "#E8F0F8", "icon": "#003363", "border": "#C8D8E8", "badge_bg": "#D6E4F0", "badge_text": "#003363"},
+        {"bg": "#E8F0F8", "icon": "#003363", "border": "#C8D8E8", "badge_bg": "#D6E4F0", "badge_text": "#003363"},
+        {"bg": "#E8F0F8", "icon": "#003363", "border": "#C8D8E8", "badge_bg": "#D6E4F0", "badge_text": "#003363"},
+        {"bg": "#E8F0F8", "icon": "#003363", "border": "#C8D8E8", "badge_bg": "#D6E4F0", "badge_text": "#003363"},
+        {"bg": "#E8F0F8", "icon": "#003363", "border": "#C8D8E8", "badge_bg": "#D6E4F0", "badge_text": "#003363"},
+        {"bg": "#E8F0F8", "icon": "#003363", "border": "#C8D8E8", "badge_bg": "#D6E4F0", "badge_text": "#003363"},
+        {"bg": "#E8F0F8", "icon": "#003363", "border": "#C8D8E8", "badge_bg": "#D6E4F0", "badge_text": "#003363"},
+        {"bg": "#E8F0F8", "icon": "#003363", "border": "#C8D8E8", "badge_bg": "#D6E4F0", "badge_text": "#003363"},
+        {"bg": "#E8F0F8", "icon": "#003363", "border": "#C8D8E8", "badge_bg": "#D6E4F0", "badge_text": "#003363"},
+        {"bg": "#E8F0F8", "icon": "#003363", "border": "#C8D8E8", "badge_bg": "#D6E4F0", "badge_text": "#003363"},
     ]
 
     # Construir las 12 carpetas de meses con su resumen e informes completos
@@ -255,29 +272,30 @@ def informes_diarios_list(request):
         mes_informes = informes_por_mes[mes_num]
         # Ordenar informes del dia 1 al ultimo del mes
         mes_informes.sort(key=lambda x: x.fecha)
-        primer_informe = mes_informes[0] if mes_informes else None
-        ultimo_informe = mes_informes[-1] if mes_informes else None
-        bg, icon_color, hover_bg, border_accent, badge_bg, badge_text = colores_meses[mes_num - 1]
+        color = colores_meses[mes_num - 1]
+
+        # Build days of month with indicators
+        days_in_month = calendar.monthrange(int(anio), mes_num)[1]
+        informe_dates = {inf.fecha.day for inf in mes_informes}
+        dias_del_mes = []
+        for dia_num in range(1, days_in_month + 1):
+            dias_del_mes.append({
+                'numero': dia_num,
+                'tiene_informe': dia_num in informe_dates,
+            })
+
         meses_con_informes.append({
             'numero': mes_num,
             'nombre': MESES_ESPANOL[mes_num - 1],
             'count': len(mes_informes),
             'informes': mes_informes,  # lista completa ordenada dia 1 -> ultimo
-            'primer_informe': primer_informe,
-            'ultima_fecha': ultimo_informe.fecha if ultimo_informe else None,  # CORREGIDO: antes era primer_informe.fecha
-            'total_dias': calendar.monthrange(int(anio), mes_num)[1],
-            'primer_dia_semana': date(int(anio), mes_num, 1).weekday(),
-            'dias_con_informes': sorted(set(inf.fecha.day for inf in mes_informes)),
-            'dias_del_mes': [
-                {'numero': d, 'tiene_informe': d in sorted(set(inf.fecha.day for inf in mes_informes))}
-                for d in range(1, calendar.monthrange(int(anio), mes_num)[1] + 1)
-            ],
-            'bg_color': bg,
-            'icon_color': icon_color,
-            'hover_bg': hover_bg,
-            'border_accent': border_accent,
-            'badge_bg': badge_bg,
-            'badge_text': badge_text,
+            'dias_del_mes': dias_del_mes,
+            'bg_color': color['bg'],
+            'icon_color': color['icon'],
+            'hover_bg': color['bg'],
+            'border_accent': color['border'],
+            'badge_bg': color['badge_bg'],
+            'badge_text': color['badge_text'],
         })
 
     meses_opciones = []

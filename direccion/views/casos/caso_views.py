@@ -8,11 +8,11 @@ from django.db.models import Q
 from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
 
-from....models import Caso, Investigado, DocumentoInvestigado, DocumentoCaso, Bien, DocumentoBien
-from....forms import CasoForm, DocumentoCasoForm
+from ...models import Caso, Investigado, DocumentoInvestigado, DocumentoCaso, Bien, DocumentoBien
+from ...forms import CasoForm, DocumentoCasoForm
 from ..mixins import PermissionRequiredMixin
-from....decorators import permiso_required
-from....audit import auditar
+from ...decorators import permiso_required
+from ...audit import auditar
 from... import permissions as perms
 
 
@@ -33,7 +33,7 @@ class CasoCreateView(PermissionRequiredMixin, CreateView):
     template_name = "direccion/caso_form.html"
     login_url = reverse_lazy("login")
     success_url = reverse_lazy("caso_list")
-    permisos_requeridos = [perms.CASOS_CREAR_]
+    permisos_requeridos = [perms.CASOS_CREAR]
 
     def form_valid(self, form):
         messages.success(self.request, "Caso creado exitosamente.")
@@ -62,7 +62,7 @@ class CasoUpdateView(PermissionRequiredMixin, UpdateView):
     template_name = "direccion/caso_form.html"
     login_url = reverse_lazy("login")
     success_url = reverse_lazy("caso_list")
-    permisos_requeridos = [perms.CASOS_EDITRE]
+    permisos_requeridos = [perms.CASOS_EDITAR]
 
     def form_valid(self, form):
         messages.success(self.request, "Caso actualizado exitosamente.")
@@ -109,7 +109,7 @@ class CasoDeleteView(PermissionRequiredMixin, DeleteView):
 # CASO DOCUMENTS
 # ======================================================================================
 
-@permiso_required(perms.CASOS_DOCUMENTOS_AGERGAR)
+@permiso_required(perms.CASOS_DOCUMENTOS_AGREGAR)
 def agregar_documento_caso(request, pk):
     caso = get_object_or_404(Caso, pk=pk)
     if request.method == "POST":

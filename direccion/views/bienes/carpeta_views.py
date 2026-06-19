@@ -1,3 +1,16 @@
+from django.shortcuts import redirect, get_object_or_404
+from django.contrib import messages
+from django.urls import reverse_lazy
+from django.views.generic import UpdateView, DetailView
+from django.contrib.auth.decorators import login_required
+
+from ...models import CarpetaBien, Bien, DocumentoBien, DocumentoCarpetaBien
+from ...forms import CarpetaForm, CarpetaBienDocumentForm
+from ..mixins import PermissionRequiredMixin
+from ...decorators import permiso_required
+from ...audit import auditar
+from ... import permissions as perms
+
 
 # ============================================================
 # Carpetas de Bienes

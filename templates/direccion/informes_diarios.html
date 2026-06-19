@@ -5,12 +5,14 @@
 {% block extra_head %}
 <style>
   .folder-card {
-    transition: all 0.2s ease;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
   }
   .folder-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    border-color: #003363 !important;
+    box-shadow: 0 8px 28px rgba(0,51,99,0.12);
+    background-color: rgba(0, 51, 99, 0.06);
   }
   .folder-card:active {
     transform: translateY(0);
@@ -19,13 +21,7 @@
     border-color: #003363 !important;
     background-color: rgba(232, 240, 248, 0.3) !important;
   }
-  .report-item {
-    transition: all 0.15s ease;
-  }
-  .report-item:hover {
-    border-color: #003363 !important;
-    box-shadow: 0 2px 8px rgba(0,51,99,0.06);
-  }
+
 
   /* Page load animations */
   @keyframes fadeInUp {
@@ -48,23 +44,84 @@
     animation: fadeIn 0.3s ease-out;
   }
   
-  /* Staggered report items */
-  .report-item.animate-item {
+
+  
+
+  /* Modern Data Grid - Report Rows */
+  .report-row {
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+  }
+  .report-row:hover {
+    border-color: #003363 !important;
+    box-shadow: 0 8px 28px rgba(0,51,99,0.12);
+    transform: translateY(-2px);
+  }
+  
+  /* Action Buttons */
+  .action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    transition: all 0.2s ease;
+    color: #94a3b8;
+    background: transparent;
+    cursor: pointer;
+    border: none;
+  }
+  .action-btn:hover {
+    transform: translateY(-1px);
+  }
+  .action-btn-view:hover {
+    background: rgba(0, 51, 99, 0.08);
+    color: #003363;
+  }
+  .action-btn-delete:hover {
+    background: rgba(239, 68, 68, 0.08);
+    color: #ef4444;
+  }
+
+  /* Row stagger */
+  .report-row.animate-item {
     opacity: 0;
     animation: fadeInUp 0.35s ease-out forwards;
   }
-  .report-item.animate-item:nth-child(1) { animation-delay: 0.02s; }
-  .report-item.animate-item:nth-child(2) { animation-delay: 0.05s; }
-  .report-item.animate-item:nth-child(3) { animation-delay: 0.08s; }
-  .report-item.animate-item:nth-child(4) { animation-delay: 0.11s; }
-  .report-item.animate-item:nth-child(5) { animation-delay: 0.14s; }
-  .report-item.animate-item:nth-child(6) { animation-delay: 0.17s; }
-  .report-item.animate-item:nth-child(7) { animation-delay: 0.20s; }
-  .report-item.animate-item:nth-child(8) { animation-delay: 0.23s; }
-  .report-item.animate-item:nth-child(9) { animation-delay: 0.26s; }
-  .report-item.animate-item:nth-child(10) { animation-delay: 0.29s; }
-  
+  .report-row.animate-item:nth-child(1) { animation-delay: 0.02s; }
+  .report-row.animate-item:nth-child(2) { animation-delay: 0.05s; }
+  .report-row.animate-item:nth-child(3) { animation-delay: 0.08s; }
+  .report-row.animate-item:nth-child(4) { animation-delay: 0.11s; }
+  .report-row.animate-item:nth-child(5) { animation-delay: 0.14s; }
+  .report-row.animate-item:nth-child(6) { animation-delay: 0.17s; }
+  .report-row.animate-item:nth-child(7) { animation-delay: 0.20s; }
+  .report-row.animate-item:nth-child(8) { animation-delay: 0.23s; }
+  .report-row.animate-item:nth-child(9) { animation-delay: 0.26s; }
+  .report-row.animate-item:nth-child(10) { animation-delay: 0.29s; }
+  .report-row.animate-item:nth-child(11) { animation-delay: 0.32s; }
+  .report-row.animate-item:nth-child(12) { animation-delay: 0.35s; }
+  .report-row.animate-item:nth-child(13) { animation-delay: 0.38s; }
+  .report-row.animate-item:nth-child(14) { animation-delay: 0.41s; }
+  .report-row.animate-item:nth-child(15) { animation-delay: 0.44s; }
+  .report-row.animate-item:nth-child(16) { animation-delay: 0.47s; }
+  .report-row.animate-item:nth-child(17) { animation-delay: 0.50s; }
+  .report-row.animate-item:nth-child(18) { animation-delay: 0.53s; }
+  .report-row.animate-item:nth-child(19) { animation-delay: 0.56s; }
+  .report-row.animate-item:nth-child(20) { animation-delay: 0.59s; }
 
+  .folder-card {
+    opacity: 0;
+    animation: fadeInUp 0.35s ease-out forwards;
+  }
+  .folder-card:nth-child(1) { animation-delay: 0.02s; }
+  .folder-card:nth-child(2) { animation-delay: 0.06s; }
+  .folder-card:nth-child(3) { animation-delay: 0.10s; }
+  .folder-card:nth-child(4) { animation-delay: 0.14s; }
+  .folder-card:nth-child(5) { animation-delay: 0.18s; }
+  .folder-card:nth-child(6) { animation-delay: 0.22s; }
+  .folder-card:nth-child(7) { animation-delay: 0.26s; }
+  .folder-card:nth-child(8) { animation-delay: 0.30s; }
 </style>
 {% endblock %}
 
@@ -166,33 +223,23 @@
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
         Carpetas por Mes
       </h3>
-      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+      <div class="grid grid-cols-4 gap-4">
         {% for mes in meses_con_informes %}
         <a href="?anio={{ anio_actual }}&amp;mes={{ mes.numero }}"
-           class="block rounded-xl border-2 {{ mes.border_accent }} overflow-hidden hover:shadow-lg transition-all duration-200 group bg-white"
+           class="group flex flex-col items-center gap-2 p-4 rounded-xl border-2 {{ mes.border_accent }} bg-white hover:shadow-lg hover:-translate-y-1 hover:border-[#003363]/30 transition-all duration-200 cursor-pointer"
            title="Ver informes de {{ mes.nombre }}">
-          <div class="{{ mes.bg_color }} {{ mes.icon_color }} px-3 py-2.5 flex items-center justify-between font-bold text-sm">
-            <span class="truncate">{{ mes.nombre }}</span>
-            {% if mes.count > 0 %}
-            <span class="text-xs font-bold {{ mes.badge_bg }} {{ mes.badge_text }} px-2 py-0.5 rounded-full ml-1 flex-shrink-0">{{ mes.count }}</span>
-            {% else %}
-            <span class="text-xs text-gray-400 flex-shrink-0">0</span>
-            {% endif %}
+          <!-- Folder Icon -->
+          <div class="relative p-2 rounded-lg {{ mes.bg_color }}">
+            <svg class="w-10 h-10 sm:w-12 sm:h-12 {{ mes.icon_color }} drop-shadow-sm" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" opacity="0.9"/>
+              <path d="M5 8a1 1 0 00-1 1v8a1 1 0 001 1h14a1 1 0 001-1V9a1 1 0 00-1-1H5z" opacity="0.15"/>
+              <path d="M2 6.5A1.5 1.5 0 013.5 5H9l2 2h9.5A1.5 1.5 0 0122 8.5V17a2 2 0 01-2 2H4a2 2 0 01-2-2V6.5z"/>
+            </svg>
+            <!-- Count badge -->
+            <span class="absolute -top-1 -right-1 min-w-[20px] h-5 flex items-center justify-center text-[10px] font-bold {{ mes.badge_bg }} {{ mes.badge_text }} rounded-full shadow-sm px-1">{{ mes.count }}</span>
           </div>
-          <div class="p-2.5">
-            <div class="grid grid-cols-7 gap-0.5 text-center">
-              <span class="text-[9px] text-gray-400 font-medium pb-1">L</span>
-              <span class="text-[9px] text-gray-400 font-medium pb-1">M</span>
-              <span class="text-[9px] text-gray-400 font-medium pb-1">X</span>
-              <span class="text-[9px] text-gray-400 font-medium pb-1">J</span>
-              <span class="text-[9px] text-gray-400 font-medium pb-1">V</span>
-              <span class="text-[9px] text-gray-400 font-medium pb-1">S</span>
-              <span class="text-[9px] text-gray-400 font-medium pb-1">D</span>
-              {% for dia in mes.dias_del_mes %}
-              <span class="w-6 h-6 flex items-center justify-center text-[10px] rounded {% if dia.tiene_informe %}{{ mes.icon_color }} {{ mes.badge_bg }} font-bold{% else %}text-gray-400{% endif %}">{{ dia.numero }}</span>
-              {% endfor %}
-            </div>
-          </div>
+          <!-- Month Name -->
+          <span class="text-xs font-semibold text-gray-700 text-center truncate max-w-full group-hover:text-[#003363] transition-colors">{{ mes.nombre }}</span>
         </a>
         {% endfor %}
       </div>
@@ -205,65 +252,76 @@
         <div class="flex items-center gap-2">
           <svg class="w-5 h-5 text-[#003363]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
           {% if mes_actual %}
-          <a href="?anio={{ anio_actual }}" class="flex items-center gap-1.5 text-sm text-gray-500 hover:text-[#003363] transition-colors">
+          <a href="?anio={{ anio_actual }}" class="flex items-center gap-2 text-sm font-semibold text-white bg-[#003363] hover:bg-[#002244] px-4 py-2 rounded-lg shadow-sm hover:shadow-md transition-all duration-200">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 12H5m7-7l-7 7 7 7"/></svg>
-            Volver a todos los meses
+            Salir de carpeta
           </a>
-          <span class="text-gray-300">|</span>
+          <span class="text-gray-300 mx-1">|</span>
           {% endif %}
           <h3 class="font-semibold text-gray-800">{% if mes_actual %}{% for num, label in meses_opciones %}{% if mes_actual|stringformat:"s" == num|stringformat:"s" %}{{ label }} {% endif %}{% endfor %}{{ anio_actual }}{% else %}Todos los informes {{ anio_actual }}{% endif %}</h3>
           <span class="text-xs text-gray-400">({{ informes|length }} informe(s))</span>
         </div>
       </div>
-      <div class="overflow-x-auto rounded-lg border border-gray-200">
-    <table class="min-w-full divide-y divide-gray-200 text-sm">
-      <thead class="bg-gray-50">
-        <tr>
-          <th class="px-4 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider text-xs">Fecha</th>
-          <th class="px-4 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider text-xs">T&iacute;tulo</th>
-          <th class="px-4 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider text-xs hidden md:table-cell">Autor</th>
-          <th class="px-4 py-3 text-left font-semibold text-gray-600 uppercase tracking-wider text-xs hidden sm:table-cell">Archivo</th>
-          <th class="px-4 py-3 text-right font-semibold text-gray-600 uppercase tracking-wider text-xs">Acciones</th>
-        </tr>
-      </thead>
-      <tbody class="bg-white divide-y divide-gray-200">
+
+      <!-- Lista de informes -->
+      <div class="space-y-2">
         {% for informe in informes %}
-        <tr class="hover:bg-gray-50 transition-colors{% if mes_actual %} animate-item{% endif %}">
-          <td class="px-4 py-3 whitespace-nowrap text-gray-500">{{ informe.fecha|date:"d/m/Y" }}</td>
-          <td class="px-4 py-3">
-            <div class="font-medium text-gray-900">{{ informe.titulo }}</div>
-            <div class="text-xs text-gray-500 line-clamp-1">{{ informe.contenido|truncatechars:100 }}</div>
-          </td>
-          <td class="px-4 py-3 whitespace-nowrap text-gray-500 hidden md:table-cell">{{ informe.creado_por.get_full_name|default:informe.creado_por.username|default:'---' }}</td>
-          <td class="px-4 py-3 whitespace-nowrap hidden sm:table-cell">
-            {% if informe.archivo %}
-            <a href="{{ informe.archivo.url }}" target="_blank" class="text-[#003363] hover:text-[#002244] font-medium text-xs">Ver</a>
-            {% else %}
-            <span class="text-gray-300">&mdash;</span>
+        <a href="{% url 'informe_diario_preview' informe.pk %}" target="_blank"
+           class="group flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl border border-gray-200 bg-white hover:border-[#003363]/30 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer">
+          <!-- Date badge -->
+          <div class="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-lg bg-[#003363]/5 flex flex-col items-center justify-center text-center group-hover:bg-[#003363]/10 transition-colors">
+            <span class="text-lg sm:text-xl font-bold text-[#003363] leading-none">{{ informe.fecha|date:"d" }}</span>
+            <span class="text-[10px] sm:text-xs text-[#64748b] font-medium mt-0.5 leading-none">{{ informe.fecha|date:"M" }}</span>
+          </div>
+          <!-- Content -->
+          <div class="flex-1 min-w-0">
+            <div class="text-sm sm:text-base font-semibold text-gray-900 group-hover:text-[#003363] transition-colors truncate">{{ informe.titulo }}</div>
+            {% if informe.contenido %}
+            <div class="text-xs sm:text-sm text-[#64748b] line-clamp-2 mt-0.5">{{ informe.contenido|truncatechars:150 }}</div>
             {% endif %}
-          </td>
-          <td class="px-4 py-3 whitespace-nowrap text-right">
-            <a href="{% url 'informe_diario_preview' informe.pk %}" target="_blank" class="text-gray-400 hover:text-[#003363] p-1.5 inline-block" title="Previsualizar PDF">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+            <div class="flex items-center gap-2 mt-1">
+              <span class="text-[10px] sm:text-xs text-gray-400">{{ informe.fecha|date:"l" }}</span>
+              {% if informe.creado_por %}
+              <span class="text-[10px] sm:text-xs text-gray-400">• {{ informe.creado_por.get_full_name|default:informe.creado_por.username }}</span>
+              {% endif %}
+            </div>
+          </div>
+          <!-- Actions -->
+          <div class="flex-shrink-0 flex items-center gap-1" onclick="event.stopPropagation();">
+            {% if informe.archivo %}
+            <a href="{{ informe.archivo.url }}" target="_blank"
+               class="flex items-center justify-center w-8 h-8 rounded-lg bg-[#003363]/5 hover:bg-[#003363]/10 text-[#003363] transition-colors"
+               title="Descargar archivo">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
             </a>
+            {% endif %}
             {% if user.profile|can:'informes_eliminar' %}
-            <form method="post" action="{% url 'informe_diario_eliminar' informe.pk %}" class="inline" onsubmit="return confirm('&#xbf;Eliminar el informe &quot;{{ informe.titulo|escapejs }}&quot;? Esta acci&oacute;n no se puede deshacer.')">
+            <form method="post" action="{% url 'informe_diario_eliminar' informe.pk %}" class="inline" onsubmit="return confirm('¿Eliminar el informe "{{ informe.titulo|escapejs }}"? Esta acción no se puede deshacer.')">
               {% csrf_token %}
-              <button type="submit" class="text-gray-400 hover:text-red-600 p-1.5 inline-block" title="Eliminar informe">
+              <button type="submit"
+                 class="flex items-center justify-center w-8 h-8 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                 title="Eliminar informe">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
               </button>
             </form>
             {% endif %}
-          </td>
-        </tr>
+            <!-- Arrow indicator -->
+            <svg class="w-4 h-4 text-gray-300 group-hover:text-[#003363] group-hover:translate-x-0.5 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          </div>
+        </a>
         {% endfor %}
-      </tbody>
-    </table>
-  </div>
-    </div>
+      </div>
+        </div>
+    {% else %}
+        <div class="text-center py-8 text-gray-400 text-sm">
+          {% if mes_actual %}
+          No hay informes para este mes.
+          {% else %}
+          No hay informes registrados.
+          {% endif %}
+        </div>
     {% endif %}
-        <span class="text-xs text-gray-400">({{ informes|length }} informe(s))</span>
-      </div><!-- Create Modal -->
+  <!-- Create Modal -->
 <div id="modal-crear-informe" class="upload-modal-overlay" style="display:none">
   <div class="upload-modal max-w-2xl">
     <div class="upload-modal-header">
@@ -370,12 +428,20 @@ function actualizarFechaModal() {
   var mesSelect = document.getElementById('modal-mes');
   var mesNombre = mesSelect.options[mesSelect.selectedIndex].text;
   label.textContent = mesNombre + ' ' + anio;
+
+  // Update form action URL with selected year/month
+  var form = document.querySelector('#modal-crear-informe form');
+  if (form) {
+    var baseUrl = form.action.split('?')[0];
+    form.action = baseUrl + '?anio=' + yyyy + '&mes=' + mm;
+  }
 }
 
 function abrirModalCrear() {
   // Reset form to current context values
   document.getElementById('modal-anio').value = '{{ anio_actual }}';
-  var mesDefault = '{{ mes_actual }}' || String(new Date().getMonth() + 1);
+  var mesActual = '{{ mes_actual }}';
+  var mesDefault = (mesActual && mesActual !== 'None') ? mesActual : String(new Date().getMonth() + 1);
   document.getElementById('modal-mes').value = mesDefault;
   actualizarFechaModal();
 
@@ -404,6 +470,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (chevron) chevron.classList.remove('rotate-180');
     }
   });
+});
 
  
 
@@ -473,6 +540,59 @@ function resetDownloadButton() {
           reportSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }, 100);
       }
+    }
+  });
+</script>
+
+<!-- Back to Top Button -->
+<style>
+  #back-to-top {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: #003363;
+    color: white;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 16px rgba(0,51,99,0.25);
+    z-index: 9999;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(12px);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  #back-to-top.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+  #back-to-top:hover {
+    background: #002244;
+    box-shadow: 0 6px 24px rgba(0,51,99,0.35);
+    transform: translateY(-2px);
+  }
+  #back-to-top:active {
+    transform: translateY(0);
+  }
+</style>
+<button id="back-to-top" onclick="window.scrollTo({top: 0, behavior: "smooth"})" aria-label="Volver arriba" title="Volver arriba">
+  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/>
+  </svg>
+</button>
+<script>
+  document.addEventListener("scroll", function() {
+    var btn = document.getElementById("back-to-top");
+    if (window.scrollY > 400) {
+      btn.classList.add("visible");
+    } else {
+      btn.classList.remove("visible");
     }
   });
 </script>
