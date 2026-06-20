@@ -4,24 +4,6 @@
 {% block page_title %}Informes Diarios{% endblock %}
 {% block extra_head %}
 <style>
-  .folder-card {
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    cursor: pointer;
-  }
-  .folder-card:hover {
-    transform: translateY(-2px);
-    border-color: #003363 !important;
-    box-shadow: 0 8px 28px rgba(0,51,99,0.12);
-    background-color: rgba(0, 51, 99, 0.06);
-  }
-  .folder-card:active {
-    transform: translateY(0);
-  }
-  .folder-card.selected {
-    border-color: #003363 !important;
-    background-color: rgba(232, 240, 248, 0.3) !important;
-  }
-
 
   /* Page load animations */
   @keyframes fadeInUp {
@@ -110,18 +92,50 @@
   .report-row.animate-item:nth-child(19) { animation-delay: 0.56s; }
   .report-row.animate-item:nth-child(20) { animation-delay: 0.59s; }
 
-  .folder-card {
+  .folder-card-item {
     opacity: 0;
     animation: fadeInUp 0.35s ease-out forwards;
+    min-height: 180px;
+    display: flex;
+    flex-direction: column;
   }
-  .folder-card:nth-child(1) { animation-delay: 0.02s; }
-  .folder-card:nth-child(2) { animation-delay: 0.06s; }
-  .folder-card:nth-child(3) { animation-delay: 0.10s; }
-  .folder-card:nth-child(4) { animation-delay: 0.14s; }
-  .folder-card:nth-child(5) { animation-delay: 0.18s; }
-  .folder-card:nth-child(6) { animation-delay: 0.22s; }
-  .folder-card:nth-child(7) { animation-delay: 0.26s; }
-  .folder-card:nth-child(8) { animation-delay: 0.30s; }
+  .folder-card-item .card-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  .folder-card-item .card-body .card-desc {
+    flex: 1;
+  }
+  .folder-card-item:nth-child(1) { animation-delay: 0.02s; }
+  .folder-card-item:nth-child(2) { animation-delay: 0.05s; }
+  .folder-card-item:nth-child(3) { animation-delay: 0.08s; }
+  .folder-card-item:nth-child(4) { animation-delay: 0.11s; }
+  .folder-card-item:nth-child(5) { animation-delay: 0.14s; }
+  .folder-card-item:nth-child(6) { animation-delay: 0.17s; }
+  .folder-card-item:nth-child(7) { animation-delay: 0.20s; }
+  .folder-card-item:nth-child(8) { animation-delay: 0.23s; }
+  .folder-card-item:nth-child(9) { animation-delay: 0.26s; }
+  .folder-card-item:nth-child(10) { animation-delay: 0.29s; }
+  .folder-card-item:nth-child(11) { animation-delay: 0.32s; }
+  .folder-card-item:nth-child(12) { animation-delay: 0.35s; }
+
+  /* Hover color variations for folder cards */
+  .folder-card-item:nth-child(4n+1):hover { border-color: #2563eb !important; box-shadow: 0 8px 24px rgba(37,99,235,0.15); }
+  .folder-card-item:nth-child(4n+1):hover .card-icon { background: #dbeafe !important; }
+  .folder-card-item:nth-child(4n+1):hover .card-icon svg { color: #2563eb !important; }
+
+  .folder-card-item:nth-child(4n+2):hover { border-color: #059669 !important; box-shadow: 0 8px 24px rgba(5,150,105,0.15); }
+  .folder-card-item:nth-child(4n+2):hover .card-icon { background: #d1fae5 !important; }
+  .folder-card-item:nth-child(4n+2):hover .card-icon svg { color: #059669 !important; }
+
+  .folder-card-item:nth-child(4n+3):hover { border-color: #7c3aed !important; box-shadow: 0 8px 24px rgba(124,58,237,0.15); }
+  .folder-card-item:nth-child(4n+3):hover .card-icon { background: #ede9fe !important; }
+  .folder-card-item:nth-child(4n+3):hover .card-icon svg { color: #7c3aed !important; }
+
+  .folder-card-item:nth-child(4n+4):hover { border-color: #d97706 !important; box-shadow: 0 8px 24px rgba(217,119,6,0.15); }
+  .folder-card-item:nth-child(4n+4):hover .card-icon { background: #fef3c7 !important; }
+  .folder-card-item:nth-child(4n+4):hover .card-icon svg { color: #d97706 !important; }
 </style>
 {% endblock %}
 
@@ -141,13 +155,26 @@
       <span class="text-[#003363] font-medium">{% for num, label in meses_opciones %}{% if mes_actual|stringformat:"s" == num|stringformat:"s" %}{{ label }}{% endif %}{% endfor %}</span>
       {% endif %}
     </nav>
+    {% if mes_actual %}
+    <div class="mb-4">
+      <a href="?anio={{ anio_actual }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 hover:text-[#003363] hover:bg-[#e8f0f8] rounded-lg transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/</svg>
+        Volver al listado
+      </a>
+    </div>
+    {% endif %}
     <!-- Header -->
     <div class="flex items-center justify-between mb-6">
       <div class="flex items-center gap-3">
-        <h3 class="font-semibold text-gray-800">Informes</h3>
-        <span class="text-xs text-gray-400">{{ informes|length }} informe(s) en {{ anio_actual }}</span>
+        <div class="flex items-center gap-1.5"><div class="relative"><span class="text-2xl font-bold text-[#003363] count-up" data-target="{{ total_informes_anio }}">0</span><div class="absolute -top-1 -right-2 w-2 h-2 rounded-full bg-green-400 animate-pulse"></div></div><div class="flex flex-col"><span class="text-xs font-semibold text-gray-700 leading-tight">Informes</span><span class="text-[10px] text-gray-400 leading-tight">{{ anio_actual }}</span></div></div>
       </div>
       <div class="flex items-center gap-2">
+                {% if mes_actual %}
+        <a href="?anio={{ anio_actual }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 hover:text-[#003363] hover:bg-[#e8f0f8] rounded-lg transition-colors" title="Volver a carpetas">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+          Volver
+        </a>
+        {% endif %}
         <!-- Year Selector -->
         <form method="get" action="{% url 'informes_diarios' %}" class="flex items-center gap-2">
           <select name="anio" onchange="this.form.submit()" class="text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white text-gray-600 hover:border-[#003363]/30">
@@ -225,28 +252,35 @@
       </h3>
       <div class="grid grid-cols-4 gap-4">
         {% for mes in meses_con_informes %}
-        <a href="?anio={{ anio_actual }}&amp;mes={{ mes.numero }}"
-           class="group flex flex-col items-center gap-2 p-4 rounded-xl border-2 {{ mes.border_accent }} bg-white hover:shadow-lg hover:-translate-y-1 hover:border-[#003363]/30 transition-all duration-200 cursor-pointer"
-           title="Ver informes de {{ mes.nombre }}">
-          <!-- Folder Icon -->
-          <div class="relative p-2 rounded-lg {{ mes.bg_color }}">
-            <svg class="w-10 h-10 sm:w-12 sm:h-12 {{ mes.icon_color }} drop-shadow-sm" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" opacity="0.9"/>
-              <path d="M5 8a1 1 0 00-1 1v8a1 1 0 001 1h14a1 1 0 001-1V9a1 1 0 00-1-1H5z" opacity="0.15"/>
-              <path d="M2 6.5A1.5 1.5 0 013.5 5H9l2 2h9.5A1.5 1.5 0 0122 8.5V17a2 2 0 01-2 2H4a2 2 0 01-2-2V6.5z"/>
-            </svg>
-            <!-- Count badge -->
-            <span class="absolute -top-1 -right-1 min-w-[20px] h-5 flex items-center justify-center text-[10px] font-bold {{ mes.badge_bg }} {{ mes.badge_text }} rounded-full shadow-sm px-1">{{ mes.count }}</span>
-          </div>
-          <!-- Month Name -->
-          <span class="text-xs font-semibold text-gray-700 text-center truncate max-w-full group-hover:text-[#003363] transition-colors">{{ mes.nombre }}</span>
-        </a>
-        {% endfor %}
+<a href="?anio={{ anio_actual }}&amp;mes={{ mes.numero }}"
+   class="folder-card-item text-left group bg-white rounded-xl border-2 hover:shadow-md hover:-translate-y-1 transition-all duration-200 p-5 cursor-pointer border-gray-200 hover:border-gray-300 block"
+   title="Ver informes de {{ mes.nombre }}">
+  <div class="flex items-start justify-between mb-3">
+    <div class="card-icon w-12 h-12 rounded-xl {% if mes.count > 0 %}{{ mes.badge_bg }} group-hover:bg-[#003363]/15{% else %}bg-gray-50 group-hover:bg-gray-100{% endif %} flex items-center justify-center transition-colors">
+      <svg class="w-6 h-6 {% if mes.count > 0 %}{{ mes.badge_text }}{% else %}text-gray-300{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+      </svg>
+    </div>
+    <span class="text-xs font-medium {% if mes.count > 0 %}{{ mes.badge_text }} {{ mes.badge_bg }}{% else %}text-gray-400 bg-gray-50{% endif %} px-2 py-0.5 rounded-full">
+      {{ mes.count }} inf.
+    </span>
+  </div>
+  <div class="card-body">
+  <h3 class="font-semibold text-gray-800">{{ mes.nombre }}</h3>
+  {% if mes.informes %}
+  <p class="text-xs text-gray-500 line-clamp-2 mt-1">{{ mes.informes.0.titulo }}</p>
+  <p class="text-xs text-gray-400 mt-2">{{ mes.count }} informe(s)</p>
+  {% else %}
+  <p class="text-xs text-gray-400 italic mt-1">Sin informes</p>
+  {% endif %}
+  </div>
+</a>
+{% endfor %}
       </div>
     </div>
     {% endif %}
-    <!-- All Reports for the selected month (below accordion) -->
-    {% if informes %}
+    <!-- All Reports for the selected month (only when a month is selected) -->
+    {% if informes and mes_actual %}
         <div class="border-t border-gray-100 pt-6 mt-4{% if mes_actual %} content-fade-in{% endif %}">
       <div class="flex items-center justify-between gap-2 mb-4">
         <div class="flex items-center gap-2">
@@ -316,8 +350,6 @@
         <div class="text-center py-8 text-gray-400 text-sm">
           {% if mes_actual %}
           No hay informes para este mes.
-          {% else %}
-          No hay informes registrados.
           {% endif %}
         </div>
     {% endif %}
@@ -596,4 +628,6 @@ function resetDownloadButton() {
     }
   });
 </script>
+
+
 {% endblock %}

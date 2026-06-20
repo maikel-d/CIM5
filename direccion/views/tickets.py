@@ -29,6 +29,7 @@ def ticket_list(request):
     """Lista de tickets con filtros por estado y usuario."""
     filtro_estado = request.GET.get("estado", "")
     filtro_usuario = request.GET.get("usuario", "")
+    filtro_prioridad = request.GET.get("prioridad", "")
 
     # Admin/Supervisor ven todos los tickets; el resto solo los propios
     if request.user.profile.tiene_permiso(perms.TICKETS_RESOLVER):
@@ -40,6 +41,9 @@ def ticket_list(request):
 
     if filtro_estado:
         tickets = tickets.filter(estado=filtro_estado)
+
+    if filtro_prioridad:
+        tickets = tickets.filter(prioridad=filtro_prioridad)
 
     # Orden: abiertos/en_proceso primero, luego por fecha descendente
     tickets = tickets.annotate(
@@ -58,6 +62,7 @@ def ticket_list(request):
         "tickets": tickets,
         "filtro_estado": filtro_estado,
         "filtro_usuario": filtro_usuario,
+        "filtro_prioridad": filtro_prioridad,
         "usuarios": usuarios,
         "estados": TicketSoporte.ESTADO_CHOICES,
     })
@@ -138,4 +143,32 @@ def ticket_asignar(request, pk):
         "accion": "Asignar"
     })
 
+@permiso_required(perms.TICKETS_VER)
+def ticket_cambiar_estado(request, pk):
+    ticket = get_object_or_404(TicketSoporte, pk=pk)
+    estado_anterior = ticket.estado
+    nuevo_estado = request.GET.get("estado", "")
+    estados_validos = [e[0] for e in TicketSoporte.ESTADO_CHOICES]
+    if nuevo_estado not in estados_validos:
+        messages.error(request, "Estado invalido.")
+        return redirect("dashboard")
+    if nuevo_estado != ticket.estado:
+        ticket.estado = nuevo_estado
+        ticket.save()
+        ticket.registrar_cambio(request.user, 'estado', estado_anterior, ticket.estado)
+        messages.success(request, f"Ticket #{ticket.pk} cambiado a {ticket.get_estado_display()}.")
+        auditar(request, "ACTUALIZAR", "TicketSoporte", ticket.pk, str(ticket),
+                f"Estado: {estado_anterior} -> {ticket.get_estado_display()}")
+    else:
+        messages.info(request, f"Ticket #{ticket.pk} ya esta {ticket.get_estado_display()}.")
+    return redirect("dashboard")
 
+
+def ticket_eliminar(request, pk):
+    if request.user.profile.rol != "ADMINISTRADOR":
+        messages.error(request, "No tienes permiso para eliminar tickets.")
+        return redirect("dashboard")
+    ticket = get_object_or_404(TicketSoporte, pk=pk)
+    ticket.delete()
+    messages.success(request, f"Ticket #{pk} eliminado.")
+    return redirect("dashboard")

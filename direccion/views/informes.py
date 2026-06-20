@@ -231,6 +231,7 @@ def informes_diarios_list(request):
 
     # Agrupar por mes en Python (evita 12 queries extra)
     informes_por_mes = {i: [] for i in range(1, 13)}
+    total_informes_anio = len(informes_anio)
     for inf in informes_anio:
         informes_por_mes[inf.fecha.month].append(inf)
 
@@ -250,21 +251,8 @@ def informes_diarios_list(request):
     anios_disponibles.add(date(hoy.year - 1, 1, 1))
     anios_disponibles = sorted(anios_disponibles, reverse=True)
 
-    # Paleta de colores para cada mes
-    colores_meses = [
-        {"bg": "#E8F0F8", "icon": "#003363", "border": "#C8D8E8", "badge_bg": "#D6E4F0", "badge_text": "#003363"},
-        {"bg": "#E8F0F8", "icon": "#003363", "border": "#C8D8E8", "badge_bg": "#D6E4F0", "badge_text": "#003363"},
-        {"bg": "#E8F0F8", "icon": "#003363", "border": "#C8D8E8", "badge_bg": "#D6E4F0", "badge_text": "#003363"},
-        {"bg": "#E8F0F8", "icon": "#003363", "border": "#C8D8E8", "badge_bg": "#D6E4F0", "badge_text": "#003363"},
-        {"bg": "#E8F0F8", "icon": "#003363", "border": "#C8D8E8", "badge_bg": "#D6E4F0", "badge_text": "#003363"},
-        {"bg": "#E8F0F8", "icon": "#003363", "border": "#C8D8E8", "badge_bg": "#D6E4F0", "badge_text": "#003363"},
-        {"bg": "#E8F0F8", "icon": "#003363", "border": "#C8D8E8", "badge_bg": "#D6E4F0", "badge_text": "#003363"},
-        {"bg": "#E8F0F8", "icon": "#003363", "border": "#C8D8E8", "badge_bg": "#D6E4F0", "badge_text": "#003363"},
-        {"bg": "#E8F0F8", "icon": "#003363", "border": "#C8D8E8", "badge_bg": "#D6E4F0", "badge_text": "#003363"},
-        {"bg": "#E8F0F8", "icon": "#003363", "border": "#C8D8E8", "badge_bg": "#D6E4F0", "badge_text": "#003363"},
-        {"bg": "#E8F0F8", "icon": "#003363", "border": "#C8D8E8", "badge_bg": "#D6E4F0", "badge_text": "#003363"},
-        {"bg": "#E8F0F8", "icon": "#003363", "border": "#C8D8E8", "badge_bg": "#D6E4F0", "badge_text": "#003363"},
-    ]
+    # Color unificado para todos los meses (tema sidebar #003363)
+    color_mes = {"bg": "#E8F0F8", "icon": "#003363", "border": "#C8D8E8", "badge_bg": "#D6E4F0", "badge_text": "#003363"}
 
     # Construir las 12 carpetas de meses con su resumen e informes completos
     meses_con_informes = []
@@ -272,7 +260,7 @@ def informes_diarios_list(request):
         mes_informes = informes_por_mes[mes_num]
         # Ordenar informes del dia 1 al ultimo del mes
         mes_informes.sort(key=lambda x: x.fecha)
-        color = colores_meses[mes_num - 1]
+        color = color_mes
 
         # Build days of month with indicators
         days_in_month = calendar.monthrange(int(anio), mes_num)[1]
@@ -326,6 +314,7 @@ def informes_diarios_list(request):
         "anios_disponibles": anios_disponibles,
         "meses_opciones": meses_opciones,
         "meses_con_informes": meses_con_informes,
+        "total_informes_anio": total_informes_anio,
         "hoy": hoy,
     })
 

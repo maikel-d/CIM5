@@ -1,3 +1,5 @@
+from django.shortcuts import redirect
+from django.contrib import messages
 # ============================================================
 # Exportación a Excel y PDF
 # ============================================================
@@ -176,58 +178,63 @@ def _human_size(size_bytes):
 # EXPORT TO EXCEL
 # ============================================================
 
-@permiso_required(perms.EXPORTAR_PERSONAL_EXCEL)
 @login_required
 @permiso_required(perms.EXPORTAR_PERSONAL_EXCEL)
 def exportar_personal_excel(request):
-    headers = ["Apellidos", "Nombres", "Cedula", "Telefonos", "Fecha Nacimiento", "Fecha Registro"]
-    rows = []
-    for p in Personal.objects.filter(activo=True).order_by("apellidos"):
-        rows.append([
-            p.apellidos,
-            p.nombres,
-            p.cedula,
-            p.telefonos or "",
-            p.fecha_nacimiento.strftime("%d/%m/%Y") if p.fecha_nacimiento else "",
-            p.fecha_creacion.strftime("%d/%m/%Y %H:%M"),
-        ])
-    auditar(request, "EXPORTAR", "Personal", None, "Exportación Excel",
-            f"{Personal.objects.filter(activo=True).count()} registros")
-    return _build_excel_response(
-        "Personal", headers, rows,
-        [30, 30, 18, 30, 18, 20], "personal_direccion.xlsx"
-    )
+    try:
+        headers = ["Apellidos", "Nombres", "Cedula", "Telefonos", "Fecha Nacimiento", "Fecha Registro"]
+        rows = []
+        for p in Personal.objects.filter(activo=True).order_by("apellidos"):
+            rows.append([
+                p.apellidos,
+                p.nombres,
+                p.cedula,
+                p.telefonos or "",
+                p.fecha_nacimiento.strftime("%d/%m/%Y") if p.fecha_nacimiento else "",
+                p.fecha_creacion.strftime("%d/%m/%Y %H:%M"),
+            ])
+        auditar(request, "EXPORTAR", "Personal", None, "Exportación Excel",
+                f"{Personal.objects.filter(activo=True).count()} registros")
+        return _build_excel_response(
+            "Personal", headers, rows,
+            [30, 30, 18, 30, 18, 20], "personal_direccion.xlsx"
+        )
+    except Exception as e:
+        messages.error(request, f"Error al exportar Personal a Excel: {str(e)}")
+        return redirect('personal_list')
 
 
-@permiso_required(perms.EXPORTAR_INVESTIGADOS_EXCEL)
 @login_required
 @permiso_required(perms.EXPORTAR_INVESTIGADOS_EXCEL)
 def exportar_investigados_excel(request):
-    headers = ["Apellidos", "Nombres", "Cedula", "RIF", "Partida Nacimiento", "Entrada Investigacion", "Fecha Registro"]
-    rows = []
-    for i in Investigado.objects.filter(activo=True).order_by("apellidos"):
-        rows.append([
-            i.apellidos,
-            i.nombres,
-            i.cedula or "",
-            i.rif or "",
-            i.partida_nacimiento or "",
-            i.entrada_investigacion or "",
-            i.fecha_creacion.strftime("%d/%m/%Y %H:%M"),
-        ])
-    auditar(request, "EXPORTAR", "Investigado", None, "Exportación Excel",
-            f"{Investigado.objects.filter(activo=True).count()} registros")
-    return _build_excel_response(
-        "Investigados", headers, rows,
-        [30, 30, 18, 18, 25, 40, 20], "investigados.xlsx"
-    )
+    try:
+        headers = ["Apellidos", "Nombres", "Cedula", "RIF", "Partida Nacimiento", "Entrada Investigacion", "Fecha Registro"]
+        rows = []
+        for i in Investigado.objects.filter(activo=True).order_by("apellidos"):
+            rows.append([
+                i.apellidos,
+                i.nombres,
+                i.cedula or "",
+                i.rif or "",
+                i.partida_nacimiento or "",
+                i.entrada_investigacion or "",
+                i.fecha_creacion.strftime("%d/%m/%Y %H:%M"),
+            ])
+        auditar(request, "EXPORTAR", "Investigado", None, "Exportación Excel",
+                f"{Investigado.objects.filter(activo=True).count()} registros")
+        return _build_excel_response(
+            "Investigados", headers, rows,
+            [30, 30, 18, 18, 25, 40, 20], "investigados.xlsx"
+        )
+    except Exception as e:
+        messages.error(request, f"Error al exportar Investigados a Excel: {str(e)}")
+        return redirect('investigado_list')
 
 
 # ============================================================
 # EXPORT TO PDF
 # ============================================================
 
-@permiso_required(perms.EXPORTAR_PERSONAL_PDF)
 @login_required
 @permiso_required(perms.EXPORTAR_PERSONAL_PDF)
 def exportar_personal_pdf(request):
@@ -243,34 +250,41 @@ def exportar_personal_pdf(request):
             p.fecha_nacimiento.strftime("%d/%m/%Y") if p.fecha_nacimiento else "",
             p.fecha_creacion.strftime("%d/%m/%Y %H:%M"),
         ])
-    auditar(request, "EXPORTAR", "Personal", None, "Exportación PDF", f"{qs.count()} registros")
-    return _build_pdf_response(
-        "Personal de la Dirección General - Reporte",
-        headers, rows, "personal_direccion.pdf"
-    )
+    try:
+        auditar(request, "EXPORTAR", "Personal", None, "Exportación PDF", f"{qs.count()} registros")
+        return _build_pdf_response(
+            "Personal de la Dirección General - Reporte",
+            headers, rows, "personal_direccion.pdf"
+        )
+    except Exception as e:
+        messages.error(request, f"Error al exportar Personal a PDF: {str(e)}")
+        return redirect('personal_list')
 
 
-@permiso_required(perms.EXPORTAR_INVESTIGADOS_PDF)
 @login_required
 @permiso_required(perms.EXPORTAR_INVESTIGADOS_PDF)
 def exportar_investigados_pdf(request):
-    qs = Investigado.objects.filter(activo=True).order_by("apellidos", "nombres")
-    headers = ["Apellidos", "Nombres", "Cédula", "RIF", "Partida Nacimiento", "Entrada Investigación", "Fecha Registro"]
-    rows = []
-    for i in qs:
-        rows.append([
-            i.apellidos,
-            i.nombres,
-            i.cedula or "",
-            i.rif or "",
-            i.partida_nacimiento or "",
-            i.entrada_investigacion or "",
-            i.fecha_creacion.strftime("%d/%m/%Y %H:%M"),
-        ])
-    auditar(request, "EXPORTAR", "Investigado", None, "Exportación PDF", f"{qs.count()} registros")
-    return _build_pdf_response(
-        "Personas a Investigar - Reporte",
-        headers, rows, "investigados.pdf"
-    )
+    try:
+        qs = Investigado.objects.filter(activo=True).order_by("apellidos", "nombres")
+        headers = ["Apellidos", "Nombres", "Cédula", "RIF", "Partida Nacimiento", "Entrada Investigación", "Fecha Registro"]
+        rows = []
+        for i in qs:
+            rows.append([
+                i.apellidos,
+                i.nombres,
+                i.cedula or "",
+                i.rif or "",
+                i.partida_nacimiento or "",
+                i.entrada_investigacion or "",
+                i.fecha_creacion.strftime("%d/%m/%Y %H:%M"),
+            ])
+        auditar(request, "EXPORTAR", "Investigado", None, "Exportación PDF", f"{qs.count()} registros")
+        return _build_pdf_response(
+            "Personas a Investigar - Reporte",
+            headers, rows, "investigados.pdf"
+        )
+    except Exception as e:
+        messages.error(request, f"Error al exportar Investigados a PDF: {str(e)}")
+        return redirect('investigado_list')
 
 

@@ -33,7 +33,7 @@
   {% if casos %}
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
     {% for c in casos %}
-    <a href="{% url 'caso_detail' c.pk %}" class="group block bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md hover:-translate-y-1 transition-all duration-200 overflow-hidden">
+    <a href="{% url 'caso_detail' c.pk %}" class="folder-card-item group block bg-white rounded-xl border-2 border-gray-200 hover:shadow-md hover:-translate-y-1 transition-all duration-200 overflow-hidden">
       <div class="p-5">
         <div class="flex items-start justify-between mb-3">
           <div class="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center flex-shrink-0">

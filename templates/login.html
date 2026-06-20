@@ -19,12 +19,13 @@
             <form method="post" class="space-y-5">
                 {% csrf_token %}
                 {% if messages %}
+                <div id="django-messages" class="hidden">
                     {% for message in messages %}
-                    <div class="p-3 rounded-lg text-sm {% if message.tags == 'error' %}bg-red-500/20 text-red-300 border border-red-500/30{% else %}bg-green-500/20 text-green-300 border border-green-500/30{% endif %}">
-                        {{ message }}
-                    </div>
+                    <div data-level="{{ message.tags }}">{{ message }}</div>
                     {% endfor %}
+                </div>
                 {% endif %}
+                <div id="toast-container"></div>
 
                 {% if bloqueado %}
                 <div class="p-3 rounded-lg text-sm bg-yellow-500/20 text-yellow-300 border border-yellow-500/30 text-center">

@@ -28,7 +28,7 @@ from .notificaciones import notificaciones_list
 from .tareas import tareas_list, tarea_completar, tarea_eliminar
 from .tickets import (
     ticket_detail, ticket_list, ticket_create,
-    ticket_resolver, ticket_asignar,
+    ticket_resolver, ticket_asignar, ticket_cambiar_estado, ticket_eliminar,
 )
 from .informes import (
     informes_diarios_list, previsualizar_informe_pdf,

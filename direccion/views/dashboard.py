@@ -6,12 +6,14 @@ import json
 import calendar
 from datetime import date, timedelta
 
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
 from django.db.models import Q, Case, When, IntegerField, Count
 from django.db.models.functions import TruncMonth
 from django.utils import timezone
 
+from ..forms import TareaForm
+from django.contrib import messages
 from ..models import (
     Personal, DocumentoPersonal, Caso, Investigado, DocumentoInvestigado,
     DocumentoCaso, DocumentoDireccion, AuditLog, Tarea, TicketSoporte,
@@ -24,12 +26,28 @@ from ..middleware import usuarios_online
 
 @permiso_required(perms.DASHBOARD_VER)
 def dashboard(request):
+    # Handle quick-add tarea from dashboard
+    if request.method == "POST":
+        form = TareaForm(request.POST)
+        if form.is_valid():
+            tarea = form.save(commit=False)
+            tarea.creado_por = request.user
+            tarea.save()
+            messages.success(request, "Tarea agregada.")
+        return redirect("dashboard")
+
     total_personal = Personal.objects.filter(activo=True).count()
     total_casos = Caso.objects.filter(activo=True).count()
     total_investigados = Investigado.objects.filter(activo=True).count()
-    total_usuarios = User.objects.filter(is_active=True).count()
     total_bienes = Bien.objects.filter(activo=True).count()
-    tareas_pendientes = Tarea.objects.filter(completada=False).order_by("-fecha_creacion")
+    tareas_pendientes = Tarea.objects.filter(completada=False).annotate(
+        prioridad_order=Case(
+            When(prioridad='ALTO', then=0),
+            When(prioridad='MEDIO', then=1),
+            When(prioridad='BAJO', then=2),
+            output_field=IntegerField(),
+        )
+    ).order_by('prioridad_order', '-fecha_creacion')
     tareas_count = Tarea.objects.count()
     tareas_completadas = Tarea.objects.filter(completada=True).count()
 
@@ -61,6 +79,7 @@ def dashboard(request):
         )
     ).order_by('estado_prioridad', '-fecha_creacion')[:5]
     tickets_abiertos = TicketSoporte.objects.filter(estado__in=["ABIERTO", "EN_PROCESO"]).count()
+    tickets_alta_prioridad = TicketSoporte.objects.filter(prioridad="ALTO", estado__in=["ABIERTO", "EN_PROCESO"]).count()
 
     # Ticket counts by status — single aggregated query
     tickets_estado_qs = TicketSoporte.objects.values('estado').annotate(total=Count('id'))
@@ -130,8 +149,6 @@ def dashboard(request):
         }
     })
 
-    # Usuarios del sistema
-    usuarios_sistema = User.objects.filter(is_active=True).select_related('profile').order_by('username')
 
     # Informes del mes actual — single query reuse for count and list
     hoy = date.today()
@@ -157,8 +174,6 @@ def dashboard(request):
         "total_documentos_investigados": total_documentos_investigados,
         "total_documentos_casos": total_documentos_casos,
         "total_documentos_direccion": total_documentos_direccion,
-        "total_usuarios": total_usuarios,
-        "usuarios_sistema": usuarios_sistema,
         "docs_pdf": docs_pdf_list,
         "docs_word": docs_word_list,
         "docs_img": docs_img_list,
@@ -171,6 +186,7 @@ def dashboard(request):
         "tickets_abiertos_count": tickets_por_estado.get('ABIERTO', 0),
         "tickets_proceso_count": tickets_por_estado.get('EN_PROCESO', 0),
         "tickets_resueltos_count": tickets_por_estado.get('RESUELTO', 0),
+        "tickets_alta_prioridad": tickets_alta_prioridad,
         "tickets_cerrados_count": tickets_por_estado.get('CERRADO', 0),
         "chart_data_json": chart_data,
         "informes_mes": informes_mes,

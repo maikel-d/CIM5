@@ -711,3 +711,276 @@ nav a:active{transform:scale(0.97)}
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
+
+
+/* ===== Toast Notifications System ===== */
+#toast-container {
+  position: fixed;
+  top: 1.25rem;
+  right: 1.25rem;
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  pointer-events: none;
+  max-width: 24rem;
+  width: 100%;
+}
+
+.toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  border-radius: 0.75rem;
+  background: #fff;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
+  animation: toast-slide-in 0.35s cubic-bezier(0.21, 1.02, 0.73, 1) forwards;
+  border-left: 4px solid #e5e7eb;
+  position: relative;
+  overflow: hidden;
+}
+
+.toast.removing {
+  animation: toast-fade-out 0.3s ease forwards;
+}
+
+.toast-icon {
+  flex-shrink: 0;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-top: 0.125rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.toast-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.toast-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 0.125rem;
+}
+
+.toast-text {
+  font-size: 0.8125rem;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+.toast-close {
+  flex-shrink: 0;
+  width: 1.25rem;
+  height: 1.25rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: #9ca3af;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.25rem;
+  transition: all 0.15s ease;
+  font-size: 0.875rem;
+  padding: 0;
+  line-height: 1;
+}
+
+.toast-close:hover {
+  background: #f3f4f6;
+  color: #4b5563;
+}
+
+/* Progress bar */
+.toast-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background: rgba(0,0,0,0.08);
+  animation: toast-shrink 4s linear forwards;
+}
+
+/* Color variants */
+.toast-success { border-left-color: #10b981; }
+.toast-success .toast-icon { background: #10b981; }
+.toast-success .toast-progress { background: #10b981; }
+
+.toast-error { border-left-color: #ef4444; }
+.toast-error .toast-icon { background: #ef4444; }
+.toast-error .toast-progress { background: #ef4444; }
+
+.toast-warning { border-left-color: #f59e0b; }
+.toast-warning .toast-icon { background: #f59e0b; }
+.toast-warning .toast-progress { background: #f59e0b; }
+
+.toast-info { border-left-color: #3b82f6; }
+.toast-info .toast-icon { background: #3b82f6; }
+.toast-info .toast-progress { background: #3b82f6; }
+
+/* Animations */
+@keyframes toast-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(100%) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes toast-fade-out {
+  to {
+    opacity: 0;
+    transform: translateX(50%) scale(0.95);
+  }
+}
+
+@keyframes toast-shrink {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+
+/* Stacking: each toast has a slight bottom shadow offset when there are multiple */
+.toast + .toast {
+  margin-top: 0;
+}
+
+/* Responsive: on mobile, full width with margins */
+@media (max-width: 640px) {
+  #toast-container {
+    right: 0.75rem;
+    left: 0.75rem;
+    max-width: none;
+    width: auto;
+  }
+}
+
+
+/* ===== Skeleton Loaders ===== */
+.skeleton-container {
+  position: relative;
+  min-height: 80px;
+}
+
+.skeleton-overlay {
+  position: absolute;
+  inset: 0;
+  background: #f9fafb;
+  z-index: 20;
+  border-radius: inherit;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  transition: opacity 0.4s ease, transform 0.3s ease;
+  opacity: 1;
+  pointer-events: none;
+}
+
+.skeleton-overlay.loaded {
+  opacity: 0;
+  transform: translateY(4px);
+}
+
+/* Shimmer animation */
+.skeleton-shimmer {
+  background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+  border-radius: 6px;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Skeleton shape variants */
+.skeleton-card-shape {
+  height: 100%;
+  width: 100%;
+  border-radius: 10px;
+}
+
+.skeleton-line {
+  height: 14px;
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.skeleton-line:last-child {
+  width: 65%;
+}
+
+.skeleton-line.short {
+  width: 45%;
+}
+
+.skeleton-line.tiny {
+  width: 30%;
+  height: 12px;
+}
+
+/* For stat cards: icon + text row */
+.skeleton-stat-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+.skeleton-stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.skeleton-stat-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* For chart area */
+.skeleton-chart {
+  height: 220px;
+  width: 100%;
+  border-radius: 10px;
+}
+
+/* For tables / lists */
+.skeleton-list-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+}
+
+.skeleton-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Staggered animation delays for multiple skeleton items */
+.skeleton-item-1 { animation-delay: 0s; }
+.skeleton-item-2 { animation-delay: 0.1s; }
+.skeleton-item-3 { animation-delay: 0.2s; }
+.skeleton-item-4 { animation-delay: 0.3s; }
+.skeleton-item-5 { animation-delay: 0.4s; }
+.skeleton-item-6 { animation-delay: 0.5s; }

@@ -74,6 +74,9 @@ urlpatterns = [
     path("tickets/<int:pk>/resolver/", views.ticket_resolver, name="ticket_resolver"),
     path("tickets/<int:pk>/asignar/", views.ticket_asignar, name="ticket_asignar"),
 
+    path("tickets/<int:pk>/estado/", views.ticket_cambiar_estado, name="ticket_estado"),
+    path("tickets/<int:pk>/eliminar/", views.ticket_eliminar, name="ticket_eliminar"),
+
     # Informes Diarios
     path("informes-diarios/", views.informes_diarios_list, name="informes_diarios"),
     path("informes-diarios/descargar/", views.exportar_informes_descargar, name="informes_descargar"),

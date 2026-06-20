@@ -276,8 +276,8 @@ class DocumentoDireccion(TipoDocumentoMixin, models.Model):
     CATEGORIA_CHOICES = [
         ('LEYES', 'Leyes'),
         ('DOCUMENTOS', 'Documentos'),
-        ('MEMO', 'Memo'),
-        ('ACTAS', 'Actas'),
+        ('MEMO', 'Formato de Memos'),
+        
     ]
 
     archivo = models.FileField(

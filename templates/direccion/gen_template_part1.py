@@ -40,8 +40,6 @@ a("<span class=" + Q + "text-white" + Q + ">{{ carpeta.nombre }}</span>")
 a("</nav>")
 
 with open("/DATA/CIM5NV/templates/direccion/bien_carpeta_detail.html", "w") as f:
-    f.write("
-".join(lines))
-    f.write("
-")
+    f.write("\n".join(lines))
+    f.write("\n")
 print("Template generated: " + str(len(lines)) + " lines")

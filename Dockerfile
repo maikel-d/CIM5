@@ -41,6 +41,9 @@ COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/pytho
 COPY --from=builder /usr/local/bin /usr/local/bin
 
 COPY . .
+# Validar sintaxis Python en build
+RUN python -m compileall /DATA/CIM5NV -q -x "/__pycache__/"
+
 
 # Tailwind CSS ya está pre-compilado localmente (static/css/tailwind.css)
 # Se copia via COPY . . -- no necesita Node.js en build

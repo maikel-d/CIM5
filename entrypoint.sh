@@ -11,11 +11,19 @@ echo "  Sistema de Gestión - Dirección General"
 echo "============================================"
 echo ""
 
+echo [*] Verificando sintaxis de Python...
+for f in /DATA/CIM5NV/core/urls.py /DATA/CIM5NV/direccion/urls.py /DATA/CIM5NV/direccion/views/__init__.py /DATA/CIM5NV/direccion/views/dashboard.py /DATA/CIM5NV/direccion/views/tickets.py; do
+  if [ -f "$f" ]; then
+    python -m py_compile "$f"
+  fi
+done
+echo [OK] Sintaxis verificada
+echo 
+
 # Esperar a que PostgreSQL esté disponible (si se usa)
 if [ "$DB_ENGINE" = "django.db.backends.postgresql" ]; then
     MAX_RETRIES=30
     RETRY_COUNT=0
-    echo "[*] Esperando a PostgreSQL (max $MAX_RETRIES intentos)..."
     until python -c "
 import psycopg2, os, sys
 try:
