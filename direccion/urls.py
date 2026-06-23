@@ -24,6 +24,7 @@ urlpatterns = [
     path("documentos-direccion/carpeta/<int:pk>/renombrar/", views.carpeta_direccion_renombrar, name="carpeta_direccion_renombrar"),
     path("documentos-direccion/carpeta/<int:pk>/eliminar/", views.carpeta_direccion_eliminar, name="carpeta_direccion_eliminar"),
     path("documentos-direccion/<int:doc_pk>/eliminar/", views.eliminar_documento_direccion, name="documento_direccion_delete"),
+    path("documentos-direccion/<str:categoria>/", views.documentos_direccion_categoria, name="documentos_direccion_categoria"),
 
     # Personal CRUD
     path("personal/", views.PersonalListView.as_view(), name="personal_list"),

@@ -543,3 +543,43 @@ To https://github.com/maikel-d/CIM5.git
 [2026-06-22 05:50:01] Backups en Drive: 4, se eliminaran: 1
 [2026-06-22 05:50:01] Eliminando: backup_completo_2026-06-19.tar.gz
 [2026-06-22 05:50:01] [4/5] Git commit + push...
+[main 4c793ad] auto: cambios 2026-06-22
+ 1 file changed, 40 insertions(+)
+To https://github.com/maikel-d/CIM5.git
+   e6d608a..4c793ad  main -> main
+[2026-06-22 05:50:01] Git push completado
+[2026-06-22 05:50:01] FIN
+
+========================================
+[2026-06-22 06:00:01] INICIO
+[2026-06-22 06:00:01] [5/5] Reiniciando contenedores Docker...
+ Container direccion-nginx Restarting 
+ Container direccion-db Restarting 
+ Container direccion-app Restarting 
+ Container cim5nv-redis Restarting 
+ Container direccion-nginx Started 
+ Container cim5nv-redis Started 
+ Container direccion-db Started 
+ Container direccion-app Started 
+[2026-06-22 06:00:01] Contenedores reiniciados
+[2026-06-22 06:00:01] FIN
+
+========================================
+[2026-06-23 05:50:01] INICIO
+[2026-06-23 05:50:01] [1/5] Backup completo (PostgreSQL + codigo + volumenes)...
+[2026-06-23 05:50:01] 1a. Dump PostgreSQL...
+[2026-06-23 05:50:01] PostgreSQL dump: 148K
+[2026-06-23 05:50:01] 1b. Copiando codigo del proyecto...
+[2026-06-23 05:50:01] 1c. Backupeando volumenes Docker...
+[2026-06-23 05:50:01]     Volumen: cim5nv_media_data
+[2026-06-23 05:50:01]     Backup OK: 3.4M
+[2026-06-23 05:50:01]     Volumen: cim5nv_static_data
+[2026-06-23 05:50:01]     Backup OK: 2.0M
+[2026-06-23 05:50:01] 1d. Comprimiendo backup...
+[2026-06-23 05:50:01] Backup completo creado: 7.4M
+[2026-06-23 05:50:01] [2/5] Subiendo backup a Google Drive...
+[2026-06-23 05:50:01] Backup subido a Drive: backup_completo_2026-06-23.tar.gz
+[2026-06-23 05:50:01] [3/5] Rotando backups antiguos en Google Drive...
+[2026-06-23 05:50:01] Backups en Drive: 4, se eliminaran: 1
+[2026-06-23 05:50:01] Eliminando: backup_completo_2026-06-20.tar.gz
+[2026-06-23 05:50:01] [4/5] Git commit + push...

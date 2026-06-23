@@ -19,7 +19,7 @@ from .casos import (
     InvestigadoUpdateView, InvestigadoDeleteView,
     agregar_documento_investigado, eliminar_documento_investigado,
 )
-from .documentos import documentos_direccion_list, eliminar_documento_direccion, batch_upload_documentos, carpeta_direccion_crear, carpeta_direccion_renombrar, carpeta_direccion_eliminar
+from .documentos import documentos_direccion_list, eliminar_documento_direccion, batch_upload_documentos, documentos_direccion_categoria, carpeta_direccion_crear, carpeta_direccion_renombrar, carpeta_direccion_eliminar
 from .usuarios import (
     UserListView, UserCreateView, UserUpdateView,
     user_toggle_active, user_delete,

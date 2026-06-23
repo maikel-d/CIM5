@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% load permissions_tags %}
+
+{% load direccion_extras %}
+
+
+
+{% block title %}{{ cat_label }} - Documentacion{% endblock %}
+
+{% block page_title %}{{ cat_label }} - Documentacion de la Direccion{% endblock %}
+
+
+
+{% block extra_head %}
+
+<style>
+
+  @keyframes fadeInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  .content-fade-in { animation: fadeIn 0.3s ease-out; }
+
+  .doc-row { opacity: 0; animation: fadeInUp 0.3s ease-out forwards; transition: background-color 0.15s ease, transform 0.15s ease; }
+
+  .doc-row:hover { background-color: #f8faff !important; transform: translateX(4px); }
+
+  @keyframes slideDown { from { opacity: 0; max-height: 0; } to { opacity: 1; max-height: 300px; } }
+
+  .upload-panel { animation: slideDown 0.3s ease-out; overflow: hidden; }
+
+  .btn-upload { transition: all 0.2s ease; }
+
+  .btn-upload:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37,99,235,0.3); }
+
+  .doc-row { animation-delay: calc(var(--i) * 0.05s); }
+
+  .file-icon { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 8px; flex-shrink: 0; }
+
+  .file-icon.pdf { background: #fee2e2; color: #dc2626; }
+
+  .file-icon.word { background: #dbeafe; color: #2563eb; }
+
+  .file-icon.otro { background: #f3f4f6; color: #6b7280; }
+
+  .file-icon.imagen { background: #fef3c7; color: #d97706; }
+
+  .action-delete { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 8px; color: #9ca3af; transition: all 0.15s ease; }
+
+  .action-delete:hover { color: #ef4444; background: #fef2f2; }
+
+  .doc-title { color: #003363; transition: color 0.15s ease; }
+
+  .doc-title:hover { color: #004080; }
+
+</style>
+
+{% endblock %}
+
+
+
+
+
+{% block content %}
+
+<div class="content-fade-in">
+
+<a href="{% url 'documentos_direccion' %}" class="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4 transition-colors">
+
+  <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+
+  Volver a Documentacion
+
+</a>
+
+<div class="flex items-center justify-between mb-6">
+
+  <p class="text-sm text-gray-500"><span class="font-semibold text-gray-700">{{ count }}</span> documento{% if count != 1 %}s{% endif %} en esta categoria</p>
+
+  {% if user.profile|can:'documentos_direccion_subir' %}
+
+  <button type="button" onclick="document.getElementById('upload-form').classList.toggle('hidden');this.textContent=document.getElementById('upload-form').classList.contains('hidden')?'+ Subir documento':'Cancelar'" class="btn-upload px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg inline-flex items-center gap-2">
+
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg> Subir documento
+
+  </button>
+
+  {% endif %}
+
+</div>
+
+<div id="upload-form" class="hidden upload-panel mb-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
+
+  <form method="post" enctype="multipart/form-data" class="space-y-3">{% csrf_token %}{{ form }}
+
+    <div class="flex gap-2"><button type="submit" class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors">Subir</button></div>
+
+  </form>
+
+</div>
+
+{% if documentos_cat %}
+
+<div class="bg-white rounded-xl border border-gray-200 overflow-hidden"><table class="w-full">
+
+<thead><tr class="bg-gray-50 border-b border-gray-200">
+
+<th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Documento</th>
+
+<th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden sm:table-cell">Fecha</th>
+
+<th class="text-right text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Accion</th>
+
+</tr></thead><tbody class="divide-y divide-gray-100">
+
+{% for doc in documentos_cat %}
+
+<tr class="doc-row" style="--i: {{ forloop.counter0 }};">
+
+<td class="px-4 py-3"><div class="flex items-center gap-3">
+
+<div class="file-icon {{ doc.tipo|lower }}">
+
+{% if doc.tipo == 'PDF' %}
+
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 13l2-2 2 2 3-3 2 2v2a1 1 0 01-1 1H8a1 1 0 01-1-1v-1z"/></svg>
+
+{% elif doc.tipo == 'WORD' %}
+
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+
+{% else %}
+
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+
+{% endif %}
+
+</div>
+
+<a href="{{ doc.archivo.url }}" target="_blank" class="doc-title text-sm font-medium">{{ doc.archivo.name|slice:"21:" }}</a>
+
+</div></td>
+
+<td class="px-4 py-3 text-sm text-gray-500 hidden sm:table-cell">{{ doc.fecha_subida|date:"d/m/Y H:i" }}</td>
+
+<td class="px-4 py-3 text-right">
+
+  {% if user.profile|can:'documentos_direccion_eliminar' %}
+
+  <a href="{% url 'documento_direccion_delete' doc.pk %}" class="action-delete" title="Eliminar" onclick="return confirm('Eliminar este documento?')">
+
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+
+  </a>{% endif %}
+
+</td></tr>
+
+{% endfor %}
+
+</tbody></table></div>
+
+{% else %}
+
+<div class="text-center py-12 text-gray-400">
+
+<svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+
+<p class="text-lg font-medium">No hay documentos en esta categoria</p>
+
+<p class="text-sm mt-1">Utilice el boton "+ Subir documento" para agregar el primero.</p>
+
+</div>{% endif %}
+
+</div>{% endblock %}

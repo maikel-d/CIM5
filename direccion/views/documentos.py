@@ -20,6 +20,7 @@ CAT_COLORS = {
     'LEYES': ('bg-amber-50', 'text-amber-600', 'hover:bg-amber-100', 'bg-amber-100', 'text-amber-700', 'border-amber-200', '#FDE68A', '#D97706'),
     'DOCUMENTOS': ('bg-blue-50', 'text-blue-600', 'hover:bg-blue-100', 'bg-blue-100', 'text-blue-700', 'border-blue-200', '#DBEAFE', '#2563EB'),
     'MEMO': ('bg-purple-50', 'text-purple-600', 'hover:bg-purple-100', 'bg-purple-100', 'text-purple-700', 'border-purple-200', '#E9D5FF', '#7C3AED'),
+    'RECURSOS': ('bg-emerald-50', 'text-emerald-600', 'hover:bg-emerald-100', 'bg-emerald-100', 'text-emerald-700', 'border-emerald-200', '#D1FAE5', '#059669'),
 
 }
 
@@ -27,9 +28,9 @@ CAT_ICONS = {
     'LEYES': 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253',
     'DOCUMENTOS': 'M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z',
     'MEMO': 'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z',
+    'RECURSOS': 'M13 10V3L4 14h7v7l9-11h-7z',
 
 }
-
 
 @permiso_required(perms.DOCUMENTOS_DIRECCION_VER)
 def documentos_direccion_list(request):
@@ -39,9 +40,10 @@ def documentos_direccion_list(request):
     # Agrupar documentos por categoria
     carpetas = []
     for key, label in DocumentoDireccion.CATEGORIA_CHOICES:
-        docs_cat = [d for d in documentos if d.categoria == key] if not categoria_filtro or categoria_filtro == key else []
         if categoria_filtro and categoria_filtro != key:
-            continue
+            docs_cat = []
+        else:
+            docs_cat = [d for d in documentos if d.categoria == key]
         colors = CAT_COLORS.get(key, ('bg-gray-50', 'text-gray-600', 'hover:bg-gray-100', 'bg-gray-100', 'text-gray-700', 'border-gray-200', '#E5E7EB', '#6B7280'))
         icon_path = CAT_ICONS.get(key, 'M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z')
         carpetas.append({
@@ -72,24 +74,16 @@ def documentos_direccion_list(request):
     else:
         form = DocumentoDireccionForm()
     
-    # Carpetas dinamicas (CarpetaDireccion)
-    carpetas_dinamicas = CarpetaDireccion.objects.all().order_by('orden', 'nombre')
-    # Para cada carpeta, contar documentos de su categoria
-    for cd in carpetas_dinamicas:
-        if cd.categoria:
-            cd.doc_count = DocumentoDireccion.objects.filter(categoria=cd.categoria).count()
-        else:
-            cd.doc_count = 0
-    
     return render(request, "direccion/documentos_direccion.html", {
         "carpetas": carpetas,
-        "carpetas_dinamicas": carpetas_dinamicas,
+    
         "form": form,
-        "carpeta_form": CarpetaDireccionForm(),
+    
         "categoria_filtro": categoria_filtro,
+    
         "categorias": DocumentoDireccion.CATEGORIA_CHOICES,
+        "documentos": documentos,
     })
-
 
 @permiso_required(perms.DOCUMENTOS_DIRECCION_ELIMINAR)
 def eliminar_documento_direccion(request, doc_pk):
@@ -103,9 +97,49 @@ def eliminar_documento_direccion(request, doc_pk):
     auditar(request, "ELIMINAR", "DocumentoDireccion", pk_val, doc_repr, "Documento Direccion")
     return redirect("documentos_direccion")
 
+@permiso_required(perms.DOCUMENTOS_DIRECCION_VER)
+def documentos_direccion_categoria(request, categoria):
+    valid_cats = [k for k,_ in DocumentoDireccion.CATEGORIA_CHOICES]
+    if categoria not in valid_cats:
+        messages.error(request, "Categoría no válida.")
+        return redirect("documentos_direccion")
+
+    documentos_cat = DocumentoDireccion.objects.filter(categoria=categoria).order_by("-fecha_subida")
+
+    cat_label = dict(DocumentoDireccion.CATEGORIA_CHOICES).get(categoria, categoria)
+    colors = CAT_COLORS.get(categoria, ("bg-gray-50", "text-gray-600", "hover:bg-gray-100", "bg-gray-100", "text-gray-700", "border-gray-200", "#E5E7EB", "#6B7280"))
+    icon_path = CAT_ICONS.get(categoria, "M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z")
+
+    if request.method == "POST":
+        form = DocumentoDireccionForm(request.POST, request.FILES)
+        if form.is_valid():
+            doc = form.save(commit=False)
+            doc.categoria = categoria
+            doc.save()
+            messages.success(request, "Documento subido exitosamente.")
+            auditar(request, "CREAR", "DocumentoDireccion", doc.pk, str(doc), "Documentos Dirección")
+            return redirect("documentos_direccion_categoria", categoria=categoria)
+        else:
+            messages.error(request, "Error al subir el documento. Verifique el formato.")
+    else:
+        form = DocumentoDireccionForm(initial={"categoria": categoria})
+
+    context = {
+        "documentos_cat": documentos_cat,
+        "categoria_key": categoria,
+        "cat_label": cat_label,
+        "bg_color": colors[0],
+        "icon_color": colors[1],
+        "icon_path": icon_path,
+        "badge_bg": colors[3],
+        "badge_text": colors[4],
+        "count": len(documentos_cat),
+        "form": form,
+    }
+    return render(request, "direccion/documentos_direccion_categoria.html", context)
+@permiso_required(perms.DOCUMENTOS_DIRECCION_SUBIR)
 
 @require_POST
-@permiso_required(perms.DOCUMENTOS_DIRECCION_SUBIR)
 def batch_upload_documentos(request):
     """Subida masiva de documentos vía drag & drop (AJAX/multi-file).
     Acepta múltiples archivos en request.FILES y crea un DocumentoDireccion
@@ -151,6 +185,8 @@ def batch_upload_documentos(request):
                 categoria=categoria,
                 descripcion=os.path.splitext(f.name)[0],
             )
+
+# Category detail view - folder navigation
             created_count += 1
             results.append({
                 "name": f.name,
@@ -179,7 +215,6 @@ def batch_upload_documentos(request):
         "results": results,
     })
 
-
 @permiso_required(perms.DOCUMENTOS_DIRECCION_ELIMINAR)
 def carpeta_direccion_crear(request):
     """Crea una nueva carpeta de documentos."""
@@ -197,7 +232,6 @@ def carpeta_direccion_crear(request):
             messages.error(request, "Debe ingresar un nombre para la carpeta.")
     return redirect("documentos_direccion")
 
-
 @permiso_required(perms.DOCUMENTOS_DIRECCION_ELIMINAR)
 def carpeta_direccion_renombrar(request, pk):
     """Renombra una carpeta de documentos."""
@@ -213,7 +247,6 @@ def carpeta_direccion_renombrar(request, pk):
         else:
             messages.error(request, "Debe ingresar un nombre para la carpeta.")
     return redirect("documentos_direccion")
-
 
 @permiso_required(perms.DOCUMENTOS_DIRECCION_ELIMINAR)
 def carpeta_direccion_eliminar(request, pk):

@@ -1,518 +1,108 @@
-{% extends 'base.html' %}
-{% load thumbnail %}
-{% load direccion_extras %}
+{% extends "base.html" %}
+{% load static %}
 {% load permissions_tags %}
-{% block title %}Documentacion de la Direccion{% endblock %}
-{% block page_title %}Documentacion de la Direccion{% endblock %}
+{% load direccion_extras %}
+
+{% block title %}Documentación{% endblock %}
+{% block page_title %}Documentación de la Dirección{% endblock %}
+
 {% block extra_head %}
 <style>
-  .rotate-180 { transform: rotate(180deg) !important; }
-  .cat-folder-active { border-color: #003363 !important; background-color: rgba(232, 240, 248, 0.3) !important; }
-  .carpeta-content { transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease-in-out; overflow: hidden; }
-  .cat-doc-item { animation: slideInItem 0.3s ease-out both; }
-  .cat-doc-item:nth-child(1) { animation-delay: 0.02s; }
-  .cat-doc-item:nth-child(2) { animation-delay: 0.04s; }
-  .cat-doc-item:nth-child(3) { animation-delay: 0.06s; }
-  .cat-doc-item:nth-child(4) { animation-delay: 0.08s; }
-  .cat-doc-item:nth-child(5) { animation-delay: 0.10s; }
-  .cat-doc-item:nth-child(6) { animation-delay: 0.12s; }
-  .cat-doc-item:nth-child(7) { animation-delay: 0.14s; }
-  .cat-doc-item:nth-child(8) { animation-delay: 0.16s; }
-  @keyframes slideInItem { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-
-  /* Modal overlay */
-  .modal-overlay { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); opacity: 0; visibility: hidden; transition: all 0.25s ease; }
-  .modal-overlay.show { opacity: 1; visibility: visible; }
-  .modal-content { background: white; border-radius: 16px; padding: 2rem; max-width: 420px; width: 90%; box-shadow: 0 25px 60px rgba(0,0,0,0.3); transform: scale(0.92) translateY(12px); transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1); }
-  .modal-overlay.show .modal-content { transform: scale(1) translateY(0); }
-
-  /* Dropdown menu */
-  .folder-dropdown { position: absolute; top: 100%; right: 0; z-index: 20; min-width: 150px; background: white; border: 1px solid #e5e7eb; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.12); padding: 4px; opacity: 0; visibility: hidden; transform: translateY(-4px); transition: all 0.15s ease; }
-  .folder-dropdown.show { opacity: 1; visibility: visible; transform: translateY(0); }
-  .folder-dropdown button { width: 100%; text-align: left; padding: 8px 12px; border-radius: 6px; font-size: 0.8rem; color: #374151; background: none; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background 0.15s; }
-  .folder-dropdown button:hover { background: #f3f4f6; }
-  .folder-dropdown .dropdown-danger { color: #dc2626; }
-  .folder-dropdown .dropdown-danger:hover { background: #fef2f2; }
-
-  /* Batch Upload Zone */
-  .batch-zone { border: 2px dashed #d1d5db; border-radius: 16px; padding: 2rem; text-align: center; cursor: pointer; transition: all 0.2s ease; background: #fafafa; }
-  .batch-zone:hover, .batch-zone.drag-over { border-color: #003363; background: rgba(0,51,99,0.03); }
-  .batch-zone.drag-over { border-color: #003363; background: rgba(0,51,99,0.06); transform: scale(1.01); }
-  .batch-zone.drag-over .batch-icon { color: #003363; }
-  .batch-preview { max-height: 300px; overflow-y: auto; }
-  .batch-file-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0.75rem; border-radius: 10px; background: #f9fafb; border: 1px solid #f3f4f6; margin-bottom: 0.375rem; transition: background 0.15s; }
-  .batch-file-item:hover { background: #f3f4f6; }
-  .batch-file-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-  .batch-file-info { flex: 1; min-width: 0; }
-  .batch-file-name { display: block; font-size: 0.8rem; font-weight: 500; color: #374151; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .batch-file-size { display: block; font-size: 0.7rem; color: #9ca3af; }
-  .batch-file-remove { width: 28px; height: 28px; border-radius: 8px; border: none; background: transparent; color: #9ca3af; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; flex-shrink: 0; }
-  .batch-file-remove:hover { background: #fee2e2; color: #dc2626; }
-  .batch-progress { height: 6px; background: #e5e7eb; border-radius: 3px; overflow: hidden; }
-  .batch-progress-bar { height: 100%; background: #003363; border-radius: 3px; transition: width 0.3s ease; }
-
-  /* Unified folder card style */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  .content-fade-in { animation: fadeIn 0.3s ease-out; }
   .folder-card-item {
-    min-height: 180px;
-    display: flex;
-    flex-direction: column;
+    opacity: 0; animation: fadeInUp 0.35s ease-out forwards; min-height: 180px; display: flex; flex-direction: column;
   }
-  .folder-card-item .card-body {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-  }
-  .folder-card-item:hover .card-icon { background: #dbeafe !important; }
-  .folder-card-item:hover .card-icon svg { color: #2563eb !important; }
-  .folder-card-item:nth-child(4n+1):hover { border-color: #2563eb !important; }
-  .folder-card-item:nth-child(4n+2):hover { border-color: #059669 !important; }
+  .folder-card-item .card-body { flex: 1; display: flex; flex-direction: column; }
+  .folder-card-item .card-body .card-desc { flex: 1; }
+  .folder-card-item:nth-child(1) { animation-delay: 0.02s; }
+  .folder-card-item:nth-child(2) { animation-delay: 0.05s; }
+  .folder-card-item:nth-child(3) { animation-delay: 0.08s; }
+  .folder-card-item:nth-child(4) { animation-delay: 0.11s; }
+  .folder-card-item:nth-child(4n+1):hover { border-color: #2563eb !important; box-shadow: 0 8px 24px rgba(37,99,235,0.15); }
+  .folder-card-item:nth-child(4n+1):hover .card-icon { background: #dbeafe !important; }
+  .folder-card-item:nth-child(4n+1):hover .card-icon svg { color: #2563eb !important; }
+  .folder-card-item:nth-child(4n+2):hover { border-color: #059669 !important; box-shadow: 0 8px 24px rgba(5,150,105,0.15); }
   .folder-card-item:nth-child(4n+2):hover .card-icon { background: #d1fae5 !important; }
   .folder-card-item:nth-child(4n+2):hover .card-icon svg { color: #059669 !important; }
-  .folder-card-item:nth-child(4n+3):hover { border-color: #7c3aed !important; }
+  .folder-card-item:nth-child(4n+3):hover { border-color: #7c3aed !important; box-shadow: 0 8px 24px rgba(124,58,237,0.15); }
   .folder-card-item:nth-child(4n+3):hover .card-icon { background: #ede9fe !important; }
   .folder-card-item:nth-child(4n+3):hover .card-icon svg { color: #7c3aed !important; }
-  .folder-card-item:nth-child(4n+4):hover { border-color: #d97706 !important; }
+  .folder-card-item:nth-child(4n+4):hover { border-color: #d97706 !important; box-shadow: 0 8px 24px rgba(217,119,6,0.15); }
   .folder-card-item:nth-child(4n+4):hover .card-icon { background: #fef3c7 !important; }
   .folder-card-item:nth-child(4n+4):hover .card-icon svg { color: #d97706 !important; }
+  .upload-toggle-btn { transition: all 0.2s ease; }
+  .upload-toggle-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,51,99,0.2); }
 </style>
 {% endblock %}
+
 {% block content %}
-<div class="space-y-6">
-  <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-    <!-- Header -->
-    <div class="flex items-center justify-between mb-6">
-      <div class="flex items-center gap-3">
-        <h3 class="font-semibold text-gray-800">Documentos Institucionales</h3>
-        <span class="text-xs text-gray-400">{{ carpetas|length }} categor&iacute;a(s){% if carpetas_dinamicas %} &middot; {{ carpetas_dinamicas|length }} carpeta(s) personalizada(s){% endif %}</span>
-      </div>
-      <div class="flex items-center gap-2">
-        <button type="button" onclick="abrirModalCrear()" class="px-3 py-1.5 bg-[#003363] text-white rounded-lg hover:bg-[#002244] text-xs font-medium transition-colors flex items-center gap-1.5">
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-          Nueva carpeta
-        </div>
+<div class="max-w-7xl mx-auto px-4 py-6 space-y-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="text-xl font-bold text-gray-900">Documentos</h2>
+      <p class="text-sm text-gray-500 mt-0.5">{{ documentos|length }} documento{{ documentos|length|pluralize:"s" }} en total</p>
+    </div>
+    <div class="flex items-center gap-3">
+      {% if user.profile|can:"documentos_direccion_subir" %}
+      <button type="button" onclick="document.getElementById('upload-form').classList.toggle('hidden');this.textContent=document.getElementById('upload-form').classList.contains('hidden')?'+ Subir':'Cancelar';return false"
+              class="upload-toggle-btn px-4 py-2 bg-[#003363] text-white rounded-lg hover:bg-[#002244] text-sm font-medium shadow-sm">
+        + Subir
       </button>
-      </div>
+      {% endif %}
     </div>
+  </div>
 
-    <!-- Batch Upload Zone -->
-    {% if user.profile|can:'documentos_direccion_subir' %}
-    <div class="mb-6">
-      <div class="flex items-center gap-2 mb-2">
-        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
-        <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Subida m&uacute;ltiple</span>
-        <span class="text-xs text-gray-400">Arrastra varios archivos o haz clic para seleccionarlos</span>
-      </div>
-
-      <div class="batch-zone" id="batch-upload-zone">
-        <div class="batch-icon text-gray-300 mb-3">
-          <svg width="40" height="40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+  <div id="upload-form" class="hidden bg-white border border-gray-200 rounded-xl p-6">
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="sm:col-span-2">
+          <label class="block text-sm font-medium text-gray-600 mb-1">Archivo</label>
+          <input type="file" name="archivo" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
         </div>
-        <p class="text-sm text-gray-600 font-medium">Arrastra y suelta tus archivos aqu&iacute;</p>
-        <p class="text-xs text-gray-400 mt-1">o haz clic para seleccionar &mdash; PDF, Word, im&aacute;genes</p>
-        <p class="text-xs text-gray-400">M&aacute;x. 10MB por archivo</p>
-        <input type="file" id="batch-file-input" multiple accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.gif,.webp" style="display:none">
-      </div>
-
-      <!-- File preview list -->
-      <div id="batch-preview" class="batch-preview mt-3" style="display:none"></div>
-
-      <!-- Category selector & submit -->
-      <div id="batch-actions" style="display:none">
-        <div class="flex items-center justify-between mt-3 gap-3">
-          <div class="flex items-center gap-2">
-            <label class="text-xs text-gray-500">Categor&iacute;a:</label>
-            <select id="batch-categoria" class="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white">
-              {% for key, label in categorias %}
-              <option value="{{ key }}" {% if categoria_filtro == key %}selected{% endif %}>{{ label }}</option>
-              {% endfor %}
-            </select>
-          </div>
-          <button type="button" id="batch-submit-btn" class="px-4 py-2 bg-[#003363] text-white rounded-lg hover:bg-[#002244] text-sm font-medium transition-colors flex items-center gap-1.5 shadow-sm" style="display:none">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-            Subir <span id="batch-file-count">0</span> archivo(s)
-          </button>
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">Categoría</label>
+          <select name="categoria" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
+            {% for key, label in categorias %}
+            <option value="{{ key }}">{{ label }}</option>
+            {% endfor %}
+          </select>
         </div>
       </div>
-
-      <!-- Progress bar -->
-      <div id="batch-progress" class="mt-3" style="display:none">
-        <div class="batch-progress">
-          <div class="batch-progress-bar" id="batch-progress-bar" style="width:0%"></div>
-        </div>
-        <p class="text-xs text-gray-500 mt-1" id="batch-progress-text"></p>
+      <div class="pt-4">
+        <button type="submit" class="px-4 py-2 bg-[#003363] text-white rounded-lg hover:bg-[#002244] text-sm font-medium transition-colors shadow-sm">Subir</button>
       </div>
-    </div>
-    {% endif %}
+    </form>
+  </div>
 
-    <!-- Folder Grid (Categorias predefinidas) -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-4">
-      {% for carpeta in carpetas %}
-      <button type="button" onclick="toggleCarpeta('{{ carpeta.key }}')"
-         class="folder-card-item text-left group bg-white rounded-xl border-2 hover:shadow-md hover:-translate-y-1 transition-all duration-200 p-5 cursor-pointer border-gray-200 hover:border-gray-300 block"
-         id="carpeta-card-{{ carpeta.key }}">
-        <div class="flex items-start justify-between mb-3">
-          <div class="card-icon w-12 h-12 rounded-xl {% if carpeta.count > 0 %}{{ carpeta.bg_color }}{% else %}bg-gray-50{% endif %} flex items-center justify-center transition-colors">
-            <svg class="w-6 h-6 {% if carpeta.count > 0 %}{{ carpeta.icon_color }}{% else %}text-gray-300{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
-            </svg>
-          </div>
-          <span class="text-xs font-medium {% if carpeta.count > 0 %}{{ carpeta.badge_text }} {{ carpeta.badge_bg }}{% else %}text-gray-400 bg-gray-50{% endif %} px-2 py-0.5 rounded-full">
-            {{ carpeta.count }} doc.
-          </span>
-        </div>
-        <div class="card-body">
-        <div class="flex items-center justify-between mb-1">
-          <h3 class="font-semibold text-gray-800">{{ carpeta.label }}</h3>
-          <svg class="w-4 h-4 text-gray-400 transition-transform duration-200" id="chevron-{{ carpeta.key }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-          </svg>
-        </div>
-        {% if carpeta.documentos %}
-        <p class="text-xs text-gray-500 line-clamp-2">{{ carpeta.documentos.0.descripcion|default:carpeta.documentos.0.archivo.name|filename }}</p>
-        <p class="text-xs text-gray-400 mt-2">{{ carpeta.count }} documento(s)</p>
-        {% else %}
-        <p class="text-xs text-gray-400 italic">Sin documentos</p>
-        {% endif %}
-      </button>
-      {% endfor %}
-    </div>
-
-    <!-- Dynamic Folders Section (CarpetaDireccion) -->
-    {% if carpetas_dinamicas %}
-    <div class="mb-4">
-      <div class="flex items-center gap-2 mb-3">
-        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
-        <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Mis carpetas</span>
-        <span class="text-xs text-gray-400">({{ carpetas_dinamicas|length }})</span>
-      </div>
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {% for cd in carpetas_dinamicas %}
-        <div class="folder-card-item relative group bg-white rounded-xl border-2 border-dashed border-gray-200 hover:shadow-md hover:-translate-y-1 transition-all duration-200 p-5"
-             id="dc-card-{{ cd.pk }}">
-          <div class="flex items-start justify-between mb-3">
-            <div class="card-icon w-12 h-12 rounded-xl bg-teal-50 flex items-center justify-center">
-              <svg class="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
-              </svg>
-            </div>
-            <div class="flex items-center gap-1">
-              {% if cd.categoria %}
-              <span class="text-xs font-medium text-teal-600 bg-teal-50 px-2 py-0.5 rounded-full">{{ cd.categoria }}</span>
-              {% endif %}
-              <span class="text-xs font-medium text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full">{{ cd.doc_count }} doc.</span>
-            </div>
-          </div>
-          <div class="flex items-center justify-between">
-            <h3 class="font-semibold text-gray-800 truncate flex-1">{{ cd.nombre }}</h3>
-            <div class="relative">
-              <button type="button" onclick="event.stopPropagation();toggleDropdown({{ cd.pk }})" class="p-1 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/></svg>
-              </button>
-              <div class="folder-dropdown" id="dropdown-{{ cd.pk }}">
-                <button type="button" onclick="event.stopPropagation();abrirModalRenombrar({{ cd.pk }}, '{{ cd.nombre|escapejs }}')">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                  Renombrar
-                </button>
-                <button type="button" class="dropdown-danger" onclick="event.stopPropagation();confirmarEliminarCarpeta({{ cd.pk }}, '{{ cd.nombre|escapejs }}')">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                  Eliminar
-                </button>
-              </div>
-            </div>
-          </div>
-          {% if cd.categoria %}
-          <p class="text-xs text-gray-400 mt-2">Documentos en categor&iacute;a: <strong>{{ cd.categoria }}</strong></p>
-          {% else %}
-          <p class="text-xs text-gray-400 italic mt-2">Carpeta sin categor&iacute;a</p>
-          {% endif %}
-        </div>
-        {% endfor %}
-      </div>
-    </div>
-    {% endif %}
-
-    <!-- Accordion Content Sections -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
     {% for carpeta in carpetas %}
-    <div id="carpeta-content-{{ carpeta.key }}" class="carpeta-content overflow-hidden transition-all duration-300 ease-in-out" style="max-height:0; opacity:0;">
-      <div class="border-t border-gray-100 pt-4 pb-2 px-1">
-        <div class="flex items-center gap-2 mb-3">
-          <span class="text-xs font-medium {{ carpeta.badge_text }} {{ carpeta.badge_bg }} px-2 py-0.5 rounded-full">{{ carpeta.count }} documento(s)</span>
-          <span class="text-xs text-gray-400">&bull;</span>
-          <span class="text-xs text-gray-400">{{ carpeta.label }}</span>
-        </div>
-
-        {% if carpeta.documentos %}
-        <div class="doc-grid mb-4">
-          {% for doc in carpeta.documentos %}
-          <div class="cat-doc-item doc-card" onclick='{% if doc.tipo == "PDF" %}window.open("{{ doc.archivo.url }}","_blank"){% else %}abrirDocumento("{{ doc.archivo.url }}", "{{ doc.tipo }}", "{{ doc.descripcion|default:doc.archivo.name|filename|escapejs }}", "{{ doc.fecha_subida|date:'d/m/Y H:i'|escapejs }}"){% endif %}'>
-            <div class="doc-card-thumb {{ doc.tipo|lower }}">
-              {% if doc.tipo == 'IMAGEN' %}
-              <div class="img-wrapper">
-                <div class="img-placeholder">
-                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                </div>
-                {% thumbnail doc.archivo "400x400" crop="center" quality=85 format="WEBP" as im %}
-                <img src="{{ im.url }}" width="{{ im.width }}" height="{{ im.height }}" alt="{{ doc.archivo.name }}" loading="lazy" onload="this.previousElementSibling.classList.add('loaded')">
-                {% endthumbnail %}
-              </div>
-              {% else %}
-              <div class="file-icon {{ doc.tipo|lower }}">
-                {% if doc.tipo == 'PDF' %}
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 13l2-2 2 2 3-3 2 2v2a1 1 0 01-1 1H8a1 1 0 01-1-1v-1z"/></svg>
-                {% elif doc.tipo == 'WORD' %}
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                {% else %}
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
-                {% endif %}
-              </div>
-              {% endif %}
-              <span class="doc-type-badge {{ doc.tipo|lower }}">{{ doc.tipo }}</span>
-            </div>
-            <div class="doc-card-body">
-              <div class="doc-name">{{ doc.descripcion|default:doc.archivo.name|filename }}</div>
-              <div class="doc-desc">{{ doc.fecha_subida|date:'d/m/Y H:i' }}</div>
-              <div class="doc-meta">
-                <span>{% if doc.tipo == 'PDF' %}PDF{% elif doc.tipo == 'WORD' %}Word{% elif doc.tipo == 'IMAGEN' %}Imagen{% else %}Archivo{% endif %}</span>
-              </div>
-            </div>
-            <div class="doc-card-actions">
-              <button type="button" class="action-view" title="Ver" onclick='event.stopPropagation();{% if doc.tipo == "PDF" %}window.open("{{ doc.archivo.url }}","_blank"){% else %}abrirDocumento("{{ doc.archivo.url }}", "{{ doc.tipo }}", "{{ doc.descripcion|default:doc.archivo.name|filename|escapejs }}", "{{ doc.fecha_subida|date:'d/m/Y H:i'|escapejs }}"){% endif %})'></button>
-                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-              </button>
-              <a href="{{ doc.archivo.url }}" download class="action-download" title="Descargar" onclick="event.stopPropagation()">
-                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-              </a>
-              {% if user.profile|can:'documentos_direccion_eliminar' %}
-              <a href="{% url 'documento_direccion_delete' doc.pk %}" class="action-delete" title="Eliminar" onclick="event.stopPropagation();return confirm('Eliminar este documento?')">
-                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-              </a>
-              {% endif %}
-            </div>
-          </div>
-          {% endfor %}
-        </div>
-        {% else %}
-        <div class="flex flex-col items-center justify-center py-6 text-gray-400">
-          <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24" class="mb-2">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+    <a href='{% url 'documentos_direccion_categoria' carpeta.key %}'
+       class="folder-card-item text-left group bg-white rounded-xl border-2 hover:shadow-md hover:-translate-y-1 transition-all duration-200 p-5 cursor-pointer border-gray-200 hover:border-gray-300 block">
+      <div class="flex items-start justify-between mb-3">
+        <div class="card-icon w-12 h-12 rounded-xl {{ carpeta.bg_color }} flex items-center justify-center transition-colors">
+          <svg class="w-6 h-6 {{ carpeta.icon_color }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="{{ carpeta.icon_path }}"/>
           </svg>
-          <p class="text-sm">No hay documentos en esta categor&iacute;a.</p>
         </div>
-        {% endif %}
-
-        <!-- Inline Upload Form -->
-        <form method="post" action="{% url 'documentos_direccion' %}?categoria={{ carpeta.key }}" enctype="multipart/form-data" class="mt-3 pt-3 border-t border-dashed border-gray-200">
-          {% csrf_token %}
-          <input type="hidden" name="categoria" value="{{ carpeta.key }}">
-          <div class="flex items-end gap-2">
-            <div class="flex-1">
-              <label class="block text-xs text-gray-500 mb-1">Subir archivo a <strong>{{ carpeta.label }}</strong></label>
-              <input type="file" name="archivo" required class="form-input w-full text-sm text-gray-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-[#003363]/10 file:text-[#003363] hover:file:bg-[#003363]/20" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.gif,.webp">
-            </div>
-            <div class="w-40">
-              <input type="text" name="descripcion" placeholder="Descripci&oacute;n (opcional)" class="form-input w-full text-xs border border-gray-200 rounded-lg px-2 py-1.5">
-            </div>
-            <button type="submit" class="px-3 py-1.5 bg-[#003363] text-white rounded-lg hover:bg-[#002244] text-xs font-medium transition-colors whitespace-nowrap flex items-center gap-1">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-              Subir
-            </button>
-          </div>
-        </form>
+        <span class="text-xs font-medium {{ carpeta.badge_bg }} {{ carpeta.badge_text }} px-2 py-0.5 rounded-full">{{ carpeta.count }} doc{{ carpeta.count|pluralize:"s" }}</span>
       </div>
-    </div>
+      <div class="card-body">
+        <h3 class="font-semibold text-gray-800">{{ carpeta.label }}</h3>
+        <div class="card-desc">
+          <p class="text-xs text-gray-400 mt-2">{{ carpeta.count }} documento{{ carpeta.count|pluralize:"s" }}</p>
+        </div>
+      </div>
+    </a>
     {% endfor %}
   </div>
 </div>
-
-<!-- Modal: Crear Carpeta -->
-<div class="modal-overlay" id="modalCrear">
-  <div class="modal-content">
-    <div class="flex items-center justify-between mb-4">
-      <h3 class="font-semibold text-gray-800">Nueva carpeta</h3>
-      <button type="button" onclick="cerrarModal('modalCrear')" class="p-1 rounded-lg hover:bg-gray-100 text-gray-400">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-      </button>
-    </div>
-    <form method="post" action="{% url 'carpeta_direccion_crear' %}">
-      {% csrf_token %}
-      <div class="mb-4">
-        <label class="block text-sm font-medium text-gray-700 mb-1">Nombre de la carpeta</label>
-        <input type="text" name="nombre" required class="form-input w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" placeholder="Ej: Correspondencia 2026">
-      </div>
-      <div class="mb-4">
-        <label class="block text-sm font-medium text-gray-700 mb-1">Categor&iacute;a (opcional)</label>
-        <select name="categoria" class="form-input w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
-          <option value="">--- Sin categor&iacute;a ---</option>
-          {% for key, label in categorias %}
-          <option value="{{ key }}">{{ label }}</option>
-          {% endfor %}
-        </select>
-        <p class="text-xs text-gray-400 mt-1">Los documentos de la categor&iacute;a seleccionada se mostrar&aacute;n dentro de esta carpeta.</p>
-      </div>
-      <div class="flex justify-end gap-2">
-        <button type="button" onclick="cerrarModal('modalCrear')" class="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">Cancelar</button>
-        <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-[#003363] rounded-lg hover:bg-[#002244] transition-colors">Crear carpeta</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<!-- Modal: Renombrar Carpeta -->
-<div class="modal-overlay" id="modalRenombrar">
-  <div class="modal-content">
-    <div class="flex items-center justify-between mb-4">
-      <h3 class="font-semibold text-gray-800">Renombrar carpeta</h3>
-      <button type="button" onclick="cerrarModal('modalRenombrar')" class="p-1 rounded-lg hover:bg-gray-100 text-gray-400">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-      </button>
-    </div>
-    <form method="post" id="formRenombrar">
-      {% csrf_token %}
-      <div class="mb-4">
-        <label class="block text-sm font-medium text-gray-700 mb-1">Nuevo nombre</label>
-        <input type="text" name="nombre" id="inputRenombrar" required class="form-input w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
-      </div>
-      <div class="flex justify-end gap-2">
-        <button type="button" onclick="cerrarModal('modalRenombrar')" class="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">Cancelar</button>
-        <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-[#003363] rounded-lg hover:bg-[#002244] transition-colors">Guardar</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<!-- Modal: Confirmar Eliminar -->
-<div class="modal-overlay" id="modalEliminar">
-  <div class="modal-content">
-    <div class="flex items-center justify-between mb-4">
-      <h3 class="font-semibold text-gray-800">Eliminar carpeta</h3>
-      <button type="button" onclick="cerrarModal('modalEliminar')" class="p-1 rounded-lg hover:bg-gray-100 text-gray-400">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-      </button>
-    </div>
-    <div class="mb-4">
-      <p class="text-sm text-gray-600">¿Est&aacute;s seguro de eliminar la carpeta <strong id="eliminarNombre"></strong>?</p>
-      <p class="text-xs text-gray-400 mt-2">Esta acci&oacute;n eliminar&aacute; la carpeta pero no los documentos.</p>
-    </div>
-    <div class="flex justify-end gap-2">
-      <button type="button" onclick="cerrarModal('modalEliminar')" class="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">Cancelar</button>
-      <a href="#" id="btnEliminarConfirmar" class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors">Eliminar</a>
-    </div>
-  </div>
-</div>
-
-<script>
-var batchUploadUrl = "{% url 'batch_upload_documentos' %}";
-var carpetaAbierta = null;
-
-function toggleCarpeta(key) {
-  var content = document.getElementById('carpeta-content-' + key);
-  var chevron = document.getElementById('chevron-' + key);
-  var card = document.getElementById('carpeta-card-' + key);
-  if (!content || !chevron) return;
-
-  if (carpetaAbierta !== null && carpetaAbierta !== key) {
-    var prevContent = document.getElementById('carpeta-content-' + carpetaAbierta);
-    var prevChevron = document.getElementById('chevron-' + carpetaAbierta);
-    var prevCard = document.getElementById('carpeta-card-' + carpetaAbierta);
-    if (prevContent) { prevContent.style.maxHeight = '0'; prevContent.style.opacity = '0'; }
-    if (prevChevron) prevChevron.classList.remove('rotate-180');
-    if (prevCard) prevCard.classList.remove('cat-folder-active');
-  }
-
-  if (carpetaAbierta === key) {
-    content.style.maxHeight = '0';
-    content.style.opacity = '0';
-    chevron.classList.remove('rotate-180');
-    if (card) card.classList.remove('cat-folder-active');
-    carpetaAbierta = null;
-  } else {
-    content.style.maxHeight = '999px';
-    content.style.opacity = '1';
-    chevron.classList.add('rotate-180');
-    if (card) card.classList.add('cat-folder-active');
-    carpetaAbierta = key;
-    setTimeout(function() {
-      content.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }, 150);
-  }
-}
-
-// --- Modal helpers ---
-function abrirModal(id) {
-  document.getElementById(id).classList.add('show');
-}
-
-function cerrarModal(id) {
-  document.getElementById(id).classList.remove('show');
-  // Cerrar cualquier dropdown abierto
-  document.querySelectorAll('.folder-dropdown.show').forEach(function(el) {
-    el.classList.remove('show');
-  });
-}
-
-// --- Create folder ---
-function abrirModalCrear() {
-  abrirModal('modalCrear');
-}
-
-// --- Rename folder ---
-function abrirModalRenombrar(pk, nombre) {
-  document.getElementById('inputRenombrar').value = nombre;
-  document.getElementById('formRenombrar').action = '/documentos-direccion/carpeta/' + pk + '/renombrar/';
-  abrirModal('modalRenombrar');
-}
-
-// --- Delete folder ---
-function confirmarEliminarCarpeta(pk, nombre) {
-  document.getElementById('eliminarNombre').textContent = '"' + nombre + '"';
-  document.getElementById('btnEliminarConfirmar').href = '/documentos-direccion/carpeta/' + pk + '/eliminar/';
-  abrirModal('modalEliminar');
-}
-
-// --- Dropdown toggle ---
-var dropdownAbierto = null;
-
-function toggleDropdown(pk) {
-  var dd = document.getElementById('dropdown-' + pk);
-  if (!dd) return;
-
-  if (dropdownAbierto !== null && dropdownAbierto !== pk) {
-    var prev = document.getElementById('dropdown-' + dropdownAbierto);
-    if (prev) prev.classList.remove('show');
-  }
-
-  if (dropdownAbierto === pk) {
-    dd.classList.remove('show');
-    dropdownAbierto = null;
-  } else {
-    dd.classList.add('show');
-    dropdownAbierto = pk;
-  }
-}
-
-// Cerrar dropdowns al hacer clic fuera
-document.addEventListener('click', function(e) {
-  if (dropdownAbierto !== null) {
-    var dd = document.getElementById('dropdown-' + dropdownAbierto);
-    if (dd && !dd.parentElement.contains(e.target)) {
-      dd.classList.remove('show');
-      dropdownAbierto = null;
-    }
-  }
-});
-
-// Cerrar modales con Escape
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') {
-    document.querySelectorAll('.modal-overlay.show').forEach(function(el) {
-      el.classList.remove('show');
-    });
-    if (dropdownAbierto !== null) {
-      var dd = document.getElementById('dropdown-' + dropdownAbierto);
-      if (dd) dd.classList.remove('show');
-      dropdownAbierto = null;
-    }
-  }
-});
-</script>
 {% endblock %}

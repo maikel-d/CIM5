@@ -277,6 +277,7 @@ class DocumentoDireccion(TipoDocumentoMixin, models.Model):
         ('LEYES', 'Leyes'),
         ('DOCUMENTOS', 'Documentos'),
         ('MEMO', 'Formato de Memos'),
+        ('RECURSOS', 'Recursos CIM5'),
         
     ]
 
