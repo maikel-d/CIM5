@@ -10,9 +10,15 @@ from django.db.utils import ProgrammingError
 from django.shortcuts import redirect
 
 
-ONLINE_TIMEOUT = 300  # 5 minutos sin actividad para considerarse "desconectado"
+ONLINE_TIMEOUT = 300  # 5
 
-
+# Colores para badges de roles
+ROL_BADGE_CLASSES = {
+    'Administrador': 'bg-purple-100 text-purple-700 ring-1 ring-purple-600/20',
+    'Supervisor': 'bg-blue-100 text-blue-700 ring-1 ring-blue-600/20',
+    'Analista': 'bg-cyan-100 text-cyan-700 ring-1 ring-cyan-600/20',
+    'Administrativo': 'bg-amber-100 text-amber-700 ring-1 ring-amber-600/20',
+}
 def usuarios_online():
     """Retorna el número de usuarios activos en los últimos 5 minutos."""
     try:
@@ -54,10 +60,12 @@ def usuarios_online_list():
                         time_ago = 'hace 1 hora'
                     else:
                         time_ago = 'hace ' + str(int(diff / 3600)) + ' horas'
+                    rol_display = getattr(getattr(user, 'profile', None), 'get_rol_display', lambda: '')() or ''
                     usuarios.append({
                         'user': user,
                         'time_ago': time_ago,
-                        'rol': getattr(getattr(user, 'profile', None), 'get_rol_display', lambda: '')() or '',
+                        'rol': rol_display,
+                        'rol_class': ROL_BADGE_CLASSES.get(rol_display, 'bg-gray-100 text-gray-500'),
                     })
                 except User.DoesNotExist:
                     pass

@@ -191,5 +191,6 @@ def usuarios_online_json(request):
             'inicial': (item['user'].get_full_name() or item['user'].username)[0].upper(),
             'time_ago': item['time_ago'],
             'rol': item['rol'],
+            'rol_class': item.get('rol_class', 'bg-gray-100 text-gray-500'),
         })
     return JsonResponse({'usuarios': data, 'total': len(data)})
