@@ -356,16 +356,26 @@ class AuditLog(models.Model):
 
 
 class Tarea(models.Model):
-    """Tarea pendiente simple - lista general."""
+    """Tarea pendiente con categorización y seguimiento."""
     PRIORIDAD_CHOICES = [
         ('BAJO', 'Bajo'),
         ('MEDIO', 'Medio'),
         ('ALTO', 'Alto'),
     ]
+    CATEGORIA_CHOICES = [
+        ('GENERAL', 'General'),
+        ('INVESTIGACION', 'Investigación'),
+        ('DOCUMENTACION', 'Documentación'),
+        ('SOPORTE', 'Soporte Técnico'),
+        ('ADMINISTRACION', 'Administración'),
+        ('REUNION', 'Reuniones'),
+        ('OTRO', 'Otro'),
+    ]
 
     descripcion = models.TextField('Descripción')
     completada = models.BooleanField('Completada', default=False, db_index=True)
     prioridad = models.CharField('Prioridad', max_length=10, choices=PRIORIDAD_CHOICES, default='MEDIO')
+    categoria = models.CharField('Categoría', max_length=20, choices=CATEGORIA_CHOICES, default='GENERAL', db_index=True)
     creado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, verbose_name='Creado por')
     fecha_creacion = models.DateTimeField('Fecha de creación', auto_now_add=True, db_index=True)
     fecha_actualizacion = models.DateTimeField('Fecha de actualización', auto_now=True)

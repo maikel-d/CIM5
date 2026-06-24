@@ -56,11 +56,12 @@
       </div>
     </a>
       </div>
-      {% if user.profile|can:'casos_eliminar' %}
-      <form method="post" action="{% url 'caso_delete' c.pk %}" onsubmit="return confirm('&iquest;Eliminar el expediente \"{{ c.nombre|escapejs }}\"? Se eliminar&aacute;n todos los investigados, bienes y documentos asociados. Esta acci&oacute;n no se puede deshacer.')" class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            {% if user.profile|can:'casos_eliminar' %}
+      <form method="post" action="{% url 'caso_delete' c.pk %}" onsubmit="return confirm('&iquest;Eliminar el expediente "{{ c.nombre|escapejs }}"? Se eliminar&aacute;n todos los investigados, bienes y documentos asociados. Esta acci&oacute;n no se puede deshacer.')" class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
         {% csrf_token %}
-        <button type="submit" class="p-1.5 bg-white/90 backdrop-blur-sm text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg shadow-sm border border-gray-200 transition-colors" title="Eliminar expediente">
+        <button type="submit" class="action-btn delete" title="Eliminar expediente">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+          Eliminar
         </button>
       </form>
       {% endif %}

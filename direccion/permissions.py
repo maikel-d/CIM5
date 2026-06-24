@@ -38,6 +38,7 @@ BIENES_CARPETAS_ELIMINAR = "bienes_carpetas_eliminar"
 DOCUMENTOS_DIRECCION_CARPETAS_CREAR = "documentos_direccion_carpetas_crear"
 DOCUMENTOS_DIRECCION_CARPETAS_RENOMBRAR = "documentos_direccion_carpetas_renombrar"
 DOCUMENTOS_DIRECCION_CARPETAS_ELIMINAR = "documentos_direccion_carpetas_eliminar"
+DOCUMENTOS_DIRECCION_EDITAR = 'documentos_direccion_editar'
 DOCUMENTOS_DIRECCION_ELIMINAR = 'documentos_direccion_eliminar'
 DOCUMENTOS_DIRECCION_CARPETAS_CREAR = 'documentos_direccion_carpetas_crear'
 

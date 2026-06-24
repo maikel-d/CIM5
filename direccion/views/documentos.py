@@ -85,6 +85,26 @@ def documentos_direccion_list(request):
         "documentos": documentos,
     })
 
+@permiso_required(perms.DOCUMENTOS_DIRECCION_EDITAR)
+def editar_documento_direccion(request, doc_pk):
+    """Edita la descripcion y categoria de un documento de la direccion."""
+    doc = get_object_or_404(DocumentoDireccion, pk=doc_pk)
+    if request.method == "POST":
+        form = DocumentoDireccionForm(request.POST, instance=doc)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Documento actualizado.")
+            return redirect("documentos_direccion_categoria", categoria=doc.categoria)
+    else:
+        form = DocumentoDireccionForm(instance=doc)
+    # Remove archivo from form so users can only edit descripcion/categoria
+    form.fields.pop('archivo', None)
+    return render(request, "direccion/documento_direccion_edit.html", {
+        "form": form,
+        "doc": doc,
+    })
+
+
 @permiso_required(perms.DOCUMENTOS_DIRECCION_ELIMINAR)
 def eliminar_documento_direccion(request, doc_pk):
     documento = get_object_or_404(DocumentoDireccion, pk=doc_pk)

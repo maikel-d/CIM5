@@ -23,6 +23,7 @@ urlpatterns = [
     path("documentos-direccion/carpeta/crear/", views.carpeta_direccion_crear, name="carpeta_direccion_crear"),
     path("documentos-direccion/carpeta/<int:pk>/renombrar/", views.carpeta_direccion_renombrar, name="carpeta_direccion_renombrar"),
     path("documentos-direccion/carpeta/<int:pk>/eliminar/", views.carpeta_direccion_eliminar, name="carpeta_direccion_eliminar"),
+    path("documentos-direccion/<int:doc_pk>/editar/", views.editar_documento_direccion, name="documento_direccion_edit"),
     path("documentos-direccion/<int:doc_pk>/eliminar/", views.eliminar_documento_direccion, name="documento_direccion_delete"),
     path("documentos-direccion/<str:categoria>/", views.documentos_direccion_categoria, name="documentos_direccion_categoria"),
 
@@ -112,4 +113,7 @@ urlpatterns = [
     path("backup/", views.backup_view, name="backup"),
     path("backup/descargar/", views.descargar_backup, name="backup_descargar"),
     path("backup/restaurar/", views.restaurar_backup, name="backup_restaurar"),
+
+    # API JSON
+    path("usuarios-online/json/", views.usuarios_online_json, name="usuarios_online_json"),
 ]

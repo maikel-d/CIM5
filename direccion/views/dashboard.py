@@ -12,28 +12,33 @@ from django.db.models import Q, Case, When, IntegerField, Count
 from django.db.models.functions import TruncMonth
 from django.utils import timezone
 
-from ..forms import TareaForm
 from django.contrib import messages
 from ..models import (
     Personal, DocumentoPersonal, Caso, Investigado, DocumentoInvestigado,
-    DocumentoCaso, DocumentoDireccion, AuditLog, Tarea, TicketSoporte,
+    DocumentoCaso, DocumentoDireccion, AuditLog, Tarea,
     InformeDiario, Bien
 )
 from ..decorators import permiso_required
 from .. import permissions as perms
-from ..middleware import usuarios_online
+from ..middleware import usuarios_online, usuarios_online_list
 
 
 @permiso_required(perms.DASHBOARD_VER)
 def dashboard(request):
     # Handle quick-add tarea from dashboard
     if request.method == "POST":
-        form = TareaForm(request.POST)
-        if form.is_valid():
-            tarea = form.save(commit=False)
-            tarea.creado_por = request.user
-            tarea.save()
+        descripcion = request.POST.get("descripcion", "").strip()
+        prioridad = request.POST.get("prioridad", "MEDIO")
+        if descripcion:
+            Tarea.objects.create(
+                descripcion=descripcion,
+                prioridad=prioridad,
+                categoria="GENERAL",
+                creado_por=request.user,
+            )
             messages.success(request, "Tarea agregada.")
+        else:
+            messages.error(request, "La descripción de la tarea es requerida.")
         return redirect("dashboard")
 
     total_personal = Personal.objects.filter(activo=True).count()
@@ -68,22 +73,6 @@ def dashboard(request):
     total_documentos_casos = dc['p'] + dc['w'] + dc['i'] + dc['o']
     total_documentos_direccion = dd['p'] + dd['w'] + dd['i'] + dd['o']
 
-    # Tickets: abiertos/en_proceso primero, luego por fecha descendente
-    tickets_recientes = TicketSoporte.objects.annotate(
-        estado_prioridad=Case(
-            When(estado='ABIERTO', then=0),
-            When(estado='EN_PROCESO', then=1),
-            When(estado='RESUELTO', then=2),
-            When(estado='CERRADO', then=3),
-            output_field=IntegerField(),
-        )
-    ).order_by('estado_prioridad', '-fecha_creacion')[:5]
-    tickets_abiertos = TicketSoporte.objects.filter(estado__in=["ABIERTO", "EN_PROCESO"]).count()
-    tickets_alta_prioridad = TicketSoporte.objects.filter(prioridad="ALTO", estado__in=["ABIERTO", "EN_PROCESO"]).count()
-
-    # Ticket counts by status — single aggregated query
-    tickets_estado_qs = TicketSoporte.objects.values('estado').annotate(total=Count('id'))
-    tickets_por_estado = {item['estado']: item['total'] for item in tickets_estado_qs}
 
     # Recent documents — single set of queries, used for both the chart list and the "by type" section
     docs_personal = DocumentoPersonal.objects.all().order_by("-fecha_subida")[:10]
@@ -141,12 +130,6 @@ def dashboard(request):
         "totalPersonal": total_personal,
         "totalCasos": total_casos,
         "totalInvestigados": total_investigados,
-        "ticketsEstado": {
-            "abierto": tickets_por_estado.get('ABIERTO', 0),
-            "proceso": tickets_por_estado.get('EN_PROCESO', 0),
-            "resuelto": tickets_por_estado.get('RESUELTO', 0),
-            "cerrado": tickets_por_estado.get('CERRADO', 0)
-        }
     })
 
 
@@ -181,21 +164,32 @@ def dashboard(request):
         "tareas_pendientes": tareas_pendientes,
         "tareas_count": tareas_count,
         "tareas_completadas": tareas_completadas,
-        "tickets_recientes": tickets_recientes,
-        "total_tickets_abiertos": tickets_abiertos,
-        "tickets_abiertos_count": tickets_por_estado.get('ABIERTO', 0),
-        "tickets_proceso_count": tickets_por_estado.get('EN_PROCESO', 0),
-        "tickets_resueltos_count": tickets_por_estado.get('RESUELTO', 0),
-        "tickets_alta_prioridad": tickets_alta_prioridad,
-        "tickets_cerrados_count": tickets_por_estado.get('CERRADO', 0),
         "chart_data_json": chart_data,
         "informes_mes": informes_mes,
         "total_informes_mes": total_informes_mes,
         "auditoria_reciente": auditoria_reciente,
         "total_bienes": total_bienes,
         "usuarios_online": usuarios_online(),
+        "usuarios_online_list": usuarios_online_list(),
         "mes_actual_nombre": calendar.month_name[hoy.month].capitalize(),
     }
     return render(request, "dashboard.html", context)
 
+from django.contrib.auth.decorators import login_required
 
+@login_required
+def usuarios_online_json(request):
+    """API JSON: retorna lista de usuarios conectados."""
+    from django.http import JsonResponse
+    from ..middleware import usuarios_online_list
+    usuarios = usuarios_online_list()
+    data = []
+    for item in usuarios:
+        data.append({
+            'nombre': item['user'].get_full_name() or item['user'].username,
+            'username': item['user'].username,
+            'inicial': (item['user'].get_full_name() or item['user'].username)[0].upper(),
+            'time_ago': item['time_ago'],
+            'rol': item['rol'],
+        })
+    return JsonResponse({'usuarios': data, 'total': len(data)})

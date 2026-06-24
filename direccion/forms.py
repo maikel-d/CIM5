@@ -238,13 +238,14 @@ class DocumentoCasoForm(forms.ModelForm):
 class TareaForm(forms.ModelForm):
     class Meta:
         model = Tarea
-        fields = ["descripcion", "prioridad"]
+        fields = ["descripcion", "prioridad", "categoria"]
         widgets = {
             "descripcion": forms.Textarea(attrs={
                 "rows": 2, "class": "form-input",
                 "placeholder": "Escribe una tarea pendiente..."
             }),
             "prioridad": forms.Select(attrs={"class": "form-input"}),
+            "categoria": forms.Select(attrs={"class": "form-input"}),
         }
 
 
@@ -262,6 +263,7 @@ class TicketSoporteForm(forms.ModelForm):
                 "placeholder": "Describe el problema en detalle..."
             }),
             "prioridad": forms.Select(attrs={"class": "form-input"}),
+            "categoria": forms.Select(attrs={"class": "form-input"}),
         }
 
 
@@ -273,6 +275,7 @@ class TicketAsignarForm(forms.ModelForm):
         widgets = {
             "estado": forms.Select(attrs={"class": "form-input"}),
             "prioridad": forms.Select(attrs={"class": "form-input"}),
+            "categoria": forms.Select(attrs={"class": "form-input"}),
             "asignado_a": forms.Select(attrs={"class": "form-input"}),
         }
 

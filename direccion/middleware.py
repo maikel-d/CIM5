@@ -5,6 +5,7 @@ import time
 from django.conf import settings
 from django.contrib.auth import logout
 from django.core.cache import cache
+from django.contrib.auth.models import User
 from django.db.utils import ProgrammingError
 from django.shortcuts import redirect
 
@@ -27,6 +28,42 @@ def usuarios_online():
         return activos
     except ProgrammingError:
         return 0
+
+
+def usuarios_online_list():
+    '''Retorna la lista de usuarios activos con su última actividad.'''
+    try:
+        online_ids = cache.get('online_users', set())
+        if not online_ids:
+            return []
+        ahora = time.time()
+        usuarios = []
+        for uid in list(online_ids):
+            last_seen = cache.get('online_' + str(uid), 0)
+            if ahora - last_seen < ONLINE_TIMEOUT:
+                try:
+                    user = User.objects.get(pk=uid)
+                    diff = ahora - last_seen
+                    if diff < 60:
+                        time_ago = 'ahora'
+                    elif diff < 120:
+                        time_ago = 'hace 1 minuto'
+                    elif diff < 3600:
+                        time_ago = 'hace ' + str(int(diff / 60)) + ' minutos'
+                    elif diff < 7200:
+                        time_ago = 'hace 1 hora'
+                    else:
+                        time_ago = 'hace ' + str(int(diff / 3600)) + ' horas'
+                    usuarios.append({
+                        'user': user,
+                        'time_ago': time_ago,
+                        'rol': getattr(getattr(user, 'profile', None), 'get_rol_display', lambda: '')() or '',
+                    })
+                except User.DoesNotExist:
+                    pass
+        return usuarios
+    except ProgrammingError:
+        return []
 
 
 class UserOnlineMiddleware:
