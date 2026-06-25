@@ -2,17 +2,66 @@
 {% load permissions_tags %}
 {% block title %}Tareas Pendientes - Direccion General{% endblock %}
 {% block page_title %}Tareas Pendientes{% endblock %}
-{% block extra_head %}{% endblock %}
+{% block extra_head %}
+<script>
+function toggleNuevaTarea() {
+  var form = document.getElementById("nuevaTareaForm");
+  if (form.style.display === "none") {
+    form.style.display = "block";
+    form.scrollIntoView({ behavior: "smooth", block: "center" });
+  } else {
+    form.style.display = "none";
+  }
+}
+{% if messages %}
+  {% for message in messages %}
+    {% if "agregada" in message.message or "creada" in message.message %}
+      document.addEventListener("DOMContentLoaded", function() {
+        document.getElementById("nuevaTareaForm").style.display = "none";
+      });
+    {% endif %}
+  {% endfor %}
+{% endif %}
+</script>
+{% endblock %}
 
 {% block content %}
 <div class="content-fade-in">
   <div class="flex items-center justify-between mb-4">
     <h4 class="font-bold mb-0 ">Tareas Pendientes</h4>
-    <a href="{% url "tarea_create" %}" class="btn-upload px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg d-inline-flex align-items-center gap-2">
+    <button onclick="toggleNuevaTarea()" class="btn-upload px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg inline-flex items-center gap-2 hover:bg-blue-700 transition-colors cursor-pointer">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg> Nueva Tarea
-    </a>
+    </button>
   </div>
 
+  
+  <!-- Inline create form (hidden by default) -->
+  <div id="nuevaTareaForm" class="bg-white rounded-xl border border-gray-200 overflow-hidden mb-4" style="display: none;">
+    <div class="p-4 border-b border-gray-100">
+      <h5 class="font-semibold text-sm text-gray-700 mb-3">Nueva Tarea</h5>
+      <form method="POST" action="{% url "tareas_list" %}" class="space-y-3">
+        {% csrf_token %}
+        <div>
+          <textarea name="descripcion" rows="2" class="form-input w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" placeholder="Escribe una tarea pendiente..." required></textarea>
+        </div>
+        <div class="flex items-center gap-3">
+          <select name="prioridad" class="form-input px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none transition">
+            <option value="BAJO">Baja</option>
+            <option value="MEDIO" selected>Media</option>
+            <option value="ALTO">Alta</option>
+          </select>
+          <select name="categoria" class="form-input px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none transition">
+            {% for val, label in CATEGORIA_CHOICES %}
+            <option value="{{ val }}">{{ label }}</option>
+            {% endfor %}
+          </select>
+          <button type="submit" class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors">Crear</button>
+          <button type="button" onclick="toggleNuevaTarea()" class="px-4 py-2 bg-gray-200 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-300 transition-colors">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  
   <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
     <table class="w-full">
       <thead>
@@ -48,7 +97,7 @@
               {% endif %}
             </td>
             <td class="px-4 py-3 text-right">
-              <div class="task-actions d-flex align-items-center justify-content-end gap-1">
+              <div class="task-actions flex items-center justify-end gap-1">
                 <a href="{% url "tarea_completar" tarea.pk %}?next=tareas_list" class="action-btn edit" title="Marcar como completada">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                 </a>
