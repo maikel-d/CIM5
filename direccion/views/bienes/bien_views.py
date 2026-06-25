@@ -9,7 +9,7 @@ from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
 from django.contrib.auth.decorators import login_required
 
-from ...models import Bien, CarpetaBien, DocumentoBien, DocumentoCarpetaBien
+from ...models import Bien, CarpetaBien, Caso, DocumentoBien, DocumentoCarpetaBien
 from ...forms import BienForm, DocumentoBienForm, CarpetaForm, CarpetaBienDocumentForm
 from ..mixins import PermissionRequiredMixin
 from ...decorators import permiso_required
@@ -20,6 +20,12 @@ from ... import permissions as perms
 class BienListView(PermissionRequiredMixin, ListView):
     model = Bien
     template_name = "direccion/bien_list.html"
+
+    def get_template_names(self):
+        pk = self.kwargs.get('pk')
+        if pk:
+            return ["direccion/bien_carpeta_detail.html"]
+        return [self.template_name]
     context_object_name = "bienes"
     login_url = reverse_lazy("login")
     permisos_requeridos = [perms.BIENES_VER]
@@ -49,7 +55,6 @@ class BienListView(PermissionRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        from ...models import Caso
         context["search"] = self.request.GET.get("search", "")
         context["categoria_filtro"] = self.request.GET.get("categoria", "")
         context["estado_filtro"] = self.request.GET.get("estado", "")
@@ -66,8 +71,7 @@ class BienListView(PermissionRequiredMixin, ListView):
             })
         context['bienes_sin_caso'] = bienes_sin_caso
         # Carpetas de Bienes con soporte para subcarpetas
-        from ...models import CarpetaBien
-        carpeta_pk = self.request.GET.get('carpeta', '')
+        carpeta_pk = self.kwargs.get('pk', self.request.GET.get('carpeta', ''))
         carpeta_actual = None
         breadcrumbs = []
         if carpeta_pk and carpeta_pk.isdigit():
@@ -87,6 +91,15 @@ class BienListView(PermissionRequiredMixin, ListView):
         context['carpeta_actual'] = carpeta_actual
         context['breadcrumbs'] = breadcrumbs
         context['casos_con_bienes'] = casos_con_bienes
+        # Bienes, subcarpetas y docs de la carpeta actual
+        if carpeta_actual:
+            context['bienes_carpeta'] = Bien.objects.filter(activo=True, carpeta=carpeta_actual).order_by('-fecha_creacion')
+            context['documentos'] = DocumentoCarpetaBien.objects.filter(carpeta=carpeta_actual).order_by('-fecha_subida')[:20]
+            context['subcarpetas'] = CarpetaBien.objects.filter(parent=carpeta_actual).order_by('nombre')
+        else:
+            context['bienes_carpeta'] = []
+            context['documentos'] = []
+            context['subcarpetas'] = []
         return context
 
 
@@ -96,6 +109,26 @@ class BienCreateView(PermissionRequiredMixin, CreateView):
     template_name = "direccion/bien_form.html"
     login_url = reverse_lazy("login")
     permisos_requeridos = [perms.BIENES_CREAR]
+
+    def get_initial(self):
+        initial = super().get_initial()
+        carpeta_pk = self.request.GET.get("carpeta")
+        if carpeta_pk and carpeta_pk.isdigit():
+            try:
+                initial["carpeta"] = CarpetaBien.objects.get(pk=carpeta_pk)
+            except CarpetaBien.DoesNotExist:
+                pass
+        return initial
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        carpeta_pk = self.request.GET.get("carpeta")
+        if carpeta_pk and carpeta_pk.isdigit():
+            try:
+                context["carpeta_origen"] = CarpetaBien.objects.get(pk=carpeta_pk)
+            except CarpetaBien.DoesNotExist:
+                pass
+        return context
 
     def get_success_url(self):
         return reverse_lazy("bien_detail", kwargs={"pk": self.object.pk})

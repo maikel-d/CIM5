@@ -39,7 +39,9 @@ from .bienes import (
     BienListView, BienCreateView, BienDetailView,
     BienUpdateView, BienDeleteView,
     agregar_documento_bien, eliminar_documento_bien,
+    agregar_documento_carpeta, eliminar_documento_carpeta,
     carpeta_bien_crear, carpeta_bien_renombrar, carpeta_bien_eliminar,
+    CarpetaBienDetailView, CarpetaBienUpdateView,
 )
 from .reportes import panel_reportes
 from .backup import backup_view, descargar_backup, restaurar_backup

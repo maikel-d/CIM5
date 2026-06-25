@@ -3,10 +3,17 @@
 {% block page_title %}Formulario Bien{% endblock %}
 {% block content %}
 <div class="max-w-2xl mx-auto">
+  {% if carpeta_origen %}
+  <a href="{% url 'bien_carpeta_detail' carpeta_origen.pk %}" class="form-back-link">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+    Volver a {{ carpeta_origen.nombre }}
+  </a>
+  {% else %}
   <a href="{% url 'bien_list' %}" class="form-back-link">
     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
     Volver al listado
   </a>
+  {% endif %}
   <form method="post" enctype="multipart/form-data" class="form-card">
     {% csrf_token %}
     <div class="form-card-header">
@@ -15,7 +22,11 @@
       </div>
       <div class="form-header-text">
         <h3>{% if form.instance.pk %}Editar Bien{% else %}Nuevo Bien{% endif %}</h3>
-        <p>{% if form.instance.pk %}Modifica los datos del bien{% else %}Registra un nuevo bien{% endif %}</p>
+        <p>{% if form.instance.pk %}Modifica los datos del bien{% else %}Registra un nuevo bien{% endif %}
+          {% if carpeta_origen %}
+          <br><span class="text-xs text-gray-400">en carpeta: {{ carpeta_origen.nombre }}</span>
+          {% endif %}
+        </p>
       </div>
     </div>
     <div class="form-card-body">

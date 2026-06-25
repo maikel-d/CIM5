@@ -41,14 +41,24 @@ def _csv(val):
     return val
 SECRET_KEY = _env('SECRET_KEY', default='cambiar-esta-clave-en-produccion')
 
-# Validacion: advertir si se usa la SECRET_KEY por defecto
-if SECRET_KEY == 'cambiar-esta-clave-en-produccion':
-    import warnings
-    warnings.warn(
-        'SECRET_KEY tiene el valor por defecto. '
-        'Define una clave unica en .env o variable de entorno.',
-        RuntimeWarning
-    )
+# Saltar validacion durante tests (no necesita clave segura en desarrollo/CI)
+if 'test' in sys.argv or 'pytest' in sys.modules:
+    SECRET_KEY = 'test-secret-key-not-for-production'
+elif SECRET_KEY == 'cambiar-esta-clave-en-produccion':
+    import sys as _sys
+    print("=" * 60, file=_sys.stderr)
+    print("  ERROR DE SEGURIDAD: SECRET_KEY no configurada", file=_sys.stderr)
+    print("=" * 60, file=_sys.stderr)
+    print("  La variable SECRET_KEY tiene el valor por defecto.", file=_sys.stderr)
+    print("  El servidor NO puede iniciar con una clave insegura.", file=_sys.stderr)
+    print(file=_sys.stderr)
+    print("  Para generar una clave unica, ejecuta:", file=_sys.stderr)
+    print("    python3 -c 'import secrets; print(secrets.token_urlsafe(50))'", file=_sys.stderr)
+    print(file=_sys.stderr)
+    print("  Luego agregala a tu archivo .env:", file=_sys.stderr)
+    print("    SECRET_KEY=<clave_generada>", file=_sys.stderr)
+    print("=" * 60, file=_sys.stderr)
+    _sys.exit(1)
 
 
 DEBUG = _env('DEBUG', default=False, cast=bool)

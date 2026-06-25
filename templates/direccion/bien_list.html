@@ -28,7 +28,7 @@
     <p class="text-sm text-gray-500">{{ bienes_sin_caso.count }} bien(es) sin carpeta</p>
     <div class="flex items-center gap-2">
       {% with can_bienes_carpetas_crear=user.profile|can:'bienes_carpetas_crear' %}{% if can_bienes_carpetas_crear %}
-      <button type="button" onclick="abrirModalCrearCarpeta()" class="px-3 py-2 bg-[#E8F0F8]0 text-white rounded-lg hover:bg-amber-600 text-sm flex items-center gap-1.5 transition-colors">
+      <button type="button" onclick="abrirModalCrearCarpeta()" class="px-3 py-2 bg-[#003363] text-white rounded-lg hover:bg-[#004a80] text-sm flex items-center gap-1.5 transition-colors shadow-sm">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 0v4m0-4h4m-4 0H8"/></svg>
         Nueva Carpeta
       </button>
@@ -81,7 +81,7 @@
         {% endwith %}
         {% endwith %}
         <div class="card-body flex flex-col items-center text-center min-w-0">
-          <span class="text-xs font-semibold text-gray-700 text-center truncate max-w-full group-hover:text-amber-600 transition-colors">{{ carpeta.nombre }}</span>
+          <span class="text-xs font-semibold text-gray-700 text-center truncate max-w-full group-hover:text-[#003363] transition-colors">{{ carpeta.nombre }}</span>
         </div>
       </a>
       {% endfor %}
@@ -237,7 +237,7 @@
       </div>
       <div class="flex justify-end gap-2">
         <button type="button" onclick="cerrarModalCrearCarpeta()" class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">Cancelar</button>
-        <button type="submit" class="px-4 py-2 text-sm text-white bg-[#E8F0F8]0 hover:bg-amber-600 rounded-lg transition-colors">Crear Carpeta</button>
+        <button type="submit" class="px-4 py-2 text-sm text-white bg-[#003363] hover:bg-[#004a80] rounded-lg transition-colors">Crear Carpeta</button>
       </div>
     </form>
   </div>

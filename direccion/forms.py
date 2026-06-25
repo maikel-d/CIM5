@@ -333,7 +333,8 @@ class BienForm(forms.ModelForm):
         fields = [
             "caso", "nombre", "descripcion", "foto", "categoria",
             "codigo_inventario", "serial", "marca", "modelo_bien",
-            "ubicacion", "estado", "fecha_adquisicion", "valor"
+            "ubicacion", "estado", "fecha_adquisicion", "valor",
+            "carpeta",
         ]
         widgets = {
             "caso": forms.Select(attrs={"class": "form-input"}),
@@ -346,6 +347,7 @@ class BienForm(forms.ModelForm):
             ),
             "categoria": forms.Select(attrs={"class": "form-input"}),
             "estado": forms.Select(attrs={"class": "form-input"}),
+            "carpeta": forms.HiddenInput(),
         }
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -358,12 +360,6 @@ class BienForm(forms.ModelForm):
     def clean_foto(self):
         return _validar_tamano_archivo(self.cleaned_data.get("foto"))
 
-    def clean_correo(self):
-        correo = self.cleaned_data.get("correo")
-        if correo:
-            if not re.match(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", correo):
-                raise forms.ValidationError("Ingrese un correo electronico valido (ejemplo@dominio.com)")
-        return correo
 
 
 class CarpetaBienDocumentForm(forms.ModelForm):

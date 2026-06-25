@@ -3,13 +3,12 @@ from django.contrib import messages
 from django.urls import reverse_lazy
 from django.views.generic import UpdateView, DetailView
 from django.contrib.auth.decorators import login_required
-
-from ...models import CarpetaBien, Bien, DocumentoBien, DocumentoCarpetaBien
 from ...forms import CarpetaForm, CarpetaBienDocumentForm
 from ..mixins import PermissionRequiredMixin
 from ...decorators import permiso_required
 from ...audit import auditar
 from ... import permissions as perms
+from ...models import CarpetaBien, Bien, DocumentoBien, DocumentoCarpetaBien
 
 
 # ============================================================
@@ -20,8 +19,6 @@ from ... import permissions as perms
 @permiso_required(perms.BIENES_CARPETAS_CREAR)
 def carpeta_bien_crear(request):
     """Crear una carpeta de bienes."""
-    from ...models import CarpetaBien
-    from ...audit import auditar
     if request.method == "POST":
         nombre = request.POST.get("nombre", "").strip()
         parent_id = request.POST.get("parent_id")
@@ -41,8 +38,6 @@ def carpeta_bien_crear(request):
 @permiso_required(perms.BIENES_CARPETAS_RENOMBRAR)
 def carpeta_bien_renombrar(request, pk):
     """Renombrar una carpeta de bienes."""
-    from ...models import CarpetaBien
-    from ...audit import auditar
     carpeta = get_object_or_404(CarpetaBien, pk=pk)
     if request.method == "POST":
         nombre = request.POST.get("nombre", "").strip()
@@ -63,6 +58,7 @@ class CarpetaBienUpdateView(PermissionRequiredMixin, UpdateView):
     form_class = CarpetaForm
     template_name = 'direccion/bien_carpeta_form.html'
     permission_required = perms.BIENES_CARPETAS_RENOMBRAR
+    login_url = reverse_lazy("login")
 
     def get_success_url(self):
         return reverse_lazy('bien_carpeta_detail', kwargs={'pk': self.object.pk})
@@ -85,6 +81,8 @@ class CarpetaBienDetailView(PermissionRequiredMixin, DetailView):
     model = CarpetaBien
     template_name = 'direccion/bien_carpeta_detail.html'
     context_object_name = 'carpeta'
+    login_url = reverse_lazy("login")
+    permisos_requeridos = [perms.BIENES_VER]
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -104,7 +102,7 @@ class CarpetaBienDetailView(PermissionRequiredMixin, DetailView):
             p = p.parent
         context['breadcrumbs'] = breadcrumbs
         # Documentos de bienes en esta carpeta
-        context['documentos'] = DocumentoBien.objects.filter(
+        context['documentos'] = DocumentoCarpetaBien.objects.filter(
             bien__carpeta=self.object
         ).order_by('-fecha_subida')[:20]
         return context
@@ -114,8 +112,6 @@ class CarpetaBienDetailView(PermissionRequiredMixin, DetailView):
 @permiso_required(perms.BIENES_CARPETAS_ELIMINAR)
 def carpeta_bien_eliminar(request, pk):
     """Eliminar una carpeta de bienes."""
-    from ...models import CarpetaBien
-    from ...audit import auditar
     carpeta = get_object_or_404(CarpetaBien, pk=pk)
     nombre = str(carpeta)
     pk_val = carpeta.pk

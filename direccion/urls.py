@@ -98,8 +98,11 @@ urlpatterns = [
     path("bienes/<int:pk>/documento/<int:doc_pk>/eliminar/", views.eliminar_documento_bien, name="bien_documento_delete"),
     path("bienes/carpeta/crear/", views.carpeta_bien_crear, name="bien_carpeta_crear"),
     path("bienes/carpeta/<int:pk>/renombrar/", views.carpeta_bien_renombrar, name="bien_carpeta_renombrar"),
+    path("bienes/carpeta/<int:pk>/editar/", views.CarpetaBienUpdateView.as_view(), name="bien_carpeta_edit"),
     path("bienes/carpeta/<int:pk>/eliminar/", views.carpeta_bien_eliminar, name="bien_carpeta_eliminar"),
-    path("bienes/carpeta/<int:pk>/", views.BienListView.as_view(), name="bien_carpeta_detail"),
+    path("bienes/carpeta/<int:pk>/documento/subir/", views.agregar_documento_carpeta, name="bien_carpeta_doc_upload"),
+    path("bienes/carpeta/<int:pk>/documento/<int:doc_pk>/eliminar/", views.eliminar_documento_carpeta, name="bien_carpeta_doc_delete"),
+    path("bienes/carpeta/<int:pk>/", views.CarpetaBienDetailView.as_view(), name="bien_carpeta_detail"),
 
     # Reports Center
     path("reportes/", views.panel_reportes, name="reportes"),
