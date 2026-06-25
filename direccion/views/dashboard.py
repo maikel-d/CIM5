@@ -53,7 +53,7 @@ def dashboard(request):
             When(prioridad='BAJO', then=2),
             output_field=IntegerField(),
         )
-    ).order_by('prioridad_order',        '-fecha_creacion')
+    ).order_by('prioridad_order', '-fecha_creacion')
     tareas_count = Tarea.objects.count()
     tareas_completadas = Tarea.objects.filter(completada=True).count()
 
@@ -76,10 +76,10 @@ def dashboard(request):
 
 
     # Recent documents — single set of queries, used for both the chart list and the "by type" section
-    docs_personal = DocumentoPersonal.objects.all().order_by("-fecha_subida"    )[:10]
-    docs_investigados = DocumentoInvestigado.objects.all().order_by("-fecha_subida"    )[:10]
-    docs_casos = DocumentoCaso.objects.all().order_by("-fecha_subida"    )[:10]
-    docs_direccion = DocumentoDireccion.objects.all().order_by("-fecha_subida"    )[:10]
+    docs_personal = DocumentoPersonal.objects.all().order_by("-fecha_subida")[:10]
+    docs_investigados = DocumentoInvestigado.objects.all().order_by("-fecha_subida")[:10]
+    docs_casos = DocumentoCaso.objects.all().order_by("-fecha_subida")[:10]
+    docs_direccion = DocumentoDireccion.objects.all().order_by("-fecha_subida")[:10]
 
     all_docs_merged = sorted(
         list(docs_personal) + list(docs_investigados) + list(docs_casos) + list(docs_direccion),
@@ -136,23 +136,26 @@ def dashboard(request):
 
     tareas_form = TareaForm()
     tareas_pendientes = Tarea.objects.filter(completada=False).order_by(
-        Case(When(prioridad='ALTO', then=0), When(prioridad='MEDIO', then=1), When(prioridad='BAJO', then=2), output_field=IntegerField()),
+        Case(When(prioridad='ALTO', then=0),
+             When(prioridad='MEDIO', then=1),
+             When(prioridad='BAJO', then=2),
+             output_field=IntegerField()),
         '-fecha_creacion'
     )[:10]
 
-# Informes del mes actual — single query reuse for count and list
+    # Informes del mes actual — single query reuse for count and list
     hoy = date.today()
     informes_qs = InformeDiario.objects.filter(
         fecha__year=hoy.year, fecha__month=hoy.month
     )
     total_informes_mes = informes_qs.count()
-    informes_mes = informes_qs.order_by('-fecha',        '-fecha_creacion'    )[:10]
+    informes_mes = informes_qs.order_by('-fecha', '-fecha_creacion')[:10]
 
     # Auditoria reciente (ultimos 10 registros, si el usuario tiene permiso)
     auditoria_reciente = []
     try:
         if request.user.profile.tiene_permiso(perms.AUDITORIA_VER):
-            auditoria_reciente = AuditLog.objects.all().order_by('-fecha'    )[:10]
+            auditoria_reciente = AuditLog.objects.all().order_by('-fecha')[:10]
     except Exception:
         pass
 
@@ -176,6 +179,8 @@ def dashboard(request):
         "total_informes_mes": total_informes_mes,
         "auditoria_reciente": auditoria_reciente,
         "total_bienes": total_bienes,
+        "tareas_pendientes": tareas_pendientes,
+        "tareas_form": tareas_form,
         "usuarios_online": usuarios_online(),
         "usuarios_online_list": usuarios_online_list(),
         "mes_actual_nombre": calendar.month_name[hoy.month].capitalize(),
