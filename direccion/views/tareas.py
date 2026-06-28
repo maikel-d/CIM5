@@ -4,6 +4,7 @@
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST
 from django.contrib import messages
 from django.db.models import Q
 
@@ -14,7 +15,6 @@ from .. import permissions as perms
 
 
 @permiso_required(perms.TAREAS_VER)
-@login_required
 def tareas_list(request):
     """Lista todas las tareas con filtros, busqueda y categorias."""
     if request.method == "POST":
@@ -63,6 +63,7 @@ def tareas_list(request):
     })
 
 
+@require_POST
 @permiso_required(perms.TAREAS_COMPLETAR)
 def tarea_completar(request, pk):
     """Marca/desmarca una tarea como completada."""
@@ -76,11 +77,16 @@ def tarea_completar(request, pk):
     return redirect(next_url)
 
 
+@require_POST
 @permiso_required(perms.TAREAS_ELIMINAR)
 def tarea_eliminar(request, pk):
     """Elimina una tarea."""
     tarea = get_object_or_404(Tarea, pk=pk)
     tarea.delete()
     messages.success(request, "Tarea eliminada.")
-    next_url = request.GET.get("next") or request.POST.get("next") or "tareas_list"
+    next_url = request.POST.get("next") or "tareas_list"
+    # Prevent open redirect - only allow relative paths
+    if next_url.startswith("http://") or next_url.startswith("https://") or next_url.startswith("//"):
+        next_url = "tareas_list"
     return redirect(next_url)
+

@@ -9,22 +9,19 @@ from datetime import datetime
 from pathlib import Path
 
 from django.shortcuts import render
-from django.contrib.auth.decorators import login_required
 from ..decorators import permiso_required
 from .. import permissions as perms
 from django.shortcuts import redirect
 from django.contrib import messages
 from django.http import HttpResponse
 from django.conf import settings
+from django.db import transaction
 from django.core.management import call_command
 
 from ..audit import auditar
-from .. import permissions as perms
 from .export import _human_size
 
 
-@permiso_required(perms.BACKUP_DESCARGAR)
-@login_required
 @permiso_required(perms.BACKUP_DESCARGAR)
 def backup_view(request):
     """Panel de copias de seguridad: descargar backup o restaurar.
@@ -55,8 +52,6 @@ def backup_view(request):
     return render(request, 'direccion/backup.html', context)
 
 
-@permiso_required(perms.BACKUP_DESCARGAR)
-@login_required
 @permiso_required(perms.BACKUP_DESCARGAR)
 def descargar_backup(request):
     """Genera y descarga un archivo ZIP con dump de la BD y los archivos media.
@@ -109,8 +104,6 @@ def descargar_backup(request):
 
 
 @permiso_required(perms.BACKUP_RESTAURAR)
-@login_required
-@permiso_required(perms.BACKUP_RESTAURAR)
 def restaurar_backup(request):
     """Recibe un archivo ZIP de respaldo y restaura la BD y media.
     Compatible con SQLite y PostgreSQL (usa dumpdata/loaddata de Django).
@@ -160,14 +153,15 @@ def restaurar_backup(request):
 
         # 1. Restaurar la base de datos
         try:
-            if es_formato_nuevo:
+            with transaction.atomic():
+             if es_formato_nuevo:
                 # Formato nuevo: limpiar BD y cargar fixture JSON (funciona con PostgreSQL y SQLite)
                 call_command('flush', '--noinput', verbosity=0)
                 call_command('loaddata', str(tmp / 'backup.json'), verbosity=0)
-            elif es_formato_antiguo:
-                # Formato antiguo: copiar archivo SQLite directamente (solo SQLite)
-                db_destino = Path(settings.DATABASES['default']['NAME'])
-                shutil.copy2(str(tmp / 'db.sqlite3'), str(db_destino))
+             elif es_formato_antiguo:
+                    # Formato antiguo: copiar archivo SQLite directamente (solo SQLite)
+                    db_destino = Path(settings.DATABASES['default']['NAME'])
+                    shutil.copy2(str(tmp / 'db.sqlite3'), str(db_destino))
         except Exception as e:
             messages.error(request, f'Error al restaurar la base de datos: {e}')
             return redirect('backup')
@@ -188,5 +182,6 @@ def restaurar_backup(request):
 
         messages.success(request, 'Respaldo restaurado exitosamente. La base de datos y los archivos han sido recuperados.')
         return redirect('backup')
+
 
 

@@ -8,7 +8,7 @@ from io import BytesIO
 from datetime import datetime
 
 from django.http import HttpResponse
-from django.contrib.auth.decorators import login_required
+
 from ..decorators import permiso_required
 from .. import permissions as perms
 from django.conf import settings
@@ -178,7 +178,6 @@ def _human_size(size_bytes):
 # EXPORT TO EXCEL
 # ============================================================
 
-@login_required
 @permiso_required(perms.EXPORTAR_PERSONAL_EXCEL)
 def exportar_personal_excel(request):
     try:
@@ -204,7 +203,6 @@ def exportar_personal_excel(request):
         return redirect('personal_list')
 
 
-@login_required
 @permiso_required(perms.EXPORTAR_INVESTIGADOS_EXCEL)
 def exportar_investigados_excel(request):
     try:
@@ -235,7 +233,6 @@ def exportar_investigados_excel(request):
 # EXPORT TO PDF
 # ============================================================
 
-@login_required
 @permiso_required(perms.EXPORTAR_PERSONAL_PDF)
 def exportar_personal_pdf(request):
     qs = Personal.objects.filter(activo=True).order_by("apellidos", "nombres")
@@ -261,7 +258,6 @@ def exportar_personal_pdf(request):
         return redirect('personal_list')
 
 
-@login_required
 @permiso_required(perms.EXPORTAR_INVESTIGADOS_PDF)
 def exportar_investigados_pdf(request):
     try:
@@ -286,5 +282,6 @@ def exportar_investigados_pdf(request):
     except Exception as e:
         messages.error(request, f"Error al exportar Investigados a PDF: {str(e)}")
         return redirect('investigado_list')
+
 
 

@@ -42,6 +42,7 @@ urlpatterns = [
     path("casos/<int:pk>/", views.CasoDetailView.as_view(), name="caso_detail"),
     path("casos/<int:pk>/editar/", views.CasoUpdateView.as_view(), name="caso_edit"),
     path("casos/<int:pk>/eliminar/", views.CasoDeleteView.as_view(), name="caso_delete"),
+    path("casos/crear-rapido/", views.caso_crear_rapido, name="caso_crear_rapido"),
     path("casos/<int:pk>/documento/agregar/", views.agregar_documento_caso, name="caso_documento_add"),
     path("casos/<int:pk>/documento/<int:doc_pk>/eliminar/", views.eliminar_documento_caso, name="caso_documento_delete"),
 
@@ -96,6 +97,7 @@ urlpatterns = [
     path("bienes/<int:pk>/eliminar/", views.BienDeleteView.as_view(), name="bien_delete"),
     path("bienes/<int:pk>/documento/agregar/", views.agregar_documento_bien, name="bien_documento_add"),
     path("bienes/<int:pk>/documento/<int:doc_pk>/eliminar/", views.eliminar_documento_bien, name="bien_documento_delete"),
+    path("bienes/crear-rapido/", views.bien_crear_rapido, name="bien_crear_rapido"),
     path("bienes/carpeta/crear/", views.carpeta_bien_crear, name="bien_carpeta_crear"),
     path("bienes/carpeta/<int:pk>/renombrar/", views.carpeta_bien_renombrar, name="bien_carpeta_renombrar"),
     path("bienes/carpeta/<int:pk>/editar/", views.CarpetaBienUpdateView.as_view(), name="bien_carpeta_edit"),

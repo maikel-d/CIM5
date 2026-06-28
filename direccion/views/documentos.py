@@ -205,8 +205,6 @@ def batch_upload_documentos(request):
                 categoria=categoria,
                 descripcion=os.path.splitext(f.name)[0],
             )
-
-# Category detail view - folder navigation
             created_count += 1
             results.append({
                 "name": f.name,
@@ -278,5 +276,6 @@ def carpeta_direccion_eliminar(request, pk):
     messages.success(request, f"Carpeta '{nombre}' eliminada.")
     auditar(request, "ELIMINAR", "CarpetaDireccion", pk_val, nombre, "Documentos Direccion")
     return redirect("documentos_direccion")
+
 
 

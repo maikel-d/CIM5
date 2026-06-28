@@ -3,6 +3,7 @@
 # ============================================================
 
 from .bien_views import (
+    bien_crear_rapido,
     BienListView, BienCreateView, BienDetailView,
     BienUpdateView, BienDeleteView,
     agregar_documento_bien, eliminar_documento_bien,

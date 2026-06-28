@@ -28,7 +28,8 @@ def carpeta_bien_crear(request):
             parent = None
             if parent_id:
                 parent = CarpetaBien.objects.filter(pk=parent_id).first()
-            carpeta = CarpetaBien(nombre=nombre, parent=parent)
+            descripcion = request.POST.get("descripcion", "").strip()
+            carpeta = CarpetaBien(nombre=nombre, descripcion=descripcion or None, parent=parent)
             carpeta.save()
             messages.success(request, f'Carpeta "{nombre}" creada.')
             auditar(request, "CREAR", "CarpetaBien", carpeta.pk, str(carpeta), "Carpeta de Bien: " + nombre)
@@ -63,11 +64,16 @@ class CarpetaBienUpdateView(PermissionRequiredMixin, UpdateView):
     def get_success_url(self):
         return reverse_lazy('bien_carpeta_detail', kwargs={'pk': self.object.pk})
 
+    def get_object(self, queryset=None):
+        obj = super().get_object(queryset)
+        self._old_nombre = obj.nombre
+        return obj
+
     def form_valid(self, form):
         messages.success(self.request, f'Carpeta renombrada a "{form.instance.nombre}".')
         auditar(
             self.request, "EDITAR", "CarpetaBien", form.instance.pk,
-            f'Renombrada de "{CarpetaBien.objects.get(pk=form.instance.pk).nombre}" a "{form.instance.nombre}"',
+            f'Renombrada de "{self._old_nombre}" a "{form.instance.nombre}"',
             "Carpeta de Bien"
         )
         return super().form_valid(form)
@@ -103,7 +109,7 @@ class CarpetaBienDetailView(PermissionRequiredMixin, DetailView):
         context['breadcrumbs'] = breadcrumbs
         # Documentos de bienes en esta carpeta
         context['documentos'] = DocumentoCarpetaBien.objects.filter(
-            bien__carpeta=self.object
+            carpeta=self.object
         ).order_by('-fecha_subida')[:20]
         return context
 

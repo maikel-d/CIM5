@@ -17,7 +17,13 @@ def notificaciones(request):
             cache.set(cache_key, no_leidas, 60)
         context['notificaciones_no_leidas'] = no_leidas
         # Casos activos para sub-menús del sidebar
-        context['sidebar_casos'] = Caso.objects.filter(activo=True).order_by('nombre')
+        # Cache sidebar_casos for 180 seconds to avoid query on every request
+        sidebar_cache_key = 'sidebar_casos_cache'
+        sidebar_casos = cache.get(sidebar_cache_key)
+        if sidebar_casos is None:
+            sidebar_casos = list(Caso.objects.filter(activo=True).order_by('nombre'))
+            cache.set(sidebar_cache_key, sidebar_casos, 180)
+        context['sidebar_casos'] = sidebar_casos
         # Usuarios conectados
         context['usuarios_online'] = usuarios_online()
     else:

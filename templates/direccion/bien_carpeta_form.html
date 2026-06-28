@@ -33,6 +33,14 @@
         {% endif %}
       </div>
 
+      <div>
+        <label for="{{ form.descripcion.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+        {{ form.descripcion }}
+        {% if form.descripcion.errors %}
+        <p class="text-red-500 text-xs mt-1">{{ form.descripcion.errors.0 }}</p>
+        {% endif %}
+      </div>
+
       <div class="flex items-center gap-3 pt-2">
         <button type="submit" class="px-4 py-2 bg-[#003363] text-white rounded-lg hover:bg-[#004a80] transition-colors text-sm font-medium">
           Guardar Cambios

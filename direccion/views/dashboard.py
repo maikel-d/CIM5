@@ -46,14 +46,6 @@ def dashboard(request):
     total_casos = Caso.objects.filter(activo=True).count()
     total_investigados = Investigado.objects.filter(activo=True).count()
     total_bienes = Bien.objects.filter(activo=True).count()
-    tareas_pendientes = Tarea.objects.filter(completada=False).annotate(
-        prioridad_order=Case(
-            When(prioridad='ALTO', then=0),
-            When(prioridad='MEDIO', then=1),
-            When(prioridad='BAJO', then=2),
-            output_field=IntegerField(),
-        )
-    ).order_by('prioridad_order', '-fecha_creacion')
     tareas_count = Tarea.objects.count()
     tareas_completadas = Tarea.objects.filter(completada=True).count()
 
@@ -179,7 +171,6 @@ def dashboard(request):
         "total_informes_mes": total_informes_mes,
         "auditoria_reciente": auditoria_reciente,
         "total_bienes": total_bienes,
-        "tareas_pendientes": tareas_pendientes,
         "tareas_form": tareas_form,
         "usuarios_online": usuarios_online(),
         "usuarios_online_list": usuarios_online_list(),
@@ -206,3 +197,4 @@ def usuarios_online_json(request):
             'rol_class': item.get('rol_class', 'bg-gray-100 text-gray-500'),
         })
     return JsonResponse({'usuarios': data, 'total': len(data)})
+

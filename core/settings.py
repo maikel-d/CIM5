@@ -81,8 +81,8 @@ except Exception:
     pass
 
 # Si DEBUG está activo, permitir cualquier host (útil en desarrollo local)
-if DEBUG and '*' not in ALLOWED_HOSTS:
-    ALLOWED_HOSTS.append('*')
+if DEBUG and 'localhost' not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.extend(['localhost', '127.0.0.1'])
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -315,7 +315,7 @@ LOGGING = {
             'formatter': 'simple',
         },
         'file_django': {
-            'level': 'WARNING',
+            'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': '/DATA/CIM5NV/logs/django.log',
             'maxBytes': 10485760,  # 10MB
@@ -349,4 +349,5 @@ LOGGING = {
         },
     },
 }
+
 

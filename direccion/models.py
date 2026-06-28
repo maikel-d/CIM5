@@ -690,6 +690,7 @@ def carpeta_bien_document_path(instance, filename):
 class CarpetaBien(models.Model):
     """Carpeta dinámica para organizar bienes."""
     nombre = models.CharField('Nombre', max_length=100)
+    descripcion = models.TextField('Descripción', blank=True, null=True)
     parent = models.ForeignKey(
         'self', on_delete=models.CASCADE,
         null=True, blank=True,

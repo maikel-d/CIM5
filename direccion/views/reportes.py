@@ -5,17 +5,11 @@
 from datetime import datetime
 
 from django.shortcuts import render
-from django.contrib.auth.decorators import login_required
-from ..decorators import permiso_required
-from .. import permissions as perms
-
 from ..models import Personal, Investigado, DocumentoPersonal, DocumentoInvestigado, DocumentoCaso
 from ..decorators import permiso_required
 from .. import permissions as perms
 
 
-@permiso_required(perms.REPORTES_VER)
-@login_required
 @permiso_required(perms.REPORTES_VER)
 def panel_reportes(request):
     """Panel central de reportes con filtros y descarga."""
@@ -51,5 +45,6 @@ def panel_reportes(request):
         "fecha_hasta": fec_hasta,
     }
     return render(request, "reportes.html", context)
+
 
 

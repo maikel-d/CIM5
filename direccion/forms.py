@@ -190,14 +190,6 @@ class InvestigadoForm(forms.ModelForm):
     def clean_foto(self):
         return _validar_tamano_archivo(self.cleaned_data.get("foto"))
 
-    def clean_correo(self):
-        correo = self.cleaned_data.get("correo")
-        if correo:
-            if not re.match(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", correo):
-                raise forms.ValidationError("Ingrese un correo electronico valido (ejemplo@dominio.com)")
-        return correo
-
-
 class DocumentoInvestigadoForm(forms.ModelForm):
     class Meta:
         model = DocumentoInvestigado
@@ -317,11 +309,16 @@ class InformeDiarioForm(forms.ModelForm):
 class CarpetaForm(forms.ModelForm):
     class Meta:
         model = CarpetaBien
-        fields = ["nombre"]
-        widgets = {"nombre": forms.TextInput(attrs={"class": "form-input", "placeholder": "Nombre de la carpeta"})}
+        fields = ["nombre", "descripcion"]
+        widgets = {
+            "nombre": forms.TextInput(attrs={"class": "form-input", "placeholder": "Nombre de la carpeta"}),
+            "descripcion": forms.Textarea(attrs={"rows": 3, "class": "form-input", "placeholder": "Descripción de la carpeta (opcional)"}),
+        }
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["nombre"].label = "Nombre"
+        self.fields["descripcion"].label = "Descripción"
+        self.fields["descripcion"].required = False
         for field in self.fields.values():
             if not hasattr(field.widget.attrs, "get") or not field.widget.attrs.get("class"):
                 field.widget.attrs.update({"class": "form-input"})
@@ -422,3 +419,5 @@ class LoginForm(forms.Form):
             "autocomplete": "current-password"
         })
     )
+
+

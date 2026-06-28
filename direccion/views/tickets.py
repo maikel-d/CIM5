@@ -11,6 +11,7 @@ from ..models import TicketSoporte, notificar_administradores
 from ..forms import TicketSoporteForm, TicketAsignarForm
 from ..decorators import permiso_required
 from ..audit import auditar
+from django.views.decorators.http import require_POST
 from .. import permissions as perms
 
 
@@ -144,10 +145,11 @@ def ticket_asignar(request, pk):
     })
 
 @permiso_required(perms.TICKETS_VER)
+@require_POST
 def ticket_cambiar_estado(request, pk):
     ticket = get_object_or_404(TicketSoporte, pk=pk)
     estado_anterior = ticket.estado
-    nuevo_estado = request.GET.get("estado", "")
+    nuevo_estado = request.POST.get("estado", "")
     estados_validos = [e[0] for e in TicketSoporte.ESTADO_CHOICES]
     if nuevo_estado not in estados_validos:
         messages.error(request, "Estado invalido.")
@@ -164,11 +166,11 @@ def ticket_cambiar_estado(request, pk):
     return redirect("dashboard")
 
 
+@require_POST
+@permiso_required(perms.TICKETS_RESOLVER)
 def ticket_eliminar(request, pk):
-    if request.user.profile.rol != "ADMINISTRADOR":
-        messages.error(request, "No tienes permiso para eliminar tickets.")
-        return redirect("dashboard")
     ticket = get_object_or_404(TicketSoporte, pk=pk)
     ticket.delete()
     messages.success(request, f"Ticket #{pk} eliminado.")
-    return redirect("dashboard")
+    return redirect("ticket_list")
+

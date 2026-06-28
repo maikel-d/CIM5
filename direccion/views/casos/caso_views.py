@@ -13,7 +13,7 @@ from ...forms import CasoForm, DocumentoCasoForm
 from ..mixins import PermissionRequiredMixin
 from ...decorators import permiso_required
 from ...audit import auditar
-from... import permissions as perms
+from ... import permissions as perms
 
 
 class CasoListView(PermissionRequiredMixin, ListView):
@@ -24,7 +24,10 @@ class CasoListView(PermissionRequiredMixin, ListView):
     permisos_requeridos = [perms.CASOS_VER]
 
     def get_queryset(self):
-        return Caso.objects.filter(activo=True).order_by("-fecha_creacion")
+        return Caso.objects.filter(activo=True).annotate(
+            count_investigados=Count("investigados", filter=Q(investigados__activo=True)),
+            count_documentos=Count("documentos")
+        ).order_by("-fecha_creacion")
 
 
 class CasoCreateView(PermissionRequiredMixin, CreateView):
@@ -104,6 +107,26 @@ class CasoDeleteView(PermissionRequiredMixin, DeleteView):
         auditar(self.request, "ELIMINAR", "Caso", pk_val, repr_, f"Nombre: {nombre}")
         return redirect(self.success_url)
 
+
+
+# ======================================================================================
+# CASO RAPIDO (Modal create from investigado_list)
+# ======================================================================================
+
+@permiso_required(perms.CASOS_CREAR)
+def caso_crear_rapido(request):
+    """Crear un caso desde el modal rapido (POST-only)."""
+    if request.method == "POST":
+        nombre = request.POST.get("nombre", "").strip()
+        descripcion = request.POST.get("descripcion", "").strip()
+        if not nombre:
+            messages.error(request, "El nombre es obligatorio.")
+        else:
+            caso = Caso(nombre=nombre, descripcion=descripcion or None)
+            caso.save()
+            messages.success(request, f'Caso "{nombre}" creado.')
+            auditar(request, "CREAR", "Caso", caso.pk, str(caso), "Caso: " + nombre)
+    return redirect("investigado_list")
 
 # ======================================================================================
 # CASO DOCUMENTS

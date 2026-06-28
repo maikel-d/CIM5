@@ -9,7 +9,7 @@ from django.urls import reverse_lazy
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
 from django.contrib.auth.decorators import login_required
 
-from ...models import Bien, CarpetaBien, Caso, DocumentoBien, DocumentoCarpetaBien
+from ...models import Bien, CarpetaBien, DocumentoBien, DocumentoCarpetaBien
 from ...forms import BienForm, DocumentoBienForm, CarpetaForm, CarpetaBienDocumentForm
 from ..mixins import PermissionRequiredMixin
 from ...decorators import permiso_required
@@ -21,11 +21,6 @@ class BienListView(PermissionRequiredMixin, ListView):
     model = Bien
     template_name = "direccion/bien_list.html"
 
-    def get_template_names(self):
-        pk = self.kwargs.get('pk')
-        if pk:
-            return ["direccion/bien_carpeta_detail.html"]
-        return [self.template_name]
     context_object_name = "bienes"
     login_url = reverse_lazy("login")
     permisos_requeridos = [perms.BIENES_VER]
@@ -60,15 +55,8 @@ class BienListView(PermissionRequiredMixin, ListView):
         context["estado_filtro"] = self.request.GET.get("estado", "")
         context["categorias"] = Bien.CATEGORIA_CHOICES
         context["estados"] = Bien.ESTADO_CHOICES
-        # Agrupar bienes por caso para la vista de carpetas
         todos_bienes = self.get_queryset()
         bienes_sin_caso = todos_bienes.filter(caso__isnull=True)
-        casos_con_bienes = []
-        for c in Caso.objects.filter(activo=True, bienes__in=todos_bienes).distinct().order_by('nombre'):
-            casos_con_bienes.append({
-                'caso': c,
-                'bienes': todos_bienes.filter(caso=c),
-            })
         context['bienes_sin_caso'] = bienes_sin_caso
         # Carpetas de Bienes con soporte para subcarpetas
         carpeta_pk = self.kwargs.get('pk', self.request.GET.get('carpeta', ''))
@@ -90,7 +78,6 @@ class BienListView(PermissionRequiredMixin, ListView):
         context['carpetas_bien'] = carpetas_bien
         context['carpeta_actual'] = carpeta_actual
         context['breadcrumbs'] = breadcrumbs
-        context['casos_con_bienes'] = casos_con_bienes
         # Bienes, subcarpetas y docs de la carpeta actual
         if carpeta_actual:
             context['bienes_carpeta'] = Bien.objects.filter(activo=True, carpeta=carpeta_actual).order_by('-fecha_creacion')
@@ -221,4 +208,32 @@ def eliminar_documento_bien(request, pk, doc_pk):
     messages.success(request, "Documento eliminado exitosamente.")
     auditar(request, "ELIMINAR", "DocumentoBien", pk_val, doc_repr, f"Bien: {bien_repr}")
     return redirect("bien_detail", pk=pk)
+
+@permiso_required(perms.BIENES_CREAR)
+def bien_crear_rapido(request):
+    """Crear un bien desde el modal rapido (POST-only)."""
+    if request.method == "POST":
+        nombre = request.POST.get("nombre", "").strip()
+        categoria = request.POST.get("categoria", "OTRO").strip()
+        estado = request.POST.get("estado", "BUENO").strip()
+        ubicacion = request.POST.get("ubicacion", "").strip()
+        carpeta_id = request.POST.get("carpeta_id")
+        if not nombre:
+            messages.error(request, "El nombre es obligatorio.")
+        else:
+            carpeta = None
+            if carpeta_id and carpeta_id.isdigit():
+                carpeta = CarpetaBien.objects.filter(pk=carpeta_id).first()
+            bien = Bien(
+                nombre=nombre,
+                categoria=categoria,
+                estado=estado,
+                ubicacion=ubicacion or None,
+                carpeta=carpeta
+            )
+            bien.save()
+            messages.success(request, f'Bien "{nombre}" creado.')
+            auditar(request, "CREAR", "Bien", bien.pk, str(bien), "Bien: " + nombre)
+    return redirect("bien_list")
+
 

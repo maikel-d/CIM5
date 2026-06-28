@@ -15,6 +15,7 @@ from .casos import (
     CasoListView, CasoCreateView, CasoDetailView,
     CasoUpdateView, CasoDeleteView,
     agregar_documento_caso, eliminar_documento_caso,
+    caso_crear_rapido,
     InvestigadoListView, InvestigadoCreateView, InvestigadoDetailView,
     InvestigadoUpdateView, InvestigadoDeleteView,
     agregar_documento_investigado, eliminar_documento_investigado,
@@ -36,6 +37,7 @@ from .informes import (
 )
 from .busqueda import busqueda_global
 from .bienes import (
+    bien_crear_rapido,
     BienListView, BienCreateView, BienDetailView,
     BienUpdateView, BienDeleteView,
     agregar_documento_bien, eliminar_documento_bien,
