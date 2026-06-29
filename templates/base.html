@@ -19,12 +19,10 @@
 </head>
 <body class="bg-gray-50">
     {% if user.is_authenticated %}
-    <!-- Mobile sidebar overlay -->
-    <div id="sidebarOverlay" class="fixed inset-0 bg-black/50 z-30 hidden lg:hidden" onclick="toggleSidebar()"></div>
     
     <div class="flex h-screen overflow-hidden">
         <!-- Sidebar -->
-        <aside id="sidebar" class="w-64 bg-[#003363] text-white flex-shrink-0 overflow-y-auto fixed lg:relative inset-y-0 left-0 z-40 lg:z-auto -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out">
+        <aside id="sidebar" class="w-64 bg-[#003363] text-white flex-shrink-0 overflow-y-auto fixed inset-y-0 left-0 z-40">
             <div class="pt-3 pb-2 px-4 border-b border-white/10 text-center">
                 <div class="mb-2">
                     <img src="{% static 'images/logo_acceso.png' %}" alt="Logo" class="w-36 h-auto mx-auto object-contain">
@@ -120,14 +118,10 @@
         </aside>
 
         <!-- Main content -->
-        <main id="main-content" class="flex-1 overflow-y-auto bg-gray-50">
+        <main id="main-content" class="flex-1 overflow-y-auto bg-gray-50 ml-64">
             <header class="bg-white shadow-sm border-b border-gray-200">
                 <div class="flex items-center justify-between px-6 py-4">
                     <div class="flex items-center gap-2">
-                        <button id="sidebarToggle" onclick="toggleSidebar()" class="p-2 text-gray-500 hover:text-[#003363] hover:bg-gray-100 rounded-lg transition-colors" aria-label="Menú" aria-expanded="true" aria-controls="sidebar">
-                            <svg id="icon-hamburger" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
-                            <svg id="icon-close" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                        </button>
                         <h1 class="text-lg sm:text-xl font-semibold text-gray-800">{% block page_title %}Dashboard{% endblock %}</h1>
                     </div>
                     <div class="flex items-center gap-1 sm:gap-2">
@@ -240,13 +234,6 @@
     
     // Convert Django messages to toasts on page load
     document.addEventListener('DOMContentLoaded', function() {
-        // Desktop: show sidebar and set margin
-        if (window.innerWidth >= 1024) {
-            const sidebar = document.getElementById('sidebar');
-            const main = document.getElementById('main-content');
-            if (sidebar) sidebar.classList.remove('-translate-x-full');
-            updateSidebarIcons(true);
-        }
         var msgContainer = document.getElementById('django-messages');
         if (msgContainer) {
             var items = msgContainer.querySelectorAll('[data-level]');
@@ -256,62 +243,7 @@
         }
     });
 
-    function toggleSidebar() {
-        const sidebar = document.getElementById('sidebar');
-        const overlay = document.getElementById('sidebarOverlay');
-        const btn = document.getElementById('sidebarToggle');
-        const main = document.getElementById('main-content');
-        const isDesktop = window.innerWidth >= 1024;
-        const isOpen = !sidebar.classList.contains('-translate-x-full');
-        
-        sidebar.classList.toggle('-translate-x-full');
-        const nowOpen = !sidebar.classList.contains('-translate-x-full');
-        
-        if (isDesktop) {
-        } else {
-            if (overlay) overlay.classList.toggle('hidden', !nowOpen);
-            document.body.classList.toggle('overflow-hidden', nowOpen);
-        }
-        
-        if (btn) {
-            btn.setAttribute('aria-expanded', nowOpen);
-            updateSidebarIcons(nowOpen);
-        }
-    }
-    
-    function updateSidebarIcons(isOpen) {
-        const hamburger = document.getElementById('icon-hamburger');
-        const close = document.getElementById('icon-close');
-        if (hamburger) hamburger.classList.toggle('hidden', isOpen);
-        if (close) close.classList.toggle('hidden', !isOpen);
-    }
-    const mql = window.matchMedia('(min-width: 1024px)');
-    mql.addEventListener('change', function(e) {
-        if (e.matches) {
-            // Switching to desktop: show sidebar
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('sidebarOverlay');
-            const main = document.getElementById('main-content');
-            if (sidebar) {
-                sidebar.classList.remove('-translate-x-full');
-                if (overlay) overlay.classList.add('hidden');
-                document.body.classList.remove('overflow-hidden');
-                const btn = document.getElementById('sidebarToggle');
-                if (btn) btn.setAttribute('aria-expanded', 'true');
-                    updateSidebarIcons(true);
-            }
-        } else {
-            // Switching to mobile: hide sidebar
-            const sidebar = document.getElementById('sidebar');
-            const main = document.getElementById('main-content');
-            if (sidebar) {
-                sidebar.classList.add('-translate-x-full');
-                const btn = document.getElementById('sidebarToggle');
-                if (btn) btn.setAttribute('aria-expanded', 'false');
-                updateSidebarIcons(false);
-            }
-        }
-    });
+
 
     // ============================================
     // BÚSQUEDA GLOBAL (Ctrl+K)

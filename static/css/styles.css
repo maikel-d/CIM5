@@ -1071,3 +1071,10 @@ small.task-date {
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
 }
+
+/* ========================================
+   SIDEBAR - Fixed layout with content margin
+   ======================================== */
+/* ml-64: left margin matching sidebar width (w-64 = 16rem) */
+.ml-64 { margin-left: 16rem !important; }
+
