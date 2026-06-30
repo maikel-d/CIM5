@@ -25,63 +25,6 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
 .pagination .current{background:#003363;color:#fff;border-color:#003363}
 
 /* ========================================
-   DOCUMENT GRID - Premium Card Style
-   ======================================== */
-.doc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1.15rem;position:relative}
-
-.doc-card{background:#fff;border:1px solid #e5e7eb;border-radius:0.85rem;overflow:hidden;transition:all 0.3s cubic-bezier(0.4,0,0.2,1);cursor:pointer;position:relative;will-change:transform}
-.doc-card::before{content:'';position:absolute;inset:0;border-radius:inherit;opacity:0;transition:opacity 0.3s ease;background:linear-gradient(135deg,rgba(0,51,99,0.03),transparent 60%);pointer-events:none;z-index:1}
-.doc-card:hover{transform:translateY(-5px);box-shadow:0 15px 40px rgba(0,0,0,0.1),0 4px 12px rgba(0,0,0,0.06);border-color:#c9cdd2}
-.doc-card:hover::before{opacity:1}
-
-/* ===== Thumbnail Area with gradient backgrounds ===== */
-.doc-card-thumb{height:150px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
-.doc-card-thumb.pdf{background:linear-gradient(135deg,#fef2f2 0%,#fee2e2 100%)}
-.doc-card-thumb.word{background:linear-gradient(135deg,#eff6ff 0%,#dbeafe 100%)}
-.doc-card-thumb.imagen{background:linear-gradient(135deg,#e8f0f8 0%,#d0e2f0 100%)}
-.doc-card-thumb.otro{background:linear-gradient(135deg,#f8f9fa 0%,#e5e7eb 100%)}
-.doc-card-thumb::after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,transparent 65%,rgba(255,255,255,0.7) 100%);pointer-events:none}
-.doc-card-thumb img{width:100%;height:100%;object-fit:cover;transition:transform 0.5s cubic-bezier(0.4,0,0.2,1)}
-.doc-card:hover .doc-card-thumb img{transform:scale(1.1)}
-
-/* Image thumbnail with loading placeholder */
-.doc-card-thumb .img-wrapper{width:100%;height:100%;position:relative;overflow:hidden}
-.doc-card-thumb .img-wrapper img{width:100%;height:100%;object-fit:cover}
-.doc-card-thumb .img-placeholder{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#f0f0f0;transition:opacity 0.4s ease}
-.doc-card-thumb .img-placeholder.loaded{opacity:0;pointer-events:none}
-.doc-card-thumb .img-placeholder svg{width:28px;height:28px;color:#d1d5db}
-
-.doc-card-thumb .file-icon{width:62px;height:62px;border-radius:16px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,0.08);position:relative;z-index:1;transition:transform 0.3s ease,box-shadow 0.3s ease}
-.doc-card:hover .doc-card-thumb .file-icon{transform:scale(1.08) translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,0.12)}
-.doc-card-thumb .file-icon svg{width:30px;height:30px}
-.doc-card-thumb .file-icon.pdf{background:#fff;color:#dc2626}
-.doc-card-thumb .file-icon.word{background:#fff;color:#2563eb}
-.doc-card-thumb .file-icon.imagen{background:#fff;color:#16a34a}
-.doc-card-thumb .file-icon.otro{background:#fff;color:#6b7280}
-
-.doc-card-body{padding:0.85rem 0.9rem 0.7rem;position:relative;z-index:1}
-.doc-card-body .doc-name{font-size:0.85rem;font-weight:600;color:#111827;line-height:1.4;display:block;white-space:normal;overflow:visible;min-height:1.4em}
-.doc-card-body .doc-cat{margin-bottom:0.35rem}
-.doc-card-body .doc-desc{font-size:0.7rem;color:#9ca3af;margin-top:0.2rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.doc-card-body .doc-meta{display:flex;align-items:center;justify-content:space-between;margin-top:0.45rem;padding-top:0.45rem;border-top:1px solid #f0f0f0;font-size:0.68rem;color:#a0aec0}
-.doc-card-body .doc-meta span{display:flex;align-items:center;gap:0.3rem}
-
-.doc-card-actions{position:absolute;top:0.6rem;right:0.6rem;display:flex;gap:0.3rem;opacity:0;transition:all 0.25s ease;z-index:3;transform:translateY(-4px)}
-.doc-card:hover .doc-card-actions{opacity:1;transform:translateY(0)}
-.doc-card-actions a,.doc-card-actions button{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.95);border:1px solid #e5e7eb;color:#6b7280;transition:all 0.2s;cursor:pointer;backdrop-filter:blur(4px)}
-.doc-card-actions a:hover,.doc-card-actions button:hover{background:#fff;box-shadow:0 4px 12px rgba(0,0,0,0.12);transform:scale(1.05)}
-.doc-card-actions .action-view:hover{color:#003363;border-color:#003363}
-.doc-card-actions .action-download:hover{color:#16a34a;border-color:#16a34a}
-.doc-card-actions .action-delete:hover{color:#dc2626;border-color:#dc2626}
-
-/* File type badge on card - glass morphism style */
-.doc-type-badge{position:absolute;top:0.6rem;left:0.6rem;padding:0.2rem 0.55rem;border-radius:6px;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;z-index:2;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
-.doc-type-badge.pdf{background:rgba(220,38,38,0.15);color:#dc2626}
-.doc-type-badge.word{background:rgba(37,99,235,0.15);color:#2563eb}
-.doc-type-badge.imagen{background:rgba(0,0,0,0.45);color:#fff}
-.doc-type-badge.otro{background:rgba(107,114,128,0.15);color:#6b7280}
-
-/* ========================================
    UPLOAD MODAL - Premium Redesign
    ======================================== */
 .upload-modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,0.7);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);z-index:100;display:flex;align-items:center;justify-content:center;padding:1rem;animation:fadeIn 0.25s ease}
@@ -147,33 +90,6 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
 
 @keyframes cloud-bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
 
-/* ========================================
-   DOCUMENT PREVIEW MODAL
-   ======================================== */
-.doc-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:100;display:flex;align-items:center;justify-content:center;padding:1.5rem;animation:fadeIn 0.2s ease}
-
-.doc-modal{background:#fff;border-radius:1rem;width:100%;max-width:70rem;max-height:90vh;overflow:hidden;box-shadow:0 25px 60px rgba(0,0,0,0.35);display:flex;flex-direction:column;animation:scaleIn 0.25s ease}
-
-.doc-modal-header{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-bottom:1px solid #e5e7eb;background:#fafbfc}
-.doc-modal-header .modal-title{font-size:0.95rem;font-weight:600;color:#1f2937;display:flex;align-items:center;gap:0.5rem}
-.doc-modal-header .modal-title .title-icon{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center}
-.doc-modal-header .modal-title .title-icon.pdf{background:#fef2f2;color:#dc2626}
-.doc-modal-header .modal-title .title-icon.word{background:#eff6ff;color:#2563eb}
-.doc-modal-header .modal-title .title-icon.imagen{background:#f0fdf4;color:#16a34a}
-.doc-modal-header .modal-title .title-icon.otro{background:#f8f9fa;color:#6b7280}
-.doc-modal-header .modal-actions{display:flex;gap:0.5rem;align-items:center}
-.doc-modal-header .modal-actions a,.doc-modal-header .modal-actions button{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;border:1px solid #e5e7eb;background:#fff;color:#6b7280;cursor:pointer;transition:all 0.15s;text-decoration:none}
-.doc-modal-header .modal-actions a:hover,.doc-modal-header .modal-actions button:hover{background:#f3f4f6;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
-.doc-modal-header .modal-actions .close-btn:hover{color:#dc2626;border-color:#dc2626}
-.doc-modal-header .modal-actions .download-btn:hover{color:#16a34a;border-color:#16a34a}
-
-.doc-modal-body{flex:1;overflow:hidden;background:#f3f4f6;display:flex;align-items:center;justify-content:center;min-height:50vh}
-.doc-modal-body iframe{width:100%;height:100%;border:none}
-.doc-modal-body img{max-width:100%;max-height:80vh;object-fit:contain;box-shadow:0 4px 20px rgba(0,0,0,0.1);border-radius:0.5rem}
-.doc-modal-body .unsupported-preview{text-align:center;padding:3rem;color:#6b7280}
-.doc-modal-body .unsupported-preview .big-icon{margin-bottom:1rem}
-
-.doc-modal-footer{padding:0.75rem 1.25rem;border-top:1px solid #e5e7eb;background:#fafbfc;display:flex;justify-content:space-between;align-items:center;font-size:0.75rem;color:#9ca3af}
 
 /* ========================================
    UPLOAD FORM INLINE (inside grid area)
@@ -239,16 +155,6 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
 .fade-in-up-d2{animation:fadeInUp 0.7s ease-out 0.2s both}
 .fade-in-up-d3{animation:fadeInUp 0.7s ease-out 0.3s both}
 .fade-in-up-d4{animation:fadeInUp 0.7s ease-out 0.4s both}
-
-/* ========================================
-   DRAG & DROP OVERLAY
-   ======================================== */
-.doc-drop-overlay{position:absolute;inset:0;background:rgba(0,51,99,0.08);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);border-radius:0.75rem;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.25s ease;z-index:5;border:2px dashed transparent}
-.doc-grid.drag-active .doc-drop-overlay{opacity:1;border-color:#003363}
-.doc-grid.drag-active .doc-card,.doc-grid.drag-active .doc-upload-card,.doc-grid.drag-active .col-span-full{pointer-events:none;opacity:0.3}
-.doc-drop-overlay .drop-content{text-align:center;color:#003363}
-.doc-drop-overlay .drop-content svg{animation:bounce 1s ease infinite}
-.doc-drop-overlay .drop-title{font-size:1.1rem;font-weight:600;margin-top:0.75rem}
 .doc-drop-overlay .drop-hint{font-size:0.8rem;color:#4a7aaa;margin-top:0.25rem}
 
 /* Upload spinner */
@@ -1075,6 +981,10 @@ small.task-date {
 /* ========================================
    SIDEBAR - Fixed layout with content margin
    ======================================== */
-/* ml-64: left margin matching sidebar width (w-64 = 16rem) */
+/* ml-48 and ml-64: left margin matching sidebar width */
+.ml-48 { margin-left: 12rem !important; }
 .ml-64 { margin-left: 16rem !important; }
+@media (min-width: 1024px) {
+  .lg\:ml-64 { margin-left: 16rem !important; }
+}
 

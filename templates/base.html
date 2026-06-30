@@ -22,7 +22,7 @@
     
     <div class="flex h-screen overflow-hidden">
         <!-- Sidebar -->
-        <aside id="sidebar" class="w-64 bg-[#003363] text-white flex-shrink-0 overflow-y-auto fixed inset-y-0 left-0 z-40">
+        <aside id="sidebar" class="w-48 lg:w-64 bg-[#003363] text-white flex-shrink-0 fixed inset-y-0 left-0 z-40 flex flex-col">
             <div class="pt-3 pb-2 px-4 border-b border-white/10 text-center">
                 <div class="mb-2">
                     <img src="{% static 'images/logo_acceso.png' %}" alt="Logo" class="w-36 h-auto mx-auto object-contain">
@@ -35,7 +35,7 @@
                     {{ user.profile.get_rol_display }}
                 </span>
             </div>
-            <nav class="p-4 space-y-1">
+            <nav class="p-4 space-y-1 flex-1 overflow-y-auto">
                 <a href="{% url 'dashboard' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#002244] transition-colors {% if request.resolver_match.url_name == 'dashboard' %}bg-[#002244] text-white{% else %}text-gray-300{% endif %}">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
                     Dashboard
@@ -107,50 +107,35 @@
                     Respaldos
                 </a>
                 {% endif %}
-            <!-- Online users indicator -->
-            <div class="px-4 pt-4 mt-2 border-t border-white/10">
+            </nav>
+            <!-- Sidebar bottom -->
+            <div class="px-4 py-3 border-t border-white/10 flex-shrink-0">
                 <div class="flex items-center gap-2 px-3 py-2 text-xs text-gray-400">
                     <span class="inline-block w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
                     <span>{{ usuarios_online }} usuario{% if usuarios_online != 1 %}s{% endif %} conectado{% if usuarios_online != 1 %}s{% endif %}</span>
                 </div>
+                <a href="{% url 'notificaciones_list' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#002244] transition-colors text-gray-300">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                    Notificaciones
+                    {% if notificaciones_no_leidas > 0 %}
+                    <span class="ml-auto bg-red-500 text-white text-xs font-bold rounded-full px-2 py-0.5">{{ notificaciones_no_leidas }}</span>
+                    {% endif %}
+                </a>
+                <form method="post" action="{% url 'logout' %}" class="w-full">
+                    {% csrf_token %}
+                    <button type="submit" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#002244] transition-colors text-gray-300 w-full text-left">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                        Salir
+                    </button>
+                </form>
             </div>
-            </nav>
         </aside>
 
         <!-- Main content -->
-        <main id="main-content" class="flex-1 overflow-y-auto bg-gray-50 ml-64">
-            <header class="bg-white shadow-sm border-b border-gray-200">
-                <div class="flex items-center justify-between px-6 py-4">
-                    <div class="flex items-center gap-2">
-                        <h1 class="text-lg sm:text-xl font-semibold text-gray-800">{% block page_title %}Dashboard{% endblock %}</h1>
-                    </div>
-                    <div class="flex items-center gap-1 sm:gap-2">
-                        <!-- Búsqueda Global -->
-                        <button type="button" onclick="abrirBusqueda()" class="hidden sm:flex items-center gap-2 px-3 py-1.5 text-sm text-gray-400 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 hover:text-gray-600 hover:border-gray-300 transition-all cursor-pointer" title="Buscar en el sistema (Ctrl+K)">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                            <span>Buscar...</span>
-                            <kbd class="hidden md:inline-flex items-center px-1.5 py-0.5 text-[10px] font-semibold text-gray-400 bg-gray-200/60 rounded">Ctrl+K</kbd>
-                        </button>
-                        <button type="button" onclick="abrirBusqueda()" class="sm:hidden p-2 text-gray-500 hover:text-[#003363] hover:bg-gray-100 rounded-lg transition-colors" title="Buscar">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                        </button>
-                        <a href="{% url 'notificaciones_list' %}" class="relative p-2 text-gray-500 hover:text-[#003363] hover:bg-gray-100 rounded-lg transition-colors">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
-                            {% if notificaciones_no_leidas > 0 %}
-                            <span class="absolute -top-0.5 -right-0.5 w-4.5 h-4.5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">{{ notificaciones_no_leidas }}</span>
-                            {% endif %}
-                        </a>
-                        <form method="post" action="{% url 'logout' %}" class="inline">
-                            {% csrf_token %}
-                            <button type="submit" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                                Salir
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </header>
+        <main id="main-content" class="flex-1 overflow-y-auto bg-gray-50 ml-48 lg:ml-64">
+
             <div class="p-6">
+                <h1 class="text-lg sm:text-xl font-semibold text-gray-800 mb-4">{% block page_title %}Dashboard{% endblock %}</h1>
                 {% if messages %}
                 <div id="django-messages" class="hidden">
                     {% for message in messages %}

@@ -4,6 +4,14 @@
 {% load permissions_tags %}
 {% block title %}{{ caso.nombre }}{% endblock %}
 {% block page_title %}{{ caso.nombre }}{% endblock %}
+{% block extra_head %}
+<style>
+  @keyframes fadeInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+  .doc-row { opacity: 0; animation: fadeInUp 0.3s ease-out forwards; transition: background-color 0.15s ease, transform 0.15s ease; }
+  .doc-row:hover { background-color: #f8faff !important; transform: translateX(4px); }
+  .file-icon { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 8px; flex-shrink: 0; }
+</style>
+{% endblock %}
 {% block content %}
 <nav class="flex items-center gap-1.5 text-sm text-gray-500 mb-4">
   <a href="{% url 'caso_list' %}" class="hover:text-[#003363] transition-colors">Expedientes</a>
@@ -85,62 +93,76 @@
           Subir Documento
         </button>
       </div>
-      <div class="doc-grid" id="doc-grid-caso" data-upload-url="{% url 'caso_documento_add' caso.pk %}">
-
-        {% for doc in documentos %}
-        <div class="doc-card" onclick="{% if doc.tipo == 'PDF' %}window.open('{{ doc.archivo.url }}','_blank'){% else %}abrirDocumento('{{ doc.archivo.url }}', '{{ doc.tipo }}', '{{ doc.descripcion|default:doc.archivo.name|filename|escapejs }}', '{{ doc.fecha_subida|date:"d/m/Y H:i" }}'){% endif %}">
-          <!-- Thumbnail / Icon -->
-          <div class="doc-card-thumb {{ doc.tipo|lower }}">
-            {% if doc.tipo == 'IMAGEN' %}
-            <div class="img-wrapper">
-              <div class="img-placeholder">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-              </div>
-              {% thumbnail doc.archivo "400x400" crop="center" quality=85 format="WEBP" as im %}
-              <img src="{{ im.url }}" width="{{ im.width }}" height="{{ im.height }}" alt="{{ doc.archivo.name }}" loading="lazy" onload="this.previousElementSibling.classList.add('loaded')">
-              {% endthumbnail %}
-            </div>
-            {% else %}
-            <div class="file-icon {{ doc.tipo|lower }}">
-              {% if doc.tipo == 'PDF' %}
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 13l2-2 2 2 3-3 2 2v2a1 1 0 01-1 1H8a1 1 0 01-1-1v-1z"/></svg>
-              {% elif doc.tipo == 'WORD' %}
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-              {% else %}
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
-              {% endif %}
-            </div>
-            {% endif %}
-            <span class="doc-type-badge {{ doc.tipo|lower }}">{{ doc.tipo }}</span>
-          </div>
-          <div class="doc-card-body">
-            <div class="doc-name">{{ doc.descripcion|default:doc.archivo.name|filename }}</div>
-            <div class="doc-desc">{{ doc.fecha_subida|date:"d/m/Y H:i" }}</div>
-            <div class="doc-meta">
-              <span>{% if doc.tipo == 'PDF' %}PDF{% elif doc.tipo == 'WORD' %}Word{% elif doc.tipo == 'IMAGEN' %}Imagen{% else %}Archivo{% endif %}</span>
-            </div>
-          </div>
-          <div class="doc-card-actions">
-            <button type="button" class="action-view" title="Ver" onclick="event.stopPropagation();{% if doc.tipo == 'PDF' %}window.open('{{ doc.archivo.url }}','_blank'){% else %}abrirDocumento('{{ doc.archivo.url }}', '{{ doc.tipo }}', '{{ doc.descripcion|default:doc.archivo.name|filename|escapejs }}', '{{ doc.fecha_subida|date:"d/m/Y H:i" }}'){% endif %}">
-              <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-            </button>
-            <a href="{{ doc.archivo.url }}" download class="action-download" title="Descargar" onclick="event.stopPropagation()">
-              <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-            </a>
-            {% if user.profile|can:'casos_documentos_eliminar' %}
-            <a href="{% url 'caso_documento_delete' caso.pk doc.pk %}" class="action-delete" title="Eliminar" onclick="event.stopPropagation();return confirm('¿Eliminar este documento?')">
-              <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-            </a>
-            {% endif %}
-          </div>
-        </div>
-        {% empty %}
-        <div class="col-span-full flex flex-col items-center justify-center py-10 text-gray-400">
-          <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24" class="mb-3"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-          <p class="text-sm">No hay documentos asociados a este caso.</p>
-          <p class="text-xs mt-1">Sube el primer archivo usando el bot&oacute;n "Subir Documento".</p>
-        </div>
-        {% endfor %}
+      <div class='overflow-x-auto overflow-y-auto max-h-[430px] rounded-lg border border-gray-200'>
+        <table class='w-full text-sm'>
+          <thead>
+            <tr class='bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-500 uppercase tracking-wider'>
+              <th class='text-left py-3 px-4'>Archivo</th>
+              <th class='text-left py-3 px-4'>Tipo</th>
+              <th class='text-left py-3 px-4'>Fecha</th>
+              <th class='text-center py-3 px-4'>Accion</th>
+            </tr>
+          </thead>
+          <tbody class='divide-y divide-gray-100'>
+            {% for doc in documentos %}
+            <tr class='doc-row transition-colors'>
+              <td class='py-3 px-4'>
+                <div class='flex items-center gap-3'>
+                  <div class='file-icon {{ doc.tipo|lower }} flex-shrink-0'>
+                    {% if doc.tipo == 'PDF' %}
+                    <svg class='w-5 h-5 text-red-500' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z'/><path stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M7 13l2-2 2 2 3-3 2 2v2a1 1 0 01-1 1H8a1 1 0 01-1-1v-1z'/></svg>
+                    {% elif doc.tipo == 'WORD' %}
+                    <svg class='w-5 h-5 text-blue-500' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'/></svg>
+                    {% elif doc.tipo == 'IMAGEN' %}
+                    <svg class='w-5 h-5 text-green-500' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z'/></svg>
+                    {% else %}
+                    <svg class='w-5 h-5 text-gray-400' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z'/></svg>
+                    {% endif %}
+                  </div>
+                  <div class='min-w-0'>
+                    <div class='font-medium text-gray-800 truncate max-w-[200px]'>{{ doc.descripcion|default:doc.archivo.name|filename }}</div>
+                  </div>
+                </div>
+              </td>
+              <td class='py-3 px-4'>
+                <span class='inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium
+                  {% if doc.tipo == 'PDF' %}bg-red-50 text-red-700
+                  {% elif doc.tipo == 'WORD' %}bg-blue-50 text-blue-700
+                  {% elif doc.tipo == 'IMAGEN' %}bg-green-50 text-green-700
+                  {% else %}bg-gray-100 text-gray-600{% endif %}'>
+                  {% if doc.tipo == 'PDF' %}PDF{% elif doc.tipo == 'WORD' %}Word{% elif doc.tipo == 'IMAGEN' %}Imagen{% else %}Archivo{% endif %}
+                </span>
+              </td>
+              <td class='py-3 px-4 text-gray-500 text-xs'>{{ doc.fecha_subida|date:'d/m/Y H:i' }}</td>
+              <td class='py-3 px-4 text-center'>
+                <div class='flex items-center justify-center gap-1.5'>
+                  <a href='{{ doc.archivo.url }}' target='_blank' class='p-1.5 text-gray-400 hover:text-[#003363] hover:bg-[#e8f0f8] rounded-lg transition-colors' title='Ver'>
+                    <svg class='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M15 12a3 3 0 11-6 0 3 3 0 016 0z'/><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z'/></svg>
+                  </a>
+                  <a href='{{ doc.archivo.url }}' download class='p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors' title='Descargar'>
+                    <svg class='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'/></svg>
+                  </a>
+                  {% if user.profile|can:'casos_documentos_eliminar' %}
+                  <a href="{% url 'caso_documento_delete' caso.pk doc.pk %}" class='p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors' title='Eliminar' onclick="return confirm('&iquest;Eliminar este documento?')">
+                    <svg class='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16'/></svg>
+                  </a>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan='4' class='py-10 text-center text-gray-400'>
+                <div class='flex flex-col items-center'>
+                  <svg class='w-10 h-10 mb-2' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'/></svg>
+                  <p class='text-sm'>No hay documentos asociados a este caso.</p>
+                  <p class='text-xs mt-1'>Sube el primer archivo usando el boton 'Subir Documento'.</p>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
       </div>
     </div>
   </div>

@@ -27,6 +27,7 @@ from ..middleware import usuarios_online, usuarios_online_list
 @permiso_required(perms.DASHBOARD_VER)
 def dashboard(request):
     # Handle quick-add tarea from dashboard
+    """Vista principal del dashboard. Muestra resumen general, tareas pendientes y permite gestion rapida de tareas."""
     if request.method == "POST":
         descripcion = request.POST.get("descripcion", "").strip()
         prioridad = request.POST.get("prioridad", "MEDIO")

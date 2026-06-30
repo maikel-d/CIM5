@@ -34,6 +34,7 @@ CAT_ICONS = {
 
 @permiso_required(perms.DOCUMENTOS_DIRECCION_VER)
 def documentos_direccion_list(request):
+    """Lista los documentos de la direccion con filtros por categoria."""
     categoria_filtro = request.GET.get('categoria', '')
     documentos = DocumentoDireccion.objects.all().order_by('-fecha_subida')
     
@@ -107,6 +108,7 @@ def editar_documento_direccion(request, doc_pk):
 
 @permiso_required(perms.DOCUMENTOS_DIRECCION_ELIMINAR)
 def eliminar_documento_direccion(request, doc_pk):
+    """Elimina un documento de la direccion."""
     documento = get_object_or_404(DocumentoDireccion, pk=doc_pk)
     doc_repr = str(documento)
     pk_val = documento.pk
@@ -119,6 +121,7 @@ def eliminar_documento_direccion(request, doc_pk):
 
 @permiso_required(perms.DOCUMENTOS_DIRECCION_VER)
 def documentos_direccion_categoria(request, categoria):
+    """Muestra documentos filtrados por una categoria especifica."""
     valid_cats = [k for k,_ in DocumentoDireccion.CATEGORIA_CHOICES]
     if categoria not in valid_cats:
         messages.error(request, "Categoría no válida.")
