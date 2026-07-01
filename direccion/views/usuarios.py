@@ -12,6 +12,7 @@ from django.views.generic import ListView, CreateView, UpdateView
 
 from ..forms import UserCreateForm, UserEditForm
 from .mixins import PermissionRequiredMixin
+from ..models import TicketSoporte, Tarea
 from ..decorators import permiso_required
 from ..audit import auditar
 from .. import permissions as perms
@@ -106,6 +107,8 @@ def user_delete(request, pk):
     if user.is_superuser:
         messages.error(request, "No se puede eliminar el superusuario.")
         return redirect("usuario_list")
+    tickets_count = TicketSoporte.objects.filter(creado_por=user).count()
+    tareas_count = Tarea.objects.filter(creado_por=user).count()
     if request.method == "POST":
         username = user.username
         pk_val = user.pk
@@ -113,6 +116,10 @@ def user_delete(request, pk):
         messages.success(request, f"Usuario '{username}' eliminado permanentemente.")
         auditar(request, "ELIMINAR", "Usuario", pk_val, username, "Eliminado permanentemente")
         return redirect("usuario_list")
-    return render(request, "direccion/usuario_confirm_delete.html", {"usuario": user})
+    return render(request, "direccion/usuario_confirm_delete.html", {
+        "usuario": user,
+        "tickets_count": tickets_count,
+        "tareas_count": tareas_count,
+    })
 
 

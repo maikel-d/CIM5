@@ -164,6 +164,11 @@ class BienDeleteView(PermissionRequiredMixin, DeleteView):
     login_url = reverse_lazy("login")
     permisos_requeridos = [perms.BIENES_ELIMINAR]
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["documentos_count"] = DocumentoBien.objects.filter(bien=self.object).count()
+        return context
+
     def form_valid(self, form):
         obj = self.object
         repr_ = str(obj)

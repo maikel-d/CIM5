@@ -166,11 +166,16 @@ def ticket_cambiar_estado(request, pk):
     return redirect("dashboard")
 
 
-@require_POST
 @permiso_required(perms.TICKETS_RESOLVER)
 def ticket_eliminar(request, pk):
+    """Elimina un ticket con confirmacion previa."""
     ticket = get_object_or_404(TicketSoporte, pk=pk)
-    ticket.delete()
-    messages.success(request, f"Ticket #{pk} eliminado.")
-    return redirect("ticket_list")
+    if request.method == "POST":
+        pk_val = ticket.pk
+        asunto = ticket.asunto
+        ticket.delete()
+        messages.success(request, f"Ticket #{pk} eliminado.")
+        auditar(request, "ELIMINAR", "TicketSoporte", pk_val, asunto, f"Asunto: {asunto}")
+        return redirect("ticket_list")
+    return render(request, "direccion/ticket_confirm_delete.html", {"ticket": ticket})
 

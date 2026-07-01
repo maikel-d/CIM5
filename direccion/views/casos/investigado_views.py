@@ -107,6 +107,11 @@ class InvestigadoDeleteView(PermissionRequiredMixin, DeleteView):
     login_url = reverse_lazy("login")
     permisos_requeridos = [perms.INVESTIGADOS_ELIMINAR]
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["documentos_count"] = DocumentoInvestigado.objects.filter(investigado=self.object).count()
+        return context
+
     def form_valid(self, form):
         obj = self.object
         repr_ = str(obj)

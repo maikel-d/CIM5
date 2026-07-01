@@ -94,6 +94,11 @@ class PersonalDeleteView(PermissionRequiredMixin, DeleteView):
     login_url = reverse_lazy("login")
     permisos_requeridos = [perms.PERSONAL_ELIMINAR]
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["documentos_count"] = DocumentoPersonal.objects.filter(personal=self.object).count()
+        return context
+
     def form_valid(self, form):
         obj = self.object
         repr_ = str(obj)

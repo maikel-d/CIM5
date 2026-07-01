@@ -81,6 +81,14 @@ class CasoDeleteView(PermissionRequiredMixin, DeleteView):
     login_url = reverse_lazy("login")
     permisos_requeridos = [perms.CASOS_ELIMINAR]
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        obj = self.object
+        context["investigados_count"] = Investigado.objects.filter(caso=obj).count()
+        context["documentos_count"] = DocumentoCaso.objects.filter(caso=obj).count()
+        context["bienes_count"] = Bien.objects.filter(caso=obj).count()
+        return context
+
     def form_valid(self, form):
         obj = self.object
         repr_ = str(obj)

@@ -25,9 +25,12 @@ def client():
 
 @pytest.fixture
 def admin_user(db):
-    return User.objects.create_superuser(
+    from direccion.models import UserProfile
+    user = User.objects.create_superuser(
         username='admin_test', email='admin@test.com', password='testpass123'
     )
+    UserProfile.objects.create(user=user, rol='ADMINISTRADOR')
+    return user
 
 
 @pytest.fixture
@@ -38,9 +41,12 @@ def admin_client(db, admin_user, client):
 
 @pytest.fixture
 def basic_user(db):
-    return User.objects.create_user(
+    from direccion.models import UserProfile
+    user = User.objects.create_user(
         username='basic_test', email='basic@test.com', password='testpass123'
     )
+    UserProfile.objects.create(user=user, rol='ADMINISTRATIVO')
+    return user
 
 
 @pytest.fixture
@@ -54,15 +60,14 @@ def sample_personal(db):
     from direccion.models import Personal
     return Personal.objects.create(
         nombres='Juan', apellidos='Perez', cedula='V-12345678',
-        telefono='04121234567', email='juan@test.com',
-        direccion='Direccion test', estatus='ACTIVO',
+        telefonos='04121234567', correo='juan@test.com',
+        direccion='Direccion test',
     )
 
 
 @pytest.fixture
-def sample_caso(db, sample_personal):
+def sample_caso(db):
     from direccion.models import Caso
     return Caso.objects.create(
-        numero_expediente='EXP-2024-001', descripcion='Caso de prueba',
-        personal_asignado=sample_personal, estatus='ABIERTO', prioridad='MEDIA',
+        nombre='Caso de prueba', descripcion='Caso de prueba',
     )

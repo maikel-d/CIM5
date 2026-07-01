@@ -8,7 +8,7 @@ urlpatterns = [
     path("logout/", auth_views.LogoutView.as_view(), name="logout"),
 
     # Dashboard
-    path("", views.dashboard, name="dashboard"),
+    path("", views.DashboardView.as_view(), name="dashboard"),
 
     # User management (Admin only)
     path("usuarios/", views.UserListView.as_view(), name="usuario_list"),

@@ -16,8 +16,8 @@ class TestPersonalCRUD:
     def test_create_personal(self):
         r = self.client.post(self.create_url, {
             'nombres': 'Test', 'apellidos': 'User',
-            'cedula': 'V-99999999', 'telefono': '04120000000',
-            'email': 'test@test.com', 'direccion': 'Calle Falsa 123',
+            'cedula': 'V-99999999', 'telefonos': '04120000000',
+            'correo': 'test@test.com', 'direccion': 'Calle Falsa 123',
         })
         assert r.status_code in [200, 302]
         if r.status_code == 302:
@@ -31,17 +31,18 @@ class TestPersonalCRUD:
     def test_edit_personal(self, sample_personal):
         r = self.client.post(f'/personal/{sample_personal.pk}/editar/', {
             'nombres': 'Editado', 'apellidos': sample_personal.apellidos,
-            'cedula': sample_personal.cedula, 'telefono': sample_personal.telefono,
-            'email': sample_personal.email, 'direccion': sample_personal.direccion,
+            'cedula': sample_personal.cedula,
+            'telefonos': sample_personal.telefonos,
+            'correo': sample_personal.correo,
+            'direccion': sample_personal.direccion,
         })
         assert r.status_code in [200, 302]
 
 
 class TestCasosCRUD:
     @pytest.fixture(autouse=True)
-    def setup(self, db, admin_client, sample_personal):
+    def setup(self, db, admin_client):
         self.client = admin_client
-        self.personal = sample_personal
 
     def test_list_casos(self):
         r = self.client.get('/casos/')
@@ -49,11 +50,8 @@ class TestCasosCRUD:
 
     def test_create_caso(self):
         r = self.client.post('/casos/crear/', {
-            'numero_expediente': 'EXP-TEST-001',
-            'descripcion': 'Caso de test',
-            'personal_asignado': self.personal.pk,
-            'estatus': 'ABIERTO',
-            'prioridad': 'MEDIA',
+            'nombre': 'Caso de test',
+            'descripcion': 'Descripcion de prueba',
         })
         assert r.status_code in [200, 302]
 
@@ -71,6 +69,6 @@ class TestTickets:
         r = self.client.post('/tickets/crear/', {
             'asunto': 'Ticket test',
             'descripcion': 'Descripcion del ticket',
-            'prioridad': 'BAJA',
+            'prioridad': 'MEDIO',
         })
         assert r.status_code in [200, 302]

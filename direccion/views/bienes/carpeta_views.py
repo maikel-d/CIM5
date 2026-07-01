@@ -116,11 +116,22 @@ class CarpetaBienDetailView(PermissionRequiredMixin, DetailView):
 
 
 @permiso_required(perms.BIENES_CARPETAS_ELIMINAR)
+def _limpiar_archivos_carpeta(carpeta):
+    """Limpia recursivamente los archivos de una carpeta y sus subcarpetas."""
+    for sub in CarpetaBien.objects.filter(parent=carpeta):
+        _limpiar_archivos_carpeta(sub)
+    for doc in DocumentoCarpetaBien.objects.filter(carpeta=carpeta):
+        if doc.archivo:
+            doc.archivo.delete(False)
+
+@permiso_required(perms.BIENES_CARPETAS_ELIMINAR)
 def carpeta_bien_eliminar(request, pk):
     """Eliminar una carpeta de bienes."""
     carpeta = get_object_or_404(CarpetaBien, pk=pk)
     nombre = str(carpeta)
     pk_val = carpeta.pk
+    # Clean up files recursively (subcarpetas + documentos)
+    _limpiar_archivos_carpeta(carpeta)
     carpeta.delete()
     messages.success(request, f'Carpeta "{nombre}" eliminada.')
     auditar(request, "ELIMINAR", "CarpetaBien", pk_val, nombre, "Carpeta de Bien: " + nombre)

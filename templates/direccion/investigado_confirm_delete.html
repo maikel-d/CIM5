@@ -1,15 +1,43 @@
-{% extends 'base.html' %}
-{% block title %}Eliminar Caso{% endblock %}
-{% block page_title %}Eliminar Caso{% endblock %}
+{% extends "base.html" %}
+{% block title %}Eliminar Investigado{% endblock %}
+{% block page_title %}Eliminar Investigado{% endblock %}
 {% block content %}
-<div class="max-w-md mx-auto bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
-  <p class="text-gray-700 mb-4">¿Está seguro de eliminar a <strong>{{ investigado.apellidos }}, {{ investigado.nombres }}</strong>?</p>
-  <p class="text-sm text-red-500 mb-6">Esta acción eliminará el registro y todos sus documentos asociados de forma permanente.</p>
-  <form method="post">{% csrf_token %}
-    <div class="flex justify-center gap-3">
-      <a href="{% url 'investigado_detail' investigado.pk %}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">Cancelar</a>
-      <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Eliminar permanentemente</button>
+<div class="max-w-lg mx-auto">
+  <div class="bg-white rounded-xl shadow-sm border border-red-200 overflow-hidden">
+    <div class="p-6 text-center">
+      <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-red-100 flex items-center justify-center">
+        <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+      </div>
+      <h2 class="text-xl font-semibold text-gray-800 mb-2">¿Eliminar Investigado?</h2>
+      <p class="text-gray-600 mb-4">
+        Se eliminará permanentemente a <strong>{{ investigado.apellidos }}, {{ investigado.nombres }}</strong>
+      </p>
+
+      {% if documentos_count > 0 %}
+      <div class="bg-red-50 border border-red-200 rounded-lg p-3 mb-4 text-left">
+        <p class="text-sm font-medium text-red-800">
+          <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          Este registro tiene <strong>{{ documentos_count }} documento{{ documentos_count|pluralize:"s" }}</strong> asociado{{ documentos_count|pluralize:"s" }} que se eliminarán.
+        </p>
+      </div>
+      {% endif %}
+
+      <p class="text-xs text-red-500 mb-6">Esta acción no se puede deshacer.</p>
+
+      <form method="post">
+        {% csrf_token %}
+        <div class="flex justify-center gap-3">
+          <a href="{% url "investigado_detail" investigado.pk %}" class="px-5 py-2.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium">Cancelar</a>
+          <button type="submit" class="px-5 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium">
+            Eliminar permanentemente
+          </button>
+        </div>
+      </form>
     </div>
-  </form>
+  </div>
 </div>
-{% endblock %}
+{% endblock %} 

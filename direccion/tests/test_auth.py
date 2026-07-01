@@ -11,13 +11,12 @@ class TestLoginView:
         response = client.post('/login/', {'username': 'admin_test', 'password': 'testpass123'})
         assert response.status_code == 302
 
-    def test_login_fail(self, client):
+    def test_login_fail(self, client, db):
         response = client.post('/login/', {'username': 'noexiste', 'password': 'wrong'})
         assert response.status_code == 200
 
-    def test_logout(self, client, admin_user):
-        client.force_login(admin_user)
-        response = client.get('/logout/')
+    def test_logout(self, admin_client):
+        response = admin_client.post('/logout/')
         assert response.status_code == 302
 
 

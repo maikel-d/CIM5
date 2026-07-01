@@ -4,159 +4,98 @@
 {% load permissions_tags %}
 {% block title %}{{ caso.nombre }}{% endblock %}
 {% block page_title %}{{ caso.nombre }}{% endblock %}
-{% block extra_head %}
-<style>
-  @keyframes fadeInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-  .doc-row { opacity: 0; animation: fadeInUp 0.3s ease-out forwards; transition: background-color 0.15s ease, transform 0.15s ease; }
-  .doc-row:hover { background-color: #f8faff !important; transform: translateX(4px); }
-  .file-icon { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 8px; flex-shrink: 0; }
-</style>
-{% endblock %}
 {% block content %}
-<nav class="flex items-center gap-1.5 text-sm text-gray-500 mb-4">
-  <a href="{% url 'caso_list' %}" class="hover:text-[#003363] transition-colors">Expedientes</a>
-  <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-  <span class="font-medium text-gray-700">{{ caso.nombre }}</span>
-</nav>
-<div class="text-center mb-6">
-    <div class="flex flex-col sm:flex-row items-center gap-4 bg-white rounded-xl shadow-sm border border-gray-200 px-4 sm:px-8 py-4">
-      <div>
-        <h1 class="text-xl font-bold text-gray-800">{{ caso.nombre }}</h1>
-        <p class="text-xs text-gray-400">Creado {{ caso.fecha_creacion|date:"d/m/Y" }}</p>
+<div class="mb-4 flex items-center gap-3">
+  <a href="{% url 'caso_list' %}" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 hover:text-[#003363] hover:bg-[#e8f0f8] rounded-lg transition-colors">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+    Volver al listado
+  </a>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <div class="lg:col-span-1 space-y-6 section-fade-d1">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center">
+          <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+        </div>
+        <div>
+          <h3 class="font-semibold text-gray-800">{{ caso.nombre }}</h3>
+          <p class="text-xs text-gray-500">Expediente #{{ caso.pk }}</p>
+        </div>
       </div>
-      <div class="flex gap-2">
+      <div class="flex justify-center gap-2">
         {% if user.profile|can:'casos_editar' %}
-        <a href="{% url 'caso_edit' caso.pk %}" class="px-3 py-1.5 bg-[#003363] text-white rounded-lg hover:bg-[#004a80] text-sm">Renombrar</a>
+        <a href="{% url 'caso_edit' caso.pk %}" class="px-3 py-1.5 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 text-sm">Editar</a>
         {% endif %}
         {% if user.profile|can:'casos_eliminar' %}
         <a href="{% url 'caso_delete' caso.pk %}" class="px-3 py-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600 text-sm">Eliminar</a>
         {% endif %}
       </div>
     </div>
-  </div>
-
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-<!-- Personas Investigadas -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 section-fade-d3">
-      <div class="flex items-center justify-between mb-4">
-        <h3 class="font-semibold text-gray-800">Personas Investigadas</h3>
-        <span class="text-xs text-gray-400">{{ investigados.count }} persona(s)</span>
-        <a href="{% url 'investigado_create' %}?caso={{ caso.pk }}" class="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm flex items-center gap-1.5 transition-colors">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-          Agregar Persona
-        </a>
-      </div>
-      {% if investigados %}
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {% for inv in investigados %}
-        <div class="bg-gray-50 rounded-xl border border-gray-200 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 overflow-hidden clickable-row" onclick="window.location.href='{% url 'investigado_detail' inv.pk %}'">
-          <div class="p-4">
-            <div class="flex items-center gap-3 mb-3">
-              <div class="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center text-white font-bold text-sm flex-shrink-0 shadow-sm">
-                {{ inv.nombres|first }}{{ inv.apellidos|first }}
-              </div>
-              <div class="min-w-0 flex-1">
-                <a href="{% url 'investigado_detail' inv.pk %}" class="text-sm font-semibold text-gray-800 hover:text-[#003363] truncate block" onclick="event.stopPropagation()">{{ inv.apellidos }}, {{ inv.nombres }}</a>
-                <p class="text-xs text-gray-400 truncate">{{ inv.cedula|default:"Sin cedula" }}</p>
-              </div>
-            </div>
-            <div class="flex items-center gap-3 text-xs text-gray-500">
-              <span class="flex items-center gap-1">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
-                {{ inv.doc_count }} doc(s)
-              </span>
-              <span class="ml-auto">
-                <a href="{% url 'investigado_detail' inv.pk %}" class="inline-flex items-center gap-1 px-2.5 py-1 bg-[#003363] text-white text-xs rounded-lg hover:bg-[#004a80] transition-colors" onclick="event.stopPropagation()">
-                  Ver
-                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                </a>
-              </span>
-            </div>
-          </div>
+    <!-- Personas Investigadas -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 section-fade-d3">
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-1.5">
+          <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          <h3 class="text-sm font-semibold text-gray-800">Personas Investigadas</h3>
+          <span class="text-[11px] text-gray-400 font-medium" id="inv-count">{{ investigados.count }}</span>
         </div>
-        {% endfor %}
-      </div>{% else %}
-      <div class="flex flex-col items-center justify-center py-10 text-gray-400">
-        <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24" class="mb-3"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-        <p class="text-sm">No hay personas investigadas en este expediente.</p>
-        <p class="text-xs mt-1">Puedes agregarlas desde la seccion de Casos.</p>
+        <div class="flex items-center gap-2">
+          <div class="relative">
+            <svg class="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            <input type="text" id="buscarInvestigados" placeholder="Buscar persona..." class="w-36 pl-7 pr-2 py-1.5 border border-gray-200 rounded-md text-xs focus:outline-none focus:border-[#003363] focus:ring-1 focus:ring-[#003363]/20 transition-all" oninput="filtrarInvestigados(this.value)">
+          </div>
+          <a href="{% url 'investigado_create' %}?caso={{ caso.pk }}" class="p-1 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors" title="Agregar persona">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          </a>
+        </div>
       </div>
-      {% endif %}
-    </div>
-    <!-- Document Grid -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 section-fade-d3">
-      <div class="flex items-center justify-between mb-4">
-        <h3 class="font-semibold text-gray-800">Documentacion del Caso</h3>
-        <span class="text-xs text-gray-400">{{ documentos.count }} archivo(s)</span>
-        <button type="button" onclick="abrirModalSubida('caso')" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm flex items-center gap-1.5 transition-colors">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-          Subir Documento
-        </button>
-      </div>
-      <div class='overflow-x-auto overflow-y-auto max-h-[430px] rounded-lg border border-gray-200'>
-        <table class='w-full text-sm'>
+      <div class="overflow-x-auto rounded-lg border border-gray-200">
+        <table id="tabla-investigados" class="w-full">
           <thead>
-            <tr class='bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-500 uppercase tracking-wider'>
-              <th class='text-left py-3 px-4'>Archivo</th>
-              <th class='text-left py-3 px-4'>Tipo</th>
-              <th class='text-left py-3 px-4'>Fecha</th>
-              <th class='text-center py-3 px-4'>Accion</th>
+            <tr class="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+              <th class="px-3 py-2 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Apellidos</th>
+              <th class="px-3 py-2 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Nombres</th>
+              <th class="px-3 py-2 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider">C&eacute;dula</th>
+              <th class="px-3 py-2 text-right text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Doc.</th>
+              <th class="px-3 py-2 text-right text-[11px] font-semibold text-gray-500 uppercase tracking-wider">Acc</th>
             </tr>
           </thead>
-          <tbody class='divide-y divide-gray-100'>
-            {% for doc in documentos %}
-            <tr class='doc-row transition-colors'>
-              <td class='py-3 px-4'>
-                <div class='flex items-center gap-3'>
-                  <div class='file-icon {{ doc.tipo|lower }} flex-shrink-0'>
-                    {% if doc.tipo == 'PDF' %}
-                    <svg class='w-5 h-5 text-red-500' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z'/><path stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M7 13l2-2 2 2 3-3 2 2v2a1 1 0 01-1 1H8a1 1 0 01-1-1v-1z'/></svg>
-                    {% elif doc.tipo == 'WORD' %}
-                    <svg class='w-5 h-5 text-blue-500' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'/></svg>
-                    {% elif doc.tipo == 'IMAGEN' %}
-                    <svg class='w-5 h-5 text-green-500' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z'/></svg>
-                    {% else %}
-                    <svg class='w-5 h-5 text-gray-400' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z'/></svg>
-                    {% endif %}
-                  </div>
-                  <div class='min-w-0'>
-                    <div class='font-medium text-gray-800 truncate max-w-[200px]'>{{ doc.descripcion|default:doc.archivo.name|filename }}</div>
-                  </div>
-                </div>
+          <tbody class="divide-y divide-gray-100">
+            {% for inv in investigados %}
+            <tr class="hover:bg-[#f8faff] transition-all duration-150 group cursor-pointer" onclick="window.location='{% url 'investigado_detail' inv.pk %}'">
+              <td class="px-3 py-2">
+                <span class="text-xs text-gray-800 group-hover:text-purple-700 transition-colors">{{ inv.apellidos }}</span>
               </td>
-              <td class='py-3 px-4'>
-                <span class='inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium
-                  {% if doc.tipo == 'PDF' %}bg-red-50 text-red-700
-                  {% elif doc.tipo == 'WORD' %}bg-blue-50 text-blue-700
-                  {% elif doc.tipo == 'IMAGEN' %}bg-green-50 text-green-700
-                  {% else %}bg-gray-100 text-gray-600{% endif %}'>
-                  {% if doc.tipo == 'PDF' %}PDF{% elif doc.tipo == 'WORD' %}Word{% elif doc.tipo == 'IMAGEN' %}Imagen{% else %}Archivo{% endif %}
-                </span>
+              <td class="px-3 py-2 text-xs text-gray-600">{{ inv.nombres }}</td>
+              <td class="px-3 py-2">
+                <span class="text-xs font-mono text-gray-500">{{ inv.cedula|default:"-" }}</span>
               </td>
-              <td class='py-3 px-4 text-gray-500 text-xs'>{{ doc.fecha_subida|date:'d/m/Y H:i' }}</td>
-              <td class='py-3 px-4 text-center'>
-                <div class='flex items-center justify-center gap-1.5'>
-                  <a href='{{ doc.archivo.url }}' target='_blank' class='p-1.5 text-gray-400 hover:text-[#003363] hover:bg-[#e8f0f8] rounded-lg transition-colors' title='Ver'>
-                    <svg class='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M15 12a3 3 0 11-6 0 3 3 0 016 0z'/><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z'/></svg>
+              <td class="px-3 py-2 text-right text-xs text-gray-400">{{ inv.doc_count }}</td>
+              <td class="px-3 py-2 text-right whitespace-nowrap" onclick="event.stopPropagation()">
+                <div class="flex items-center justify-end gap-0.5">
+                  <a href="{% url 'investigado_detail' inv.pk %}" class="p-1 text-gray-400 hover:text-purple-600 transition-colors" title="Ver">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                   </a>
-                  <a href='{{ doc.archivo.url }}' download class='p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors' title='Descargar'>
-                    <svg class='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'/></svg>
+                  {% if user.profile|can:'investigados_editar' %}
+                  <a href="{% url 'investigado_edit' inv.pk %}" class="p-1 text-gray-400 hover:text-yellow-600 transition-colors" title="Editar">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                   </a>
-                  {% if user.profile|can:'casos_documentos_eliminar' %}
-                  <a href="{% url 'caso_documento_delete' caso.pk doc.pk %}" class='p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors' title='Eliminar' onclick="return confirm('&iquest;Eliminar este documento?')">
-                    <svg class='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16'/></svg>
+                  {% endif %}
+                  {% if user.profile|can:'investigados_eliminar' %}
+                  <a href="{% url 'investigado_delete' inv.pk %}" class="p-1 text-gray-400 hover:text-red-600 transition-colors" title="Eliminar">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                   </a>
                   {% endif %}
                 </div>
               </td>
             </tr>
             {% empty %}
-            <tr>
-              <td colspan='4' class='py-10 text-center text-gray-400'>
-                <div class='flex flex-col items-center'>
-                  <svg class='w-10 h-10 mb-2' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'/></svg>
-                  <p class='text-sm'>No hay documentos asociados a este caso.</p>
-                  <p class='text-xs mt-1'>Sube el primer archivo usando el boton 'Subir Documento'.</p>
+            <tr class="empty-row">
+              <td colspan="5" class="px-3 py-8 text-center">
+                <div class="flex flex-col items-center">
+                  <svg class="w-8 h-8 text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                  <p class="text-xs text-gray-400">Sin investigados</p>
                 </div>
               </td>
             </tr>
@@ -166,10 +105,177 @@
       </div>
     </div>
   </div>
+  <div class="lg:col-span-2 space-y-6">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 section-fade-d2">
+      <h3 class="font-semibold text-gray-800 mb-4">Informacion del Expediente</h3>
+      <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div><dt class="text-xs text-gray-500 uppercase">Nombre</dt><dd class="text-sm font-medium text-gray-800">{{ caso.nombre }}</dd></div>
+        <div><dt class="text-xs text-gray-500 uppercase">Fecha de Apertura</dt><dd class="text-sm font-medium text-gray-800">{{ caso.fecha_apertura|date:"d/m/Y"|default:"-" }}</dd></div>
+        <div class="md:col-span-2"><dt class="text-xs text-gray-500 uppercase">Descripcion</dt><dd class="text-sm text-gray-700 mt-1">{{ caso.descripcion|default:"Sin descripcion"|linebreaks }}</dd></div>
+      </dl>
+    </div>
+    <!-- Document Grid -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 section-fade-d3">
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-2">
+          <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+          <h3 class="text-sm font-semibold text-gray-800">Documentos</h3>
+          <span class="text-[11px] text-gray-400 font-medium">({{ documentos.count }})</span>
+        </div>
+        <button type="button" onclick="abrirModalSubidaCaso()" class="p-1.5 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors" title="Subir documento">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        </button>
+      </div>
+      <div class="space-y-1" id="doc-grid-caso" data-upload-url="{% url 'caso_documento_add' caso.pk %}">
+
+        {% for doc in documentos %}
+        <div class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors border border-gray-100 hover:border-gray-200 cursor-pointer" onclick="{% if doc.tipo == 'PDF' %}window.open('{{ doc.archivo.url }}','_blank'){% else %}abrirDocumento('{{ doc.archivo.url }}', '{{ doc.tipo }}', '{{ doc.descripcion|default:doc.archivo.name|filename|escapejs }}', '{{ doc.fecha_subida|date:"d/m/Y H:i" }}'){% endif %}">
+          <div class="w-10 h-10 rounded-lg {% if doc.tipo == 'PDF' %}bg-red-100{% elif doc.tipo == 'WORD' %}bg-blue-100{% elif doc.tipo == 'IMAGEN' %}bg-green-100{% else %}bg-gray-100{% endif %} flex items-center justify-center shrink-0">
+            {% if doc.tipo == 'PDF' %}
+            <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 13l2-2 2 2 3-3 2 2v2a1 1 0 01-1 1H8a1 1 0 01-1-1v-1z"/></svg>
+            {% elif doc.tipo == 'WORD' %}
+            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            {% elif doc.tipo == 'IMAGEN' %}
+            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            {% else %}
+            <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+            {% endif %}
+          </div>
+          <div class="min-w-0 flex-1">
+            <p class="text-sm font-medium text-[#003363] truncate">{{ doc.descripcion|default:doc.archivo.name|filename }}</p>
+            <p class="text-xs text-gray-400">{{ doc.fecha_subida|date:"d/m/Y H:i" }}</p>
+          </div>
+          <div class="flex items-center gap-0.5 shrink-0" onclick="event.stopPropagation()">
+            <button type="button" class="p-1.5 text-gray-400 hover:text-blue-600 transition-colors rounded" title="Ver" onclick="{% if doc.tipo == 'PDF' %}window.open('{{ doc.archivo.url }}','_blank'){% else %}abrirDocumento('{{ doc.archivo.url }}', '{{ doc.tipo }}', '{{ doc.descripcion|default:doc.archivo.name|filename|escapejs }}', '{{ doc.fecha_subida|date:"d/m/Y H:i" }}'){% endif %}">
+              <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+            </button>
+            <a href="{{ doc.archivo.url }}" download class="p-1.5 text-gray-400 hover:text-green-600 transition-colors rounded" title="Descargar" onclick="event.stopPropagation()">
+              <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            </a>
+            {% if user.profile|can:'casos_documentos_eliminar' %}
+            <a href="{% url 'caso_documento_delete' caso.pk doc.pk %}" class="p-1.5 text-gray-400 hover:text-red-600 transition-colors rounded" title="Eliminar" onclick="event.stopPropagation();return confirm('¿Eliminar este documento?')">
+              <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </a>
+            {% endif %}
+          </div>
+        </div>
+        {% empty %}
+        <div class="flex flex-col items-center justify-center py-8 text-gray-400">
+          <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24" class="mb-2"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+          <p class="text-xs text-gray-400">Sin documentos</p>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Upload Modal -->
-{% url 'caso_documento_add' caso.pk as upload_url %}
-{% include "direccion/_upload_modal.html" with suffix="caso" upload_url=upload_url subtitle="Agregar documento al caso" %}
+<div id="modal-subida-caso" class="upload-modal-overlay" style="display:none">
+  <div class="upload-modal">
+    <div class="upload-modal-header">
+      <div class="upload-modal-title">
+        <div class="upload-title-icon">
+          <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+        </div>
+        <div>
+          <h3>Subir Documento</h3>
+          <p class="upload-modal-subtitle">Agregar documento al caso: {{ caso.nombre }}</p>
+        </div>
+      </div>
+      <button type="button" class="upload-modal-close" onclick="cerrarModalSubidaCaso()" title="Cerrar">
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
 
+    <form method="post" action="{% url 'caso_documento_add' caso.pk %}" enctype="multipart/form-data" class="upload-modal-body">
+      {% csrf_token %}
+      
+      <div class="upload-drop-area" id="upload-drop-caso">
+        <input type="file" name="archivo" id="file-input-caso-modal" required class="file-input-hidden" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.gif,.webp" onchange="onFileSelectedCaso(this)">
+        <div class="upload-drop-cloud">
+          <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+        </div>
+        <p class="upload-drop-text">Arrastra y suelta tu archivo aqui, o <span class="upload-drop-link">examina</span></p>
+        <p class="upload-drop-hint">PDF, Word (doc/docx) e imagenes (png, jpg, webp)</p>
+      </div>
+
+      <div class="upload-file-card" id="upload-file-card-caso" style="display:none">
+        <div class="upload-file-icon" id="upload-file-icon-caso">
+          <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+        </div>
+        <div class="upload-file-details">
+          <span class="upload-file-name" id="upload-file-name-caso"></span>
+          <span class="upload-file-size" id="upload-file-size-caso"></span>
+        </div>
+        <button type="button" class="upload-file-remove" onclick="limpiarArchivoCaso()" title="Quitar archivo">
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="upload-modal-fields">
+        <div class="upload-field-group">
+          <label class="upload-field-label">
+            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/></svg>
+            Descripcion
+          </label>
+          <div class="upload-field-input">
+            <input type="text" name="descripcion" placeholder="Ej: Documento de identificacion" class="form-input">
+          </div>
+        </div>
+      </div>
+
+      <div class="upload-modal-footer">
+        <button type="button" onclick="cerrarModalSubidaCaso()" class="upload-btn upload-btn-cancel">Cancelar</button>
+        <button type="submit" class="upload-btn upload-btn-submit" id="btn-subir-caso">
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+          Subir Documento
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function onFileSelectedCaso(input) {
+  onFileSelectedUpload(input, 'caso');
+}
+
+function abrirModalSubidaCaso() {
+  abrirModalUpload('modal-subida-caso');
+}
+
+function cerrarModalSubidaCaso() {
+  cerrarModalUpload('modal-subida-caso', 'caso');
+}
+
+function limpiarArchivoCaso() {
+  limpiarArchivoUpload('caso');
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  initModalClickOutside('modal-subida-caso', cerrarModalSubidaCaso);
+  initModalEscape(cerrarModalSubidaCaso);
+  initDropZone('upload-drop-caso', 'file-input-caso-modal', 'onFileSelectedCaso');
+});
+</script>
+
+<script>
+function filtrarInvestigados(query) {
+  const q = query.toLowerCase().trim();
+  const rows = document.querySelectorAll('#tabla-investigados tbody tr:not(.empty-row)');
+  let visible = 0;
+  rows.forEach(function(row) {
+    const text = (row.textContent || '').toLowerCase();
+    const match = !q || text.includes(q);
+    row.style.display = match ? '' : 'none';
+    if (match) visible++;
+  });
+  const emptyRow = document.querySelector('#tabla-investigados .empty-row');
+  if (emptyRow) {
+    emptyRow.style.display = q && visible === 0 ? '' : 'none';
+  }
+  document.getElementById('inv-count').textContent = visible;
+}
+</script>
 {% endblock %}

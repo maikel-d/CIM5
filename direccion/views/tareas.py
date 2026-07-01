@@ -10,6 +10,7 @@ from django.db.models import Q
 
 from ..models import Tarea
 from ..forms import TareaForm
+from ..audit import auditar
 from ..decorators import permiso_required
 from .. import permissions as perms
 
@@ -77,16 +78,19 @@ def tarea_completar(request, pk):
     return redirect(next_url)
 
 
-@require_POST
 @permiso_required(perms.TAREAS_ELIMINAR)
 def tarea_eliminar(request, pk):
-    """Elimina una tarea."""
+    """Elimina una tarea con confirmacion previa."""
     tarea = get_object_or_404(Tarea, pk=pk)
-    tarea.delete()
-    messages.success(request, "Tarea eliminada.")
-    next_url = request.POST.get("next") or "tareas_list"
-    # Prevent open redirect - only allow relative paths
-    if next_url.startswith("http://") or next_url.startswith("https://") or next_url.startswith("//"):
-        next_url = "tareas_list"
-    return redirect(next_url)
+    if request.method == "POST":
+        pk_val = tarea.pk
+        desc = tarea.descripcion[:50]
+        tarea.delete()
+        messages.success(request, "Tarea eliminada.")
+        auditar(request, "ELIMINAR", "Tarea", pk_val, desc, "Tarea")
+        next_url = request.POST.get("next") or "tareas_list"
+        if next_url.startswith("http://") or next_url.startswith("https://") or next_url.startswith("//"):
+            next_url = "tareas_list"
+        return redirect(next_url)
+    return render(request, "direccion/tarea_confirm_delete.html", {"tarea": tarea})
 
