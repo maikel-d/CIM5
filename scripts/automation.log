@@ -989,3 +989,64 @@ To https://github.com/maikel-d/CIM5.git
 [2026-07-01 05:50:01] Backups en Drive: 4, se eliminaran: 1
 [2026-07-01 05:50:01] Eliminando: backup_completo_2026-06-28.tar.gz
 [2026-07-01 05:50:01] [4/5] Git commit + push...
+[main ad8384f] auto: cambios 2026-07-01
+ 47 files changed, 2854 insertions(+), 3523 deletions(-)
+ delete mode 100644 %%LOG_FILE%%
+ delete mode 100644 ^
+ delete mode 100644 core/settings.py.bak
+ delete mode 100644 direccion/admin.py.bak
+ create mode 100644 direccion/views/bienes.py
+ delete mode 100644 direccion/views/dashboard.py
+ create mode 100644 direccion/views/dashboard/__init__.py
+ create mode 100644 direccion/views/dashboard/views.py
+ create mode 100644 direccion/views/documentos/__init__.py
+ create mode 100644 direccion/views/documentos/api.py
+ create mode 100644 direccion/views/documentos/carpetas.py
+ rename direccion/views/{documentos.py => documentos/views.py} (57%)
+ delete mode 100755 entrypoint.sh.bak
+ delete mode 100644 setup_admin.py.bak
+ delete mode 100644 templates/direccion/bien_carpeta_detail.html.bak
+ delete mode 100644 templates/direccion/bien_carpeta_detail.html.bak2
+ delete mode 100644 templates/direccion/caso_detail.html.bak
+ delete mode 100644 templates/direccion/personal_detail.html.bak
+ delete mode 100644 templates/direccion/personal_detail.html.bak2
+ create mode 100644 templates/direccion/tarea_confirm_delete.html
+ create mode 100644 templates/direccion/ticket_confirm_delete.html
+To https://github.com/maikel-d/CIM5.git
+   55e8975..ad8384f  main -> main
+[2026-07-01 05:50:01] Git push completado
+[2026-07-01 05:50:01] FIN
+
+========================================
+[2026-07-01 06:00:01] INICIO
+[2026-07-01 06:00:01] [5/5] Reiniciando contenedores Docker...
+ Container direccion-app Restarting 
+ Container direccion-nginx Restarting 
+ Container cim5nv-redis Restarting 
+ Container direccion-db Restarting 
+ Container direccion-nginx Started 
+ Container cim5nv-redis Started 
+ Container direccion-db Started 
+ Container direccion-app Started 
+[2026-07-01 06:00:01] Contenedores reiniciados
+[2026-07-01 06:00:01] FIN
+
+========================================
+[2026-07-02 05:50:01] INICIO
+[2026-07-02 05:50:01] [1/5] Backup completo (PostgreSQL + codigo + volumenes)...
+[2026-07-02 05:50:01] 1a. Dump PostgreSQL...
+[2026-07-02 05:50:01] PostgreSQL dump: 156K
+[2026-07-02 05:50:01] 1b. Copiando codigo del proyecto...
+[2026-07-02 05:50:01] 1c. Backupeando volumenes Docker...
+[2026-07-02 05:50:01]     Volumen: cim5nv_media_data
+[2026-07-02 05:50:01]     Backup OK: 25M
+[2026-07-02 05:50:01]     Volumen: cim5nv_static_data
+[2026-07-02 05:50:01]     Backup OK: 2.0M
+[2026-07-02 05:50:01] 1d. Comprimiendo backup...
+[2026-07-02 05:50:01] Backup completo creado: 31M
+[2026-07-02 05:50:01] [2/5] Subiendo backup a Google Drive...
+[2026-07-02 05:50:01] Backup subido a Drive: backup_completo_2026-07-02.tar.gz
+[2026-07-02 05:50:01] [3/5] Rotando backups antiguos en Google Drive...
+[2026-07-02 05:50:01] Backups en Drive: 4, se eliminaran: 1
+[2026-07-02 05:50:01] Eliminando: backup_completo_2026-06-29.tar.gz
+[2026-07-02 05:50:01] [4/5] Git commit + push...

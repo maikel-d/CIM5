@@ -3,9 +3,50 @@ from django.contrib.auth.models import User
 from django.core.validators import RegexValidator
 from datetime import date
 import os
+import re
 
 
 from .permissions import tiene_permiso as _tiene_permiso
+
+
+def sanitize_path_component(value, default='sin_dato'):
+    """
+    Sanitiza un componente de ruta para prevenir ataques de Path Traversal.
+    Elimina secuencias como '../', '..\\', y cualquier separador de ruta.
+    """
+    if not value:
+        return default
+    value = str(value)
+    # Eliminar secuencias de path traversal: ../ ..\
+    value = re.sub(r'\.\.[/\\\\]', '', value)
+    # Eliminar separadores de ruta
+    value = value.replace('\\', '_').replace('/', '_')
+    # Eliminar cualquier '..' restante
+    value = value.replace('..', '_')
+    # Recortar espacios y puntos al inicio/final
+    value = value.strip('. \\/')
+    if not value:
+        return default
+    return value[:100]
+
+
+def sanitize_filename(filename):
+    """
+    Sanitiza un nombre de archivo para prevenir path traversal.
+    Elimina cualquier componente de directorio, manteniendo solo el basename.
+    """
+    if not filename:
+        return 'archivo'
+    filename = str(filename)
+    # Extraer solo el nombre base (sin ruta)
+    filename = os.path.basename(filename)
+    # Eliminar secuencias de path traversal
+    filename = filename.replace('..', '_')
+    # Recortar espacios y puntos al inicio/final
+    filename = filename.strip('. \\/')
+    if not filename:
+        return 'archivo'
+    return filename[:255]
 
 
 class UserProfile(models.Model):
@@ -35,12 +76,18 @@ class UserProfile(models.Model):
 
 
 def personal_photo_path(instance, filename):
-    ext = filename.split('.')[-1]
-    return f'personal/fotos/{instance.cedula}_{instance.apellidos}_{instance.nombres}.{ext}'
+    ext = filename.rsplit('.', 1)[-1] if '.' in filename else 'bin'
+    safe_cedula = sanitize_path_component(instance.cedula)
+    safe_apellidos = sanitize_path_component(instance.apellidos)
+    safe_nombres = sanitize_path_component(instance.nombres)
+    safe_filename = sanitize_filename(filename).rsplit('.', 1)[0] if '.' in filename else sanitize_filename(filename)
+    return f'personal/fotos/{safe_cedula}_{safe_apellidos}_{safe_nombres}_{safe_filename}.{ext}'
 
 
 def personal_document_path(instance, filename):
-    return f'personal/documentos/{instance.personal.cedula}/{filename}'
+    safe_cedula = sanitize_path_component(instance.personal.cedula)
+    safe_filename = sanitize_filename(filename)
+    return f'personal/documentos/{safe_cedula}/{safe_filename}'
 
 
 class Personal(models.Model):
@@ -145,7 +192,8 @@ class DocumentoPersonal(TipoDocumentoMixin, models.Model):
 
 
 def caso_document_path(instance, filename):
-    return f'casos/documentos/{instance.caso.pk}/{filename}'
+    safe_filename = sanitize_filename(filename)
+    return f'casos/documentos/{instance.caso.pk}/{safe_filename}'
 
 
 class DocumentoCaso(TipoDocumentoMixin, models.Model):
@@ -203,12 +251,18 @@ class Caso(models.Model):
 
 
 def investigado_photo_path(instance, filename):
-    ext = filename.split('.')[-1]
-    return f'investigados/fotos/{instance.cedula}_{instance.apellidos}_{instance.nombres}.{ext}'
+    ext = filename.rsplit('.', 1)[-1] if '.' in filename else 'bin'
+    safe_cedula = sanitize_path_component(instance.cedula)
+    safe_apellidos = sanitize_path_component(instance.apellidos)
+    safe_nombres = sanitize_path_component(instance.nombres)
+    safe_filename = sanitize_filename(filename).rsplit('.', 1)[0] if '.' in filename else sanitize_filename(filename)
+    return f'investigados/fotos/{safe_cedula}_{safe_apellidos}_{safe_nombres}_{safe_filename}.{ext}'
 
 
 def investigado_document_path(instance, filename):
-    return f'investigados/documentos/{instance.investigado.cedula}/{filename}'
+    safe_cedula = sanitize_path_component(instance.investigado.cedula)
+    safe_filename = sanitize_filename(filename)
+    return f'investigados/documentos/{safe_cedula}/{safe_filename}'
 
 
 class Investigado(models.Model):
@@ -262,7 +316,8 @@ class Investigado(models.Model):
 
 
 def direccion_document_path(instance, filename):
-    return f'direccion/documentos/{filename}'
+    safe_filename = sanitize_filename(filename)
+    return f'direccion/documentos/{safe_filename}'
 
 
 class DocumentoDireccion(TipoDocumentoMixin, models.Model):
@@ -511,12 +566,17 @@ def notificar_administradores(mensaje, link=None):
         Notificacion.objects.bulk_create(notis)
 
 
+def informe_diario_path(instance, filename):
+    safe_filename = sanitize_filename(filename)
+    return f'informes/archivos/{safe_filename}'
+
+
 class InformeDiario(models.Model):
     """Informe diario con segmentación por semana, mes y año."""
     titulo = models.CharField('Título', max_length=200)
     contenido = models.TextField('Contenido del informe')
     archivo = models.FileField(
-        'Archivo adjunto', upload_to='informes/archivos/',
+        'Archivo adjunto', upload_to=informe_diario_path,
         blank=True, null=True,
         help_text='Opcional: PDF, Word, imagen...'
     )
@@ -580,12 +640,15 @@ class DocumentoInvestigado(TipoDocumentoMixin, models.Model):
 # ============================================================
 
 def bien_photo_path(instance, filename):
-    ext = filename.split('.')[-1]
-    return f'bienes/fotos/{instance.pk}_{instance.nombre}.{ext}'
+    ext = filename.rsplit('.', 1)[-1] if '.' in filename else 'bin'
+    safe_nombre = sanitize_path_component(instance.nombre)
+    safe_filename = sanitize_filename(filename).rsplit('.', 1)[0] if '.' in filename else sanitize_filename(filename)
+    return f'bienes/fotos/{instance.pk}_{safe_nombre}_{safe_filename}.{ext}'
 
 
 def bien_document_path(instance, filename):
-    return f'bienes/documentos/{instance.bien.pk}/{filename}'
+    safe_filename = sanitize_filename(filename)
+    return f'bienes/documentos/{instance.bien.pk}/{safe_filename}'
 
 
 class Bien(models.Model):
@@ -684,7 +747,8 @@ class DocumentoBien(TipoDocumentoMixin, models.Model):
 
 
 def carpeta_bien_document_path(instance, filename):
-    return f'bienes/carpetas/{instance.carpeta.pk}/{filename}'
+    safe_filename = sanitize_filename(filename)
+    return f'bienes/carpetas/{instance.carpeta.pk}/{safe_filename}'
 
 
 class CarpetaBien(models.Model):

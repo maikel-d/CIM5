@@ -1,23 +1,42 @@
 // ============================================
+// Security: HTML Escaping & URL Sanitization
+// ============================================
+function escapeHtml(text) {
+  if (!text) return '';
+  var div = document.createElement('div');
+  div.appendChild(document.createTextNode(text));
+  return div.innerHTML;
+}
+
+function sanitizeUrl(url) {
+  if (!url) return '';
+  // Block dangerous URL schemes (javascript:, data:, vbscript:)
+  if (/^\s*javascript:/i.test(url)) return '';
+  if (/^\s*data:/.test(url)) return '';
+  if (/^\s*vbscript:/i.test(url)) return '';
+  return url;
+}
+
+// ============================================
 // Document Preview Modal
 // ============================================
 function abrirDocumento(url, tipo, nombre, fecha) {
   var overlay = document.createElement('div');
   overlay.className = 'doc-modal-overlay';
 
-  var iconClass = tipo.toLowerCase();
+  var iconClass = escapeHtml(tipo.toLowerCase());
   var iconSvg = '';
   var previewContent = '';
 
   if (tipo === 'PDF') {
     iconSvg = '<svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 13l2-2 2 2 3-3 2 2v2a1 1 0 01-1 1H8a1 1 0 01-1-1v-1z"/></svg>';
-    previewContent = '<iframe src="' + url + '" title="' + nombre + '"></iframe>';
+    previewContent = '<iframe src="' + sanitizeUrl(url) + '" title="' + escapeHtml(nombre) + '"></iframe>';
   } else if (tipo === 'WORD') {
     iconSvg = '<svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>';
     previewContent = '<div class="unsupported-preview"><div class="big-icon">' + iconSvg.replace('width="16"','width="48"').replace('height="16"','height="48"') + '</div><p class="font-medium text-gray-700 mb-1">Documento de Word</p><p class="text-sm text-gray-500">Vista previa no disponible para este formato.</p><p class="text-sm text-gray-500 mt-2">Descarga el archivo para visualizarlo.</p></div>';
   } else if (tipo === 'IMAGEN') {
     iconSvg = '<svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>';
-    previewContent = '<img src="' + url + '" alt="' + nombre + '">';
+    previewContent = '<img src="' + sanitizeUrl(url) + '" alt="' + escapeHtml(nombre) + '">';
   } else {
     iconSvg = '<svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>';
     previewContent = '<div class="unsupported-preview"><div class="big-icon">' + iconSvg.replace('width="16"','width="48"').replace('height="16"','height="48"') + '</div><p class="font-medium text-gray-700 mb-1">Archivo</p><p class="text-sm text-gray-500">Vista previa no disponible.</p><p class="text-sm text-gray-500 mt-2">Descarga el archivo para visualizarlo.</p></div>';
@@ -27,13 +46,13 @@ function abrirDocumento(url, tipo, nombre, fecha) {
     '<div class="doc-modal-header">' +
       '<div class="modal-title">' +
         '<span class="title-icon ' + iconClass + '">' + iconSvg + '</span>' +
-        '<span class="truncate max-w-md" title="' + (nombre || '').replace(/"/g,'&quot;') + '">' + (nombre || '') + '</span>' +
+        '<span class="truncate max-w-md" title="' + escapeHtml(nombre) + '">' + escapeHtml(nombre) + '</span>' +
       '</div>' +
       '<div class="modal-actions">' +
-        '<a href="' + url + '" download class="download-btn" title="Descargar">' +
+        '<a href="' + sanitizeUrl(url) + '" download class="download-btn" title="Descargar">' +
           '<svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>' +
         '</a>' +
-        '<a href="' + url + '" target="_blank" class="open-btn" title="Abrir en nueva pestaña">' +
+        '<a href="' + sanitizeUrl(url) + '" target="_blank" class="open-btn" title="Abrir en nueva pestaña">' +
           '<svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>' +
         '</a>' +
         '<button class="close-btn" title="Cerrar (Esc)">' +
@@ -43,8 +62,8 @@ function abrirDocumento(url, tipo, nombre, fecha) {
     '</div>' +
     '<div class="doc-modal-body">' + previewContent + '</div>' +
     '<div class="doc-modal-footer">' +
-      '<span class="truncate">' + (nombre || '') + '</span>' +
-      '<span>' + (fecha || '') + '</span>' +
+      '<span class="truncate">' + escapeHtml(nombre) + '</span>' +
+      '<span>' + escapeHtml(fecha) + '</span>' +
     '</div>' +
   '</div>';
 
@@ -398,7 +417,7 @@ function iniciarBatchUpload() {
           '<svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>' +
         '</div>' +
         '<div class="batch-file-info">' +
-          '<span class="batch-file-name">' + f.name + '</span>' +
+          '<span class="batch-file-name">' + escapeHtml(f.name) + '</span>' +
           '<span class="batch-file-size">' + formatFileSize(f.size) + '</span>' +
         '</div>' +
         '<button type="button" class="batch-file-remove" onclick="removeBatchFile(' + i + ')" title="Quitar">' +

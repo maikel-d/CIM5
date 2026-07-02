@@ -2,7 +2,6 @@
 # Dashboard - Vista principal del sistema
 # ============================================================
 
-import json
 import calendar
 from datetime import date, timedelta
 
@@ -126,7 +125,7 @@ class DashboardView(PermissionRequiredMixin, TemplateView):
         im = _monthly_counts(Investigado.objects)
         cm = _monthly_counts(Caso.objects)
 
-        chart_data = json.dumps({
+        chart_data = {
             "docTypes": {"pdf": docs_pdf, "word": docs_word, "img": docs_img},
             "months": months,
             "personalMonthly": pm,
@@ -135,7 +134,7 @@ class DashboardView(PermissionRequiredMixin, TemplateView):
             "totalPersonal": total_personal,
             "totalCasos": total_casos,
             "totalInvestigados": total_investigados,
-        })
+        }
 
         tareas_form = TareaForm()
         tareas_pendientes = Tarea.objects.filter(completada=False).order_by(
@@ -183,7 +182,7 @@ class DashboardView(PermissionRequiredMixin, TemplateView):
             "informes_mes": informes_mes,
             "total_informes_mes": total_informes_mes,
             "auditoria_reciente": auditoria_reciente,
-            "usuarios_online": usuarios_online_list(),
+            "usuarios_online": usuarios_online(),
         })
         return context
 
@@ -192,5 +191,5 @@ class DashboardView(PermissionRequiredMixin, TemplateView):
 @permiso_required(perms.DASHBOARD_VER)
 def usuarios_online_json(request):
     """Vista JSON que retorna la lista de usuarios conectados."""
-    usuarios = usuarios_online_list()
+    usuarios = usuarios_online()
     return JsonResponse({"usuarios": usuarios, "total": len(usuarios)})

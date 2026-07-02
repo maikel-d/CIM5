@@ -6,38 +6,6 @@
 
 set -e
 
-# ============================================
-# Load Docker Secrets (if available)
-# ============================================
-SECRETS_DIR="/run/secrets"
-if [ -d "$SECRETS_DIR" ]; then
-  echo "[*] Cargando secretos desde Docker Secrets..."
-  
-  if [ -f "$SECRETS_DIR/secret_key" ]; then
-    export SECRET_KEY=$(cat "$SECRETS_DIR/secret_key")
-    echo "  [OK] SECRET_KEY cargado"
-  fi
-  
-  if [ -f "$SECRETS_DIR/db_password" ]; then
-    export DB_PASSWORD=$(cat "$SECRETS_DIR/db_password")
-    echo "  [OK] DB_PASSWORD cargado"
-  fi
-  
-  if [ -f "$SECRETS_DIR/admin_password" ]; then
-    export ADMIN_PASSWORD=$(cat "$SECRETS_DIR/admin_password")
-    echo "  [OK] ADMIN_PASSWORD cargado"
-  fi
-  
-  if [ -f "$SECRETS_DIR/cloudflared_credentials" ]; then
-    echo "  [OK] cloudflared_credentials disponible"
-  fi
-  
-  echo "[*] Secretos cargados correctamente"
-else
-  echo "[*] Docker Secrets no disponible, usando variables de entorno"
-fi
-
-echo ""
 echo "============================================"
 echo "  Sistema de Gestión - Dirección General"
 echo "============================================"

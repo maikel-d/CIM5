@@ -42,9 +42,7 @@ services:
     environment:
       - POSTGRES_DB=${DB_NAME:-direccion}
       - POSTGRES_USER=${DB_USER:-direccion}
-      - POSTGRES_PASSWORD_FILE=/run/secrets/db_password
-    secrets:
-      - db_password
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-direccion}
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-direccion} -d ${DB_NAME:-direccion}"]
       interval: 5s
@@ -70,22 +68,21 @@ services:
       - ./:/DATA/CIM5NV
       - media_data:/DATA/CIM5NV/media
       - static_data:/DATA/CIM5NV/staticfiles
-    secrets:
-      - secret_key
-      - db_password
-      - admin_password
     environment:
       - DEBUG=${DEBUG:-False}
+      - SECRET_KEY=${SECRET_KEY:-cambiar-esta-clave-en-produccion}
       - ALLOWED_HOSTS=${ALLOWED_HOSTS:-*}
       - DJANGO_SETTINGS_MODULE=core.settings
       - DB_ENGINE=${DB_ENGINE:-django.db.backends.postgresql}
       - DB_NAME=${DB_NAME:-direccion}
       - DB_USER=${DB_USER:-direccion}
+      - DB_PASSWORD=${DB_PASSWORD:-direccion}
       - DB_HOST=${DB_HOST:-db}
       - DB_PORT=${DB_PORT:-5432}
       - DOMAIN=${DOMAIN:-}
       - SECURE_SSL_REDIRECT=${SECURE_SSL_REDIRECT:-False}
       - SECURE_COOKIES=${SECURE_COOKIES:-False}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin321}
       - WEBUI_PORT=${WEBUI_PORT:-80}
       - WEBUI_PORT_SSL=${WEBUI_PORT_SSL:-443}
     healthcheck:
@@ -263,13 +260,10 @@ services:
     profiles:
       - cloudflare
     volumes:
-      - ./cloudflared/config.yml:/etc/cloudflared/config.yml:ro
-      - ./cloudflared/cert.pem:/etc/cloudflared/cert.pem:ro
-    secrets:
-      - cloudflared_credentials
+      - ./cloudflared:/etc/cloudflared
     environment:
       - TUNNEL_ORIGIN_CERT=/etc/cloudflared/cert.pem
-    command: tunnel --config /etc/cloudflared/config.yml --credentials-file /run/secrets/cloudflared_credentials run
+    command: tunnel --config /etc/cloudflared/config.yml run
     depends_on:
       - nginx
     deploy:
@@ -287,19 +281,6 @@ volumes:
   certbot_conf:
   media_data:
   static_data:
-
-# ============================================
-#   Docker Secrets
-# ============================================
-secrets:
-  secret_key:
-    file: ./secrets/secret_key.txt
-  db_password:
-    file: ./secrets/db_password.txt
-  admin_password:
-    file: ./secrets/admin_password.txt
-  cloudflared_credentials:
-    file: ./secrets/cloudflared_credentials.json
 
 # ============================================
 #   CasaOS App Store Metadata

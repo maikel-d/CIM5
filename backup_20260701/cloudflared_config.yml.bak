@@ -1,0 +1,9 @@
+tunnel: c45f5c64-1e2f-4796-8cc7-0134ebabc6e5
+credentials-file: /etc/cloudflared/cimcinco.json
+
+ingress:
+  - hostname: cimcinco.com
+    service: http://nginx:80
+  - hostname: www.cimcinco.com
+    service: http://nginx:80
+  - service: http_status:404

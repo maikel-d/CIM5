@@ -9,6 +9,7 @@ from direccion.models import DocumentoDireccion
 from direccion.decorators import permiso_required
 from direccion.audit import auditar
 from direccion import permissions as perms
+from direccion.validators import validar_tipo_real
 
 
 @permiso_required(perms.DOCUMENTOS_DIRECCION_SUBIR)
@@ -26,12 +27,14 @@ def batch_upload_documentos(request):
             results.append({"name": f.name, "status": "error", "error": f"Archivo supera limite de 10MB ({f.size / 1024 / 1024:.1f}MB)"})
             error_count += 1
             continue
-        ext = os.path.splitext(f.name)[1].lower()
-        allowed = [".pdf", ".doc", ".docx", ".png", ".jpg", ".jpeg", ".gif", ".webp"]
-        if ext not in allowed:
-            results.append({"name": f.name, "status": "error", "error": f"Formato no soportado: {ext}"})
+
+        # Validar tipo real (extensión + firma de bytes)
+        es_valido, error_msg = validar_tipo_real(f)
+        if not es_valido:
+            results.append({"name": f.name, "status": "error", "error": error_msg})
             error_count += 1
             continue
+
         try:
             doc = DocumentoDireccion.objects.create(archivo=f, categoria=categoria, descripcion=os.path.splitext(f.name)[0])
             created_count += 1

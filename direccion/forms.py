@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
 from django.core.exceptions import ValidationError
 import re
+from .validators import validar_tipo_real
 from .models import (
     UserProfile, Personal, DocumentoPersonal,
     Caso, Investigado, DocumentoInvestigado, DocumentoDireccion,
@@ -20,6 +21,16 @@ def _validar_tamano_archivo(archivo, max_size=MAX_FILE_SIZE):
     if archivo and archivo.size > max_size:
         mb = max_size / (1024 * 1024)
         raise ValidationError(f"El archivo no puede superar los {mb:.0f}MB. Tamaño actual: {archivo.size / (1024 * 1024):.1f}MB")
+    return archivo
+
+
+def _validar_mime(archivo):
+    """Valida el tipo MIME real del archivo y lanza ValidationError si no es válido."""
+    if not archivo:
+        return archivo
+    es_valido, error_msg = validar_tipo_real(archivo)
+    if not es_valido:
+        raise ValidationError(error_msg)
     return archivo
 
 
@@ -122,7 +133,9 @@ class PersonalForm(forms.ModelForm):
                 field.widget.attrs.update({"class": "form-input"})
 
     def clean_foto(self):
-        return _validar_tamano_archivo(self.cleaned_data.get("foto"))
+        archivo = self.cleaned_data.get("foto")
+        archivo = _validar_tamano_archivo(archivo)
+        return _validar_mime(archivo)
 
     def clean_correo(self):
         correo = self.cleaned_data.get("correo")
@@ -141,7 +154,9 @@ class DocumentoPersonalForm(forms.ModelForm):
         }
 
     def clean_archivo(self):
-        return _validar_tamano_archivo(self.cleaned_data.get("archivo"))
+        archivo = self.cleaned_data.get("archivo")
+        archivo = _validar_tamano_archivo(archivo)
+        return _validar_mime(archivo)
 
 
 class CasoForm(forms.ModelForm):
@@ -188,7 +203,9 @@ class InvestigadoForm(forms.ModelForm):
                 field.widget.attrs.update({"class": "form-input"})
 
     def clean_foto(self):
-        return _validar_tamano_archivo(self.cleaned_data.get("foto"))
+        archivo = self.cleaned_data.get("foto")
+        archivo = _validar_tamano_archivo(archivo)
+        return _validar_mime(archivo)
 
 class DocumentoInvestigadoForm(forms.ModelForm):
     class Meta:
@@ -199,7 +216,9 @@ class DocumentoInvestigadoForm(forms.ModelForm):
         }
 
     def clean_archivo(self):
-        return _validar_tamano_archivo(self.cleaned_data.get("archivo"))
+        archivo = self.cleaned_data.get("archivo")
+        archivo = _validar_tamano_archivo(archivo)
+        return _validar_mime(archivo)
 
 
 class DocumentoDireccionForm(forms.ModelForm):
@@ -212,7 +231,9 @@ class DocumentoDireccionForm(forms.ModelForm):
         }
 
     def clean_archivo(self):
-        return _validar_tamano_archivo(self.cleaned_data.get("archivo"))
+        archivo = self.cleaned_data.get("archivo")
+        archivo = _validar_tamano_archivo(archivo)
+        return _validar_mime(archivo)
 
 
 class DocumentoCasoForm(forms.ModelForm):
@@ -224,7 +245,9 @@ class DocumentoCasoForm(forms.ModelForm):
         }
 
     def clean_archivo(self):
-        return _validar_tamano_archivo(self.cleaned_data.get("archivo"))
+        archivo = self.cleaned_data.get("archivo")
+        archivo = _validar_tamano_archivo(archivo)
+        return _validar_mime(archivo)
 
 
 class TareaForm(forms.ModelForm):
@@ -303,7 +326,9 @@ class InformeDiarioForm(forms.ModelForm):
         return self.cleaned_data.get('contenido') or 'Sin descripción'
 
     def clean_archivo(self):
-        return _validar_tamano_archivo(self.cleaned_data.get("archivo"))
+        archivo = self.cleaned_data.get("archivo")
+        archivo = _validar_tamano_archivo(archivo)
+        return _validar_mime(archivo)
 
 
 class CarpetaForm(forms.ModelForm):
@@ -355,7 +380,9 @@ class BienForm(forms.ModelForm):
                 field.widget.attrs.update({"class": "form-input"})
 
     def clean_foto(self):
-        return _validar_tamano_archivo(self.cleaned_data.get("foto"))
+        archivo = self.cleaned_data.get("foto")
+        archivo = _validar_tamano_archivo(archivo)
+        return _validar_mime(archivo)
 
 
 
@@ -368,7 +395,9 @@ class CarpetaBienDocumentForm(forms.ModelForm):
         }
 
     def clean_archivo(self):
-        return _validar_tamano_archivo(self.cleaned_data.get("archivo"))
+        archivo = self.cleaned_data.get("archivo")
+        archivo = _validar_tamano_archivo(archivo)
+        return _validar_mime(archivo)
 
 
 class CarpetaDireccionForm(forms.ModelForm):
@@ -399,7 +428,9 @@ class DocumentoBienForm(forms.ModelForm):
         }
 
     def clean_archivo(self):
-        return _validar_tamano_archivo(self.cleaned_data.get("archivo"))
+        archivo = self.cleaned_data.get("archivo")
+        archivo = _validar_tamano_archivo(archivo)
+        return _validar_mime(archivo)
 
 
 class LoginForm(forms.Form):
